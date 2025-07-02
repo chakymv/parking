@@ -1,73 +1,65 @@
 const express = require('express');
 const router = express.Router();
-const HistorialParqueo = require('../model/HistorialParqueo');
+const supabase = require('../supabaseClient');
 
-// Obtener todos los registros
+function mapHistorialParqueoBody(body) {
+  return {
+    celda_id: body.celda_id || null,
+    vehiculo_id: body.vehiculo_id || null,
+    fecha_hora: body.fecha_hora || null
+  };
+}
+
+function mapHistorialParqueoUpdateBody(body) {
+  const allowed = ['celda_id','vehiculo_id','fecha_hora'];
+  const updateObj = {};
+  for (const key of allowed) {
+    if (body[key] !== undefined) updateObj[key] = body[key];
+  }
+  return updateObj;
+}
+
 router.get('/', async (req, res) => {
-  try {
-    const registros = await HistorialParqueo.findAll();
-    res.json(registros.map(r => r.toJSON()));
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  const { data, error } = await supabase.from('historial_parqueo').select('*');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
-// Obtener un registro por celda_id y vehiculo_id
 router.get('/:celda_id/:vehiculo_id', async (req, res) => {
-  try {
-    const historial = new HistorialParqueo();
-    const found = await historial.findById(req.params.celda_id, req.params.vehiculo_id);
-    if (!found) return res.status(404).json({ error: 'Registro no encontrado' });
-    res.json(historial.toJSON());
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  const { data, error } = await supabase.from('historial_parqueo').select('*')
+    .eq('celda_id', req.params.celda_id)
+    .eq('vehiculo_id', req.params.vehiculo_id)
+    .single();
+  if (error || !data) return res.status(404).json({ error: error ? error.message : 'Registro no encontrado' });
+  res.json(data);
 });
 
-// Crear un registro
 router.post('/', async (req, res) => {
-  try {
-    const { celda_id, vehiculo_id, fecha_hora } = req.body;
-    if (!celda_id || !vehiculo_id || !fecha_hora) {
-      return res.status(400).json({ error: 'Faltan campos obligatorios' });
-    }
-    const historial = new HistorialParqueo(celda_id, vehiculo_id, fecha_hora);
-    await historial.create();
-    res.status(201).json(historial.toJSON());
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+  const registro = mapHistorialParqueoBody(req.body);
+  if (!registro.celda_id || !registro.vehiculo_id || !registro.fecha_hora) {
+    return res.status(400).json({ error: 'Faltan campos obligatorios' });
   }
+  const { data, error } = await supabase.from('historial_parqueo').insert([registro]).select().single();
+  if (error) return res.status(400).json({ error: error.message });
+  res.status(201).json(data);
 });
 
-// Actualizar un registro
 router.put('/:celda_id/:vehiculo_id', async (req, res) => {
-  try {
-    const historial = new HistorialParqueo();
-    const found = await historial.findById(req.params.celda_id, req.params.vehiculo_id);
-    if (!found) return res.status(404).json({ error: 'Registro no encontrado' });
-    Object.keys(req.body).forEach(key => {
-      if (historial.hasOwnProperty(`_${key}`)) {
-        historial[`_${key}`] = req.body[key];
-      }
-    });
-    await historial.update();
-    res.json(historial.toJSON());
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+  const registro = mapHistorialParqueoUpdateBody(req.body);
+  const { data, error } = await supabase.from('historial_parqueo').update(registro)
+    .eq('celda_id', req.params.celda_id)
+    .eq('vehiculo_id', req.params.vehiculo_id)
+    .select().single();
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
 });
 
-// Eliminar un registro
 router.delete('/:celda_id/:vehiculo_id', async (req, res) => {
-  try {
-    const historial = new HistorialParqueo();
-    const found = await historial.findById(req.params.celda_id, req.params.vehiculo_id);
-    if (!found) return res.status(404).json({ error: 'Registro no encontrado' });
-    await historial.delete();
-    res.status(204).send();
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+  const { error } = await supabase.from('historial_parqueo').delete()
+    .eq('celda_id', req.params.celda_id)
+    .eq('vehiculo_id', req.params.vehiculo_id);
+  if (error) return res.status(400).json({ error: error.message });
+  res.status(204).send();
 });
 
 module.exports = router;

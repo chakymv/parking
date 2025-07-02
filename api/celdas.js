@@ -1,73 +1,56 @@
 const express = require('express');
 const router = express.Router();
-const Celda = require('../model/Celda');
+const supabase = require('../supabaseClient');
 
-// Obtener todas las celdas
+function mapCeldaBody(body) {
+  return {
+    tipo: body.tipo || null,
+    estado: body.estado || null
+  };
+}
+
+function mapCeldaUpdateBody(body) {
+  const allowed = ['tipo','estado'];
+  const updateObj = {};
+  for (const key of allowed) {
+    if (body[key] !== undefined) updateObj[key] = body[key];
+  }
+  return updateObj;
+}
+
 router.get('/', async (req, res) => {
-  try {
-    const celdas = await Celda.findAll();
-    res.json(celdas.map(c => c.toJSON()));
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  const { data, error } = await supabase.from('celda').select('*');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
 });
 
-// Obtener una celda por ID
 router.get('/:id', async (req, res) => {
-  try {
-    const celda = new Celda();
-    const found = await celda.findById(req.params.id);
-    if (!found) return res.status(404).json({ error: 'Celda no encontrada' });
-    res.json(celda.toJSON());
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+  const { data, error } = await supabase.from('celda').select('*').eq('id', req.params.id).single();
+  if (error || !data) return res.status(404).json({ error: error ? error.message : 'Celda no encontrada' });
+  res.json(data);
 });
 
-// Crear una celda
 router.post('/', async (req, res) => {
-  try {
-    const { tipo, estado } = req.body;
-    if (!tipo || !estado) {
-      return res.status(400).json({ error: 'Faltan campos obligatorios' });
-    }
-    const celda = new Celda(null, tipo, estado);
-    await celda.create();
-    res.status(201).json(celda.toJSON());
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+  const celda = mapCeldaBody(req.body);
+  if (!celda.tipo || !celda.estado) {
+    return res.status(400).json({ error: 'Faltan campos obligatorios' });
   }
+  const { data, error } = await supabase.from('celda').insert([celda]).select().single();
+  if (error) return res.status(400).json({ error: error.message });
+  res.status(201).json(data);
 });
 
-// Actualizar una celda
 router.put('/:id', async (req, res) => {
-  try {
-    const celda = new Celda();
-    const found = await celda.findById(req.params.id);
-    if (!found) return res.status(404).json({ error: 'Celda no encontrada' });
-    Object.keys(req.body).forEach(key => {
-      if (celda.hasOwnProperty(`_${key}`)) {
-        celda[`_${key}`] = req.body[key];
-      }
-    });
-    await celda.update();
-    res.json(celda.toJSON());
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+  const celda = mapCeldaUpdateBody(req.body);
+  const { data, error } = await supabase.from('celda').update(celda).eq('id', req.params.id).select().single();
+  if (error) return res.status(400).json({ error: error.message });
+  res.json(data);
 });
 
-// Eliminar una celda
 router.delete('/:id', async (req, res) => {
-  try {
-    const celda = new Celda();
-    const found = await celda.findById(req.params.id);
-    if (!found) return res.status(404).json({ error: 'Celda no encontrada' });
-    await celda.delete();
-    res.status(204).send();
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+  const { error } = await supabase.from('celda').delete().eq('id', req.params.id);
+  if (error) return res.status(400).json({ error: error.message });
+  res.status(204).send();
 });
 
 module.exports = router;
