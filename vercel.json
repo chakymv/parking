@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/usuarios.js", "use": "@vercel/node" },
+    { "src": "api/vehiculos.js", "use": "@vercel/node" },
+    { "src": "api/celdas.js", "use": "@vercel/node" },
+    { "src": "api/historial_parqueo.js", "use": "@vercel/node" },
+    { "src": "api/acceso_salidas.js", "use": "@vercel/node" },
+    { "src": "api/incidencias.js", "use": "@vercel/node" },
+    { "src": "api/reporte_incidencias.js", "use": "@vercel/node" },
+    { "src": "api/pico_placa.js", "use": "@vercel/node" },
+    { "src": "api/perfil_usuario.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/usuarios", "dest": "/api/usuarios.js" },
+    { "src": "/api/vehiculos", "dest": "/api/vehiculos.js" },
+    { "src": "/api/celdas", "dest": "/api/celdas.js" },
+    { "src": "/api/historial_parqueo", "dest": "/api/historial_parqueo.js" },
+    { "src": "/api/acceso_salidas", "dest": "/api/acceso_salidas.js" },
+    { "src": "/api/incidencias", "dest": "/api/incidencias.js" },
+    { "src": "/api/reporte_incidencias", "dest": "/api/reporte_incidencias.js" },
+    { "src": "/api/pico_placa", "dest": "/api/pico_placa.js" },
+    { "src": "/api/perfil_usuario", "dest": "/api/perfil_usuario.js" }
+  ]
+}
