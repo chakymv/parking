@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Manual del Backend ParkingLot</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f4f6fb; color: #222; }
+    .container { max-width: 900px; margin: 2em auto; background: #fff; border-radius: 10px; box-shadow: 0 2px 12px #0001; padding: 2.5em 3em; }
+    h1 { color: #1a4d8f; font-size: 2.5em; margin-bottom: 0.2em; }
+    h2 { color: #2c3e50; border-bottom: 1px solid #e0e0e0; padding-bottom: 0.2em; margin-top: 2em; }
+    h3 { color: #3b5998; }
+    code, pre { background: #f0f3fa; padding: 2px 6px; border-radius: 3px; }
+    pre { padding: 1em; overflow-x: auto; }
+    ul, ol { margin-left: 1.5em; }
+    .section { margin-bottom: 2.5em; }
+    .highlight { background: #eaf6ff; border-left: 4px solid #1a4d8f; padding: 1em; margin-bottom: 2em; border-radius: 6px; }
+    .footer { text-align: center; color: #888; margin-top: 3em; font-size: 0.95em; }
+    @media (max-width: 600px) { .container { padding: 1em; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Manual del Backend ParkingLot</h1>
+
+    <div class="highlight">
+      <h2>¿Qué es este proyecto?</h2>
+      <p>Este backend es una API RESTful desarrollada en <b>Node.js</b> y <b>Express</b> para la gestión de un sistema de parqueadero inteligente. Utiliza <b>Supabase/PostgreSQL</b> como base de datos y está estructurada para ser robusta, escalable y fácil de mantener.</p>
+      <ul>
+        <li>Todos los modelos de datos están desacoplados y centralizados en la carpeta <code>model/</code>.</li>
+        <li>Los endpoints REST están en <code>api/</code> y cada uno usa su modelo correspondiente.</li>
+        <li>La conexión a la base de datos es unificada y segura mediante <code>supabaseClient.js</code> y variables de entorno.</li>
+        <li>Incluye pruebas automatizadas para todos los endpoints principales usando <b>Jest</b> y <b>Supertest</b>.</li>
+      </ul>
+      <p>El código está pensado para ser claro, validando datos y devolviendo errores útiles, facilitando la integración con frontend o apps móviles.</p>
+    </div>
+
+    <div class="section">
+      <h2>1. Requisitos Previos</h2>
+      <ul>
+        <li>Node.js 18.x o superior</li>
+        <li>Acceso a una base de datos PostgreSQL (Supabase)</li>
+        <li>Git (opcional, para clonar el repositorio)</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>2. Instalación de Paquetes</h2>
+      <ol>
+        <li>Clona o descarga el repositorio en tu máquina local.</li>
+        <li>Abre una terminal en la carpeta raíz del proyecto.</li>
+        <li>Ejecuta:<br>
+          <pre><code>npm install</code></pre>
+        </li>
+      </ol>
+    </div>
+
+    <div class="section">
+      <h2>2.1. Dependencias y Librerías Instaladas</h2>
+      <ul>
+        <li><b>@supabase/supabase-js</b>: Cliente oficial para interactuar con Supabase/PostgreSQL.</li>
+        <li><b>express</b>: Framework para crear el servidor y endpoints REST.</li>
+        <li><b>dotenv</b>: Carga variables de entorno desde el archivo <code>.env</code>.</li>
+        <li><b>body-parser</b>: Middleware para parsear el body de las peticiones (integrado en Express 4.16+).</li>
+        <li><b>supertest</b>: Utilidad para pruebas HTTP automatizadas (devDependency).</li>
+        <li><b>serverless-http</b>: Adaptador para desplegar Express en entornos serverless (opcional).</li>
+        <li><b>mysql2</b> y <b>postgres</b>: Drivers de bases de datos (no usados en la versión Supabase, pero presentes).</li>
+      </ul>
+      <p>Para instalar todas las dependencias ejecuta: <br>
+        <pre><code>npm install</code></pre>
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>3. Configuración de Variables de Entorno</h2>
+      <ol>
+        <li>Crea un archivo <code>.env</code> en la raíz del proyecto (si no existe).</li>
+        <li>Agrega tus credenciales de Supabase/PostgreSQL, por ejemplo:<br>
+          <pre><code>SUPABASE_URL=tu_url_supabase
+SUPABASE_KEY=tu_api_key
+</code></pre>
+        </li>
+      </ol>
+    </div>
+
+    <div class="section">
+      <h2>4. Estructura del Proyecto</h2>
+      <ul>
+        <li><b>api/</b>: Endpoints REST (usuarios, vehiculos, celdas, etc.)</li>
+        <li><b>model/</b>: Modelos de datos y lógica de negocio</li>
+        <li><b>test/</b>: Pruebas automatizadas con Jest y Supertest</li>
+        <li><b>supabaseClient.js</b>: Configuración de conexión a Supabase</li>
+        <li><b>app.js</b> y <b>server.js</b>: Arranque del servidor Express</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>5. Ejecución del Servidor</h2>
+      <ol>
+        <li>En la terminal, ejecuta:<br>
+          <pre><code>node server.js</code></pre>
+        </li>
+        <li>El backend estará disponible en <code>http://localhost:3000</code> (o el puerto configurado).</li>
+      </ol>
+    </div>
+
+    <div class="section">
+      <h2>6. Ejecución de Pruebas Automatizadas</h2>
+      <ol>
+        <li>Para ejecutar todas las pruebas:<br>
+          <pre><code>npx jest --runInBand</code></pre>
+        </li>
+        <li>Para ejecutar una prueba específica:<br>
+          <pre><code>npx jest --runInBand test/PruebasCelda.test.js</code></pre>
+        </li>
+        <li>Las pruebas cubren todos los endpoints principales (usuarios, vehículos, celdas, historial de parqueo, acceso/salidas).</li>
+      </ol>
+    </div>
+
+    <div class="section">
+      <h2>7. Buenas Prácticas</h2>
+      <ul>
+        <li>Todos los modelos usan conexión unificada a Supabase y nombres de columnas en minúsculas.</li>
+        <li>Los endpoints validan campos obligatorios y devuelven errores claros.</li>
+        <li>Las pruebas automatizadas aseguran la integridad de la API.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>8. Contacto y Soporte</h2>
+      <p>Para dudas o soporte, contacta al equipo de desarrollo o revisa la documentación interna del proyecto.</p>
+    </div>
+
+    <div class="footer">
+      <hr>
+      <p>Manual  &copy; 2025 | ParkingLot Backend</p>
+    </div>
+  </div>
+</body>
+</html>
