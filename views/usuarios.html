@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Usuarios</title>
+  <link rel="stylesheet" href="/tablas.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script>
+    const allColumns = ['id_usuario', 'tipo_documento', 'numero_documento', 'primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'direccion_correo', 'numero_celular', 'estado', 'perfil_usuario_id'];
+    let columns = [...allColumns];
+    let data = [];
+    let dataTableInstance = null;
+
+    async function fetchUsuarios() {
+      const res = await fetch('/api/usuarios');
+      data = await res.json();
+      renderTable();
+      renderColumnSelector();
+    }
+
+    function renderTable(filteredData) {
+      const table = document.getElementById('usuarios-table');
+      table.innerHTML = '';
+      if (columns.length === 0) {
+        if (dataTableInstance) {
+          dataTableInstance.destroy();
+          dataTableInstance = null;
+        }
+        return;
+      }
+      let header = '<thead><tr>';
+      columns.forEach(col => header += `<th>${col}</th>`);
+      header += '</tr></thead>';
+      table.innerHTML += header;
+      let rows = '<tbody>';
+      (filteredData || data).forEach(row => {
+        let tr = '<tr>';
+        columns.forEach(col => tr += `<td>${row[col] ?? ''}</td>`);
+        tr += '</tr>';
+        rows += tr;
+      });
+      rows += '</tbody>';
+      table.innerHTML += rows;
+      if (dataTableInstance) {
+        dataTableInstance.destroy();
+        dataTableInstance = null;
+      }
+      dataTableInstance = $('#usuarios-table').DataTable({
+        paging: true,
+        searching: false,
+        info: true,
+        responsive: true,
+        language: {
+          url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+        }
+      });
+    }
+
+    function renderColumnSelector() {
+      const selector = document.getElementById('column-selector');
+      selector.innerHTML = `<button class='dropdown-btn' onclick='toggleDropdown(event)'>Seleccionar columnas ▼</button><div class='dropdown-content' id='dropdown-list' style='position:absolute;z-index:1000;'>`;
+      allColumns.forEach(col => {
+        const checked = columns.includes(col) ? 'checked' : '';
+        selector.innerHTML += `<label style='display:flex;align-items:center;'><input type='checkbox' value='${col}' ${checked} onchange='toggleCol(this)'> ${col}</label>`;
+      });
+      selector.innerHTML += '</div>';
+    }
+
+    function toggleDropdown(e) {
+      e.stopPropagation();
+      const selector = document.getElementById('column-selector');
+      const dropdown = selector.querySelector('.dropdown-content');
+      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+      if (dropdown.style.display === 'block') {
+        document.addEventListener('click', closeDropdown);
+      }
+    }
+    function closeDropdown(e) {
+      const selector = document.getElementById('column-selector');
+      const dropdown = selector.querySelector('.dropdown-content');
+      if (!selector.contains(e.target)) {
+        dropdown.style.display = 'none';
+        document.removeEventListener('click', closeDropdown);
+      }
+    }
+
+    function toggleCol(checkbox) {
+      const col = checkbox.value;
+      if (checkbox.checked) {
+        if (!columns.includes(col)) columns.push(col);
+      } else {
+        columns = columns.filter(c => c !== col);
+      }
+      // Ordenar columnas según allColumns para evitar error de DataTables
+      columns = allColumns.filter(c => columns.includes(c));
+      renderTable();
+    }
+
+    function filterTable() {
+      const filtro = document.getElementById('filtro').value.toLowerCase();
+      const filtered = data.filter(row => columns.some(col => (row[col]+'' || '').toLowerCase().includes(filtro)));
+      renderTable(filtered);
+    }
+
+    window.onload = fetchUsuarios;
+  </script>
+</head>
+<body>
+  <h1>Usuarios</h1>
+  <div id="column-selector" class="dropdown" style="margin-bottom:12px;"></div>
+  <input id="filtro" class="input-filtro" placeholder="Buscar..." oninput="filterTable()" />
+  <table border="1" id="usuarios-table" class="datatable tabla-usuarios"></table>
+</body>
+</html>

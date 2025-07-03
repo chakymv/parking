@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Vehículos</title>
+  <link rel="stylesheet" href="/public/tablas.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script>
+    const allColumns = ['id', 'placa', 'color', 'modelo', 'marca', 'tipo', 'usuario_id_usuario'];
+    let columns = [...allColumns];
+    let data = [];
+    let dataTableInstance = null;
+
+    async function fetchVehiculos() {
+      const res = await fetch('/api/vehiculos');
+      data = await res.json();
+      renderTable();
+      renderColumnSelector();
+    }
+
+    function renderTable(filteredData) {
+      const table = document.getElementById('vehiculos-table');
+      table.innerHTML = '';
+      if (columns.length === 0) {
+        if (dataTableInstance) {
+          dataTableInstance.destroy();
+          dataTableInstance = null;
+        }
+        return;
+      }
+      let header = '<thead><tr>';
+      columns.forEach(col => header += `<th>${col}</th>`);
+      header += '</tr></thead>';
+      table.innerHTML += header;
+      let rows = '<tbody>';
+      (filteredData || data).forEach(row => {
+        let tr = '<tr>';
+        columns.forEach(col => tr += `<td>${row[col] ?? ''}</td>`);
+        tr += '</tr>';
+        rows += tr;
+      });
+      rows += '</tbody>';
+      table.innerHTML += rows;
+      if (dataTableInstance) {
+        dataTableInstance.destroy();
+        dataTableInstance = null;
+      }
+      dataTableInstance = $('#vehiculos-table').DataTable({
+        paging: true,
+        searching: false,
+        info: true,
+        responsive: true,
+        language: {
+          url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+        }
+      });
+    }
+
+    function renderColumnSelector() {
+      const selector = document.getElementById('column-selector');
+      selector.innerHTML = `<button class='dropdown-btn' onclick='toggleDropdown(event)'>Seleccionar columnas ▼</button><div class='dropdown-content'>`;
+      allColumns.forEach(col => {
+        const checked = columns.includes(col) ? 'checked' : '';
+        selector.innerHTML += `<label><input type='checkbox' value='${col}' ${checked} onchange='toggleCol(this)'> ${col}</label>`;
+      });
+      selector.innerHTML += '</div>';
+    }
+
+    function toggleDropdown(e) {
+      e.stopPropagation();
+      const selector = document.getElementById('column-selector');
+      selector.classList.toggle('show');
+      document.addEventListener('click', closeDropdown);
+    }
+    function closeDropdown(e) {
+      const selector = document.getElementById('column-selector');
+      if (!selector.contains(e.target)) {
+        selector.classList.remove('show');
+        document.removeEventListener('click', closeDropdown);
+      }
+    }
+
+    function toggleCol(checkbox) {
+      const col = checkbox.value;
+      if (checkbox.checked) {
+        if (!columns.includes(col)) columns.push(col);
+      } else {
+        columns = columns.filter(c => c !== col);
+      }
+      renderTable();
+    }
+
+    function filterTable() {
+      const filtro = document.getElementById('filtro').value.toLowerCase();
+      const filtered = data.filter(row => columns.some(col => (row[col]+'' || '').toLowerCase().includes(filtro)));
+      renderTable(filtered);
+    }
+
+    window.onload = fetchVehiculos;
+  </script>
+</head>
+<body>
+  <h1>Vehículos</h1>
+  <div id="column-selector" class="dropdown" style="margin-bottom:12px;"></div>
+  <input id="filtro" class="input-filtro" placeholder="Buscar..." oninput="filterTable()" />
+  <table border="1" id="vehiculos-table" class="datatable tabla-vehiculos"></table>
+</body>
+</html>

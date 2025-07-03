@@ -9,6 +9,7 @@ const reporteIncidenciasRoutes = require('./api/reporte_incidencias');
 const picoPlacaRoutes = require('./api/pico_placa');
 const perfilUsuarioRoutes = require('./api/perfil_usuario');
 const bodyParser = require('body-parser');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -24,6 +25,8 @@ app.use('/api/incidencias', incidenciaRoutes);
 app.use('/api/reporte_incidencias', reporteIncidenciasRoutes);
 app.use('/api/pico_placa', picoPlacaRoutes);
 app.use('/api/perfil_usuario', perfilUsuarioRoutes);
+app.use(express.static(path.join(__dirname, 'views')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
   res.json({ mensaje: 'API funcionando correctamente' });
