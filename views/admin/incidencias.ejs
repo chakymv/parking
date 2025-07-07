@@ -10,7 +10,7 @@
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 </head>
 <body>
-<%- include('header') %>
+<%- include('../partials/sidebar') %>
 
 <main>
 <div class="contenido-principal">
@@ -27,24 +27,20 @@
         <table id="tabla-reportes" class="display" style="width:100%">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Descripción</th>
-                    <th>Fecha</th>
-                    <th>Reportado por</th>
-                    <th>Email</th>
+                    <th>Placa Vehículo</th>
+                    <th>Tipo de Incidencia</th>
+                    <th>Fecha y Hora</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 <% reportes.forEach(reporte => { %>
                     <tr>
-                        <td><%= reporte.id %></td>
-                        <td><%= reporte.descripcion %></td>
-                        <td><%= new Date(reporte.fecha).toLocaleString() %></td>
-                        <td><%= reporte.usuario ? `${reporte.usuario.primer_nombre} ${reporte.usuario.primer_apellido}` : 'N/A' %></td>
-                        <td><%= reporte.usuario ? reporte.usuario.direccion_correo : 'N/A' %></td>
+                        <td><%= reporte.placa %></td>
+                        <td><%= reporte.incidencia_nombre %></td>
+                        <td><%= new Date(reporte.fecha_hora).toLocaleString() %></td>
                         <td>
-                            <button class="botones-min btn-eliminar" onclick="eliminarReporte('<%= reporte.id %>')"><i class="fa-solid fa-trash"></i></button>
+                            <button class="botones-min btn-eliminar" onclick="eliminarReporte('<%= reporte.vehiculo_id %>', '<%= reporte.incidencia_id %>')"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 <% }) %>
@@ -64,7 +60,7 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Descripción</th>
+                    <th>Nombre</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -72,9 +68,9 @@
                 <% incidencias.forEach(incidencia => { %>
                     <tr>
                         <td><%= incidencia.id %></td>
-                        <td><%= incidencia.descripcion %></td>
+                        <td><%= incidencia.nombre %></td>
                         <td>
-                            <button class="botones-min btn-editar" onclick="editarTipo('<%= incidencia.id %>', '<%= incidencia.descripcion %>')"><i class="fa-solid fa-pen"></i></button>
+                            <button class="botones-min btn-editar" onclick="editarTipo('<%= incidencia.id %>', '<%= incidencia.nombre %>')"><i class="fa-solid fa-pen"></i></button>
                             <button class="botones-min btn-eliminar" onclick="eliminarTipo('<%= incidencia.id %>')"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
@@ -96,8 +92,8 @@
         <div class="cuerpo-modal">
             <form id="formTipo" class="formulario">
                 <input type="hidden" id="tipoId" name="id">
-                <label for="tipoDescripcion">Descripción:</label>
-                <input type="text" id="tipoDescripcion" name="descripcion" placeholder="Ej: Choque, Robo, Daño" required>
+                <label for="tipoNombre">Nombre:</label>
+                <input type="text" id="tipoNombre" name="nombre" placeholder="Ej: Choque, Robo, Daño" required>
                 <button type="submit" class="crear">Guardar</button>
             </form>
         </div>
@@ -114,19 +110,24 @@
         <hr class="linea-windows">
         <div class="cuerpo-modal">
             <form id="formReporte" class="formulario">
-                <label for="reporteUsuario">Usuario que reporta:</label>
-                <select id="reporteUsuario" name="usuario_id" required>
-                    <option value="">Seleccione un usuario...</option>
-                    <% usuarios.forEach(u => { %>
-                        <option value="<%= u.id_usuario %>"><%= u.primer_nombre %> <%= u.primer_apellido %> (<%= u.numero_documento %>)</option>
+                <label for="reporteVehiculo">Vehículo afectado:</label>
+                <select id="reporteVehiculo" name="vehiculo_id" required>
+                    <option value="">Seleccione un vehículo...</option>
+                    <% vehiculos.forEach(v => { %>
+                        <option value="<%= v.id %>"><%= v.placa %> (<%= v.marca %>)</option>
                     <% }) %>
                 </select>
 
-                <label for="reporteDescripcion">Descripción detallada:</label>
-                <textarea id="reporteDescripcion" name="descripcion" rows="4" placeholder="Describa lo que sucedió..." required></textarea>
+                <label for="reporteIncidencia">Tipo de incidencia:</label>
+                <select id="reporteIncidencia" name="incidencia_id" required>
+                    <option value="">Seleccione un tipo...</option>
+                    <% incidencias.forEach(i => { %>
+                        <option value="<%= i.id %>"><%= i.nombre %></option>
+                    <% }) %>
+                </select>
 
-                <label for="reporteFecha">Fecha y Hora:</label>
-                <input type="datetime-local" id="reporteFecha" name="fecha" required>
+                <label for="reporteFechaHora">Fecha y Hora:</label>
+                <input type="datetime-local" id="reporteFechaHora" name="fecha_hora" required>
 
                 <button type="submit" class="crear">Crear Reporte</button>
             </form>
@@ -155,7 +156,7 @@ $(document).ready(function() {
         // Poner fecha y hora actual por defecto
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        document.getElementById('reporteFecha').value = now.toISOString().slice(0,16);
+        document.getElementById('reporteFechaHora').value = now.toISOString().slice(0,16);
         modalReporte.style.display = 'flex';
     });
 
@@ -174,7 +175,7 @@ $(document).ready(function() {
     $('#formTipo').on('submit', async function(e) {
         e.preventDefault();
         const id = $('#tipoId').val();
-        const descripcion = $('#tipoDescripcion').val();
+        const nombre = $('#tipoNombre').val();
         const url = id ? `/api/incidencias/${id}` : '/api/incidencias';
         const method = id ? 'PUT' : 'POST';
 
@@ -182,9 +183,12 @@ $(document).ready(function() {
             const response = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ descripcion })
+                body: JSON.stringify({ nombre })
             });
-            if (!response.ok) throw new Error('Error al guardar el tipo de incidencia.');
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error || 'Error al guardar el tipo de incidencia.');
+            }
             alert('Tipo de incidencia guardado con éxito.');
             location.reload();
         } catch (error) {
@@ -195,8 +199,11 @@ $(document).ready(function() {
     // Formulario para Reportes de Incidencia (Crear)
     $('#formReporte').on('submit', async function(e) {
         e.preventDefault();
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData.entries());
+        const data = {
+            vehiculo_id: $('#reporteVehiculo').val(),
+            incidencia_id: $('#reporteIncidencia').val(),
+            fecha_hora: $('#reporteFechaHora').val()
+        };
 
         try {
             const response = await fetch('/api/reporte_incidencias', {
@@ -204,7 +211,10 @@ $(document).ready(function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            if (!response.ok) throw new Error('Error al crear el reporte.');
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error || 'Error al crear el reporte.');
+            }
             alert('Reporte creado con éxito.');
             location.reload();
         } catch (error) {
@@ -215,10 +225,10 @@ $(document).ready(function() {
 
 // --- Funciones para botones de las tablas ---
 
-function editarTipo(id, descripcion) {
+function editarTipo(id, nombre) {
     $('#formTipo')[0].reset();
     $('#tipoId').val(id);
-    $('#tipoDescripcion').val(descripcion);
+    $('#tipoNombre').val(nombre);
     $('#modalTipoTitulo').text('Editar Tipo de Incidencia');
     document.getElementById('modalTipo').style.display = 'flex';
 }
@@ -227,7 +237,7 @@ async function eliminarTipo(id) {
     if (!confirm('¿Estás seguro de que deseas eliminar este tipo de incidencia?')) return;
     try {
         const response = await fetch(`/api/incidencias/${id}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('No se pudo eliminar.');
+        if (response.status !== 204) throw new Error('No se pudo eliminar.');
         alert('Tipo de incidencia eliminado.');
         location.reload();
     } catch (error) {
@@ -235,17 +245,18 @@ async function eliminarTipo(id) {
     }
 }
 
-async function eliminarReporte(id) {
+async function eliminarReporte(vehiculo_id, incidencia_id) {
     if (!confirm('¿Estás seguro de que deseas eliminar este reporte?')) return;
     try {
-        const response = await fetch(`/api/reporte_incidencias/${id}`, { method: 'DELETE' });
-        if (!response.ok) throw new Error('No se pudo eliminar el reporte.');
+        const response = await fetch(`/api/reporte_incidencias/${vehiculo_id}/${incidencia_id}`, { method: 'DELETE' });
+        if (response.status !== 204) throw new Error('No se pudo eliminar el reporte.');
         alert('Reporte eliminado.');
         location.reload();
     } catch (error) {
         alert(error.message);
     }
 }
+
 </script>
 </body>
 </html>
