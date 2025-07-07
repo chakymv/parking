@@ -98,7 +98,7 @@ router.get('/parqueaderos', requireLogin, (req, res) => {
 });
 
 router.get('/incidencias', requireLogin, (req, res) => {
-  res.render('admin/incidencias', { titulo: 'Gestionar Inicidencias', userName: req.session.userName });
+  res.render('admin/incidencia', { titulo: 'Gestionar Inicidencias', userName: req.session.userName });
 });
 
 
