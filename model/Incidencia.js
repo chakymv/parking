@@ -1,3 +1,4 @@
+// File: model/Incidencia.js
 const supabase = require('../supabaseClient');
 
 class Incidencia {

@@ -90,6 +90,43 @@ class ReporteIncidencia {
       usuario_id: this._usuario_id
     };
   }
+
+  // Static methods for convenience in routes
+  static async create(data) {
+    const newReporte = new ReporteIncidencia(
+      null,
+      data.descripcion,
+      data.fecha,
+      data.usuario_id
+    );
+    await newReporte.create();
+    return newReporte;
+  }
+
+  static async getById(id) {
+    const reporte = new ReporteIncidencia();
+    const found = await reporte.findById(id);
+    return found;
+  }
+
+  static async update(id, data) {
+    const reporte = await ReporteIncidencia.getById(id);
+    if (!reporte) {
+      throw new Error('Reporte de incidencia no encontrado para actualizar');
+    }
+    reporte.descripcion = data.descripcion || reporte.descripcion;
+    reporte.fecha = data.fecha || reporte.fecha;
+    reporte.usuario_id = data.usuario_id || reporte.usuario_id;
+    await reporte.update();
+    return reporte;
+  }
+
+  static async delete(id) {
+    const reporte = new ReporteIncidencia();
+    reporte.id = id;
+    await reporte.delete();
+    return true;
+  }
 }
 
 module.exports = ReporteIncidencia;
