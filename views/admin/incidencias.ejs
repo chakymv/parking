@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title><%= page_title %></title>
+    <title>Incidencias</title>
     <link rel="stylesheet" href="/admin/css/estilo.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -10,11 +10,10 @@
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 </head>
 <body>
-<%- include('../partials/sidebar') %>
-
+ <%- include('header') %>
 <main>
 <div class="contenido-principal">
-    <h1 class="centrar"><%= page_title %></h1>
+    <h1 class="centrar">Gestion Incidencias</h1>
     <p class="centrar">Administra los tipos de incidencia y los reportes generados.</p>
     <hr class="linea-windows">
 
@@ -153,7 +152,7 @@ $(document).ready(function() {
 
     $('#abrirModalReporte').on('click', () => {
         $('#formReporte')[0].reset();
-        // Poner fecha y hora actual por defecto
+       
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
         document.getElementById('reporteFechaHora').value = now.toISOString().slice(0,16);
