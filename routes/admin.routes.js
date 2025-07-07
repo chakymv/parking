@@ -6,9 +6,11 @@ const catchAsync = require('../utils/catchAsync');
 // Middleware para verificar si el usuario ha iniciado sesión
 const requireLogin = (req, res, next) => {
   if (!req.session.userId) {
-  return res.redirect('/admin/login');
+    // Si no hay sesión, redirigir a la página de login
+    return res.redirect('/admin/login');
   }
-next();
+  // Si hay sesión, continuar a la siguiente ruta
+  next();
 };
 
 // --- RUTAS DE AUTENTICACIÓN ---
@@ -24,17 +26,19 @@ router.post('/login', catchAsync(async (req, res) => {
 
   const usuario = await Usuario.findByEmail(email);
   if (!usuario) {
-   
+    // Usuario no encontrado, redirigir con un mensaje de error (usando flash sería ideal)
     return res.status(401).send('Credenciales inválidas. <a href="/admin/login">Intentar de nuevo</a>');
   }
 
   const esValida = await usuario.comparePassword(password);
   if (esValida) {
-  req.session.userId = usuario.id_usuario;
-  req.session.userName = usuario.primer_nombre;
-  res.redirect('/admin/index');
+    // Contraseña válida, guardar ID en la sesión
+    req.session.userId = usuario.id_usuario;
+    req.session.userName = usuario.primer_nombre;
+    // Redirigir al panel de administración
+    res.redirect('/admin/index');
   } else {
-   
+    // Contraseña inválida
     res.status(401).send('Credenciales inválidas. <a href="/admin/login">Intentar de nuevo</a>');
   }
 }));
@@ -43,9 +47,9 @@ router.post('/login', catchAsync(async (req, res) => {
 router.post('/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) {
-      return res.redirect('/admin/index'); 
+      return res.redirect('/admin/index'); // O a una página de error
     }
-    res.clearCookie('connect.sid'); 
+    res.clearCookie('connect.sid'); // Limpiar la cookie de sesión
     res.redirect('/admin/login');
   });
 });
@@ -97,12 +101,10 @@ router.get('/parqueaderos', requireLogin, (req, res) => {
   res.render('admin/parqueaderos', { titulo: 'Gestionar Parqueaderos', userName: req.session.userName });
 });
 
-router.get('/incidencias', requireLogin, (req, res) => {
-  res.render('admin/incidencias', { titulo: 'Gestionar Inicidencias', userName: req.session.userName });
-});
-
 router.get('/niveles', requireLogin, (req, res) => {
-res.render('admin/niveles', { titulo: 'Gestionar Niveles', userName: req.session.userName });
+  // Nota: Asegúrate de tener un archivo llamado 'niveles.ejs' en 'views/admin/'
+  // para que esta ruta funcione correctamente.
+  res.render('admin/niveles', { titulo: 'Gestionar Niveles', userName: req.session.userName });
 });
 
 module.exports = router;
