@@ -1,15 +1,14 @@
 const supabase = require('../supabaseClient');
 
 class Vehiculo {
- // constructor(id = null, placa = null, color = null, modelo = null, marca = null, tipo = null, usuario_id_usuario = null) {
-     constructor(id = null, placa = null, color = null, modelo = null, marca = null, tipo = null, usuario_id = null) {
+  constructor(id = null, placa = null, color = null, modelo = null, marca = null, tipo = null, usuario_id_usuario = null) {
     this.id = id;
     this.placa = placa;
     this.color = color;
     this.modelo = modelo;
     this.marca = marca;
     this.tipo = tipo;
-    this.usuario_id = usuario_id;
+    this.usuario_id_usuario = usuario_id_usuario;
   }
 
   toJSON() {
@@ -20,7 +19,7 @@ class Vehiculo {
       modelo: this.modelo,
       marca: this.marca,
       tipo: this.tipo,
-      usuario_id_usuario: this.usuario_id,
+      usuario_id_usuario: this.usuario_id_usuario,
     };
   }
 
@@ -31,7 +30,7 @@ class Vehiculo {
     this.modelo = row.modelo;
     this.marca = row.marca;
     this.tipo = row.tipo;
-    this.usuario_id = row.usuario_id;
+    this.usuario_id_usuario = row.usuario_id_usuario;
     return this;
   }
 
@@ -62,7 +61,7 @@ class Vehiculo {
       modelo: this.modelo,
       marca: this.marca,
       tipo: this.tipo,
-      usuario_id: this.usuario_id,
+      usuario_id_usuario: this.usuario_id_usuario,
     };
 
     let query;
