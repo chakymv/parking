@@ -1,34 +1,45 @@
+// File: routes/incidencia.routes.js
 const express = require('express');
 const router = express.Router();
 const Incidencia = require('../model/Incidencia');
 const catchAsync = require('../utils/catchAsync');
 
-// Obtener todas las incidencias
 router.get('/', catchAsync(async (req, res) => {
-  const incidencias = await Incidencia.getAll();
-  res.json(incidencias);
+  const incidencias = await Incidencia.findAll();
+  res.json(incidencias.map(inc => inc.toJSON()));
 }));
 
-// Obtener incidencia por ID
 router.get('/:id', catchAsync(async (req, res) => {
   const incidencia = await Incidencia.getById(req.params.id);
-  res.json(incidencia);
+  if (!incidencia) {
+    return res.status(404).json({ error: 'Incidencia no encontrada' });
+  }
+  res.json(incidencia.toJSON());
 }));
 
-// Crear nueva incidencia
 router.post('/', catchAsync(async (req, res) => {
   const nuevaIncidencia = await Incidencia.create(req.body);
-  res.status(201).json(nuevaIncidencia);
+  res.status(201).json(nuevaIncidencia.toJSON());
 }));
 
-// Actualizar incidencia
 router.put('/:id', catchAsync(async (req, res) => {
-  const actualizada = await Incidencia.update(req.params.id, req.body);
-  res.json(actualizada);
+  try {
+    const actualizada = await Incidencia.update(req.params.id, req.body);
+    res.json(actualizada.toJSON());
+  } catch (error) {
+    if (error.message === 'Incidencia no encontrada para actualizar') {
+      return res.status(404).json({ error: error.message });
+    }
+    throw error;
+  }
 }));
 
-// Eliminar incidencia
 router.delete('/:id', catchAsync(async (req, res) => {
+  const exists = await Incidencia.getById(req.params.id);
+  if (!exists) {
+      return res.status(404).json({ error: 'Incidencia no encontrada para eliminar' });
+  }
+
   await Incidencia.delete(req.params.id);
   res.status(204).end();
 }));
