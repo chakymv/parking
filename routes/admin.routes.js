@@ -97,10 +97,9 @@ router.get('/parqueaderos', requireLogin, (req, res) => {
   res.render('admin/parqueaderos', { titulo: 'Gestionar Parqueaderos', userName: req.session.userName });
 });
 
-router.get('admin/incidencia', requireLogin, (req, res) => {
+router.get('/incidencia', requireLogin, (req, res) => {
   res.render('admin/incidencia', { titulo: 'Gestionar Inicidencias', userName: req.session.userName });
 });
-
 
 
 router.get('/niveles', requireLogin, (req, res) => {
