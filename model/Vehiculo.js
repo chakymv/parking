@@ -1,7 +1,8 @@
 const supabase = require('../supabaseClient');
 
 class Vehiculo {
-  constructor(id = null, placa = null, color = null, modelo = null, marca = null, tipo = null, usuario_id_usuario = null) {
+ // constructor(id = null, placa = null, color = null, modelo = null, marca = null, tipo = null, usuario_id_usuario = null) {
+     constructor(id = null, placa = null, color = null, modelo = null, marca = null, tipo = null, usuario_id = null) {
     this.id = id;
     this.placa = placa;
     this.color = color;
