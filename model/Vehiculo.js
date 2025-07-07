@@ -9,7 +9,7 @@ class Vehiculo {
     this.modelo = modelo;
     this.marca = marca;
     this.tipo = tipo;
-    this.usuario_id_usuario = usuario_id_usuario;
+    this.usuario_id = usuario_id;
   }
 
   toJSON() {
@@ -20,7 +20,7 @@ class Vehiculo {
       modelo: this.modelo,
       marca: this.marca,
       tipo: this.tipo,
-      usuario_id_usuario: this.usuario_id_usuario,
+      usuario_id_usuario: this.usuario_id,
     };
   }
 
@@ -31,7 +31,7 @@ class Vehiculo {
     this.modelo = row.modelo;
     this.marca = row.marca;
     this.tipo = row.tipo;
-    this.usuario_id_usuario = row.usuario_id_usuario;
+    this.usuario_id = row.usuario_id;
     return this;
   }
 
@@ -62,7 +62,7 @@ class Vehiculo {
       modelo: this.modelo,
       marca: this.marca,
       tipo: this.tipo,
-      usuario_id_usuario: this.usuario_id_usuario,
+      usuario_id: this.usuario_id,
     };
 
     let query;
