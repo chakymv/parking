@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title><%= page_title %></title>
+    <link rel="stylesheet" href="/admin/css/estilo.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+<%- include('header') %>
+
+<main>
+<div class="contenido-principal">
+    <h1 class="centrar"><%= page_title %></h1>
+    <p class="centrar">Administra los tipos de incidencia y los reportes generados.</p>
+    <hr class="linea-windows">
+
+    <!-- SECCIÓN DE REPORTES DE INCIDENCIA -->
+    <div class="seccion-gestion">
+        <h2>Reportes de Incidencias</h2>
+        <div class="filtros">
+            <button id="abrirModalReporte" class="botones-min btn-agregar"><i class="fa-solid fa-plus"></i> Reportar Incidencia</button>
+        </div>
+        <table id="tabla-reportes" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Descripción</th>
+                    <th>Fecha</th>
+                    <th>Reportado por</th>
+                    <th>Email</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% reportes.forEach(reporte => { %>
+                    <tr>
+                        <td><%= reporte.id %></td>
+                        <td><%= reporte.descripcion %></td>
+                        <td><%= new Date(reporte.fecha).toLocaleString() %></td>
+                        <td><%= reporte.usuario ? `${reporte.usuario.primer_nombre} ${reporte.usuario.primer_apellido}` : 'N/A' %></td>
+                        <td><%= reporte.usuario ? reporte.usuario.direccion_correo : 'N/A' %></td>
+                        <td>
+                            <button class="botones-min btn-eliminar" onclick="eliminarReporte('<%= reporte.id %>')"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+
+    <hr class="linea-windows" style="margin-top: 40px;">
+
+    <!-- SECCIÓN DE TIPOS DE INCIDENCIA -->
+    <div class="seccion-gestion">
+        <h2>Tipos de Incidencia</h2>
+        <div class="filtros">
+            <button id="abrirModalTipo" class="botones-min btn-agregar"><i class="fa-solid fa-plus"></i> Crear Tipo</button>
+        </div>
+        <table id="tabla-tipos" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Descripción</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% incidencias.forEach(incidencia => { %>
+                    <tr>
+                        <td><%= incidencia.id %></td>
+                        <td><%= incidencia.descripcion %></td>
+                        <td>
+                            <button class="botones-min btn-editar" onclick="editarTipo('<%= incidencia.id %>', '<%= incidencia.descripcion %>')"><i class="fa-solid fa-pen"></i></button>
+                            <button class="botones-min btn-eliminar" onclick="eliminarTipo('<%= incidencia.id %>')"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+</main>
+
+<!-- Modal para Crear/Editar Tipo de Incidencia -->
+<div id="modalTipo" class="modal">
+    <div class="contenido-modal">
+        <div class="encabezado-modal">
+            <h2 id="modalTipoTitulo">Crear Tipo de Incidencia</h2>
+            <button class="cerrar" id="cerrarModalTipo">&times;</button>
+        </div>
+        <hr class="linea-windows">
+        <div class="cuerpo-modal">
+            <form id="formTipo" class="formulario">
+                <input type="hidden" id="tipoId" name="id">
+                <label for="tipoDescripcion">Descripción:</label>
+                <input type="text" id="tipoDescripcion" name="descripcion" placeholder="Ej: Choque, Robo, Daño" required>
+                <button type="submit" class="crear">Guardar</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Crear Reporte de Incidencia -->
+<div id="modalReporte" class="modal">
+    <div class="contenido-modal">
+        <div class="encabezado-modal">
+            <h2>Reportar Nueva Incidencia</h2>
+            <button class="cerrar" id="cerrarModalReporte">&times;</button>
+        </div>
+        <hr class="linea-windows">
+        <div class="cuerpo-modal">
+            <form id="formReporte" class="formulario">
+                <label for="reporteUsuario">Usuario que reporta:</label>
+                <select id="reporteUsuario" name="usuario_id" required>
+                    <option value="">Seleccione un usuario...</option>
+                    <% usuarios.forEach(u => { %>
+                        <option value="<%= u.id_usuario %>"><%= u.primer_nombre %> <%= u.primer_apellido %> (<%= u.numero_documento %>)</option>
+                    <% }) %>
+                </select>
+
+                <label for="reporteDescripcion">Descripción detallada:</label>
+                <textarea id="reporteDescripcion" name="descripcion" rows="4" placeholder="Describa lo que sucedió..." required></textarea>
+
+                <label for="reporteFecha">Fecha y Hora:</label>
+                <input type="datetime-local" id="reporteFecha" name="fecha" required>
+
+                <button type="submit" class="crear">Crear Reporte</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#tabla-reportes').DataTable({ "language": { "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json" } });
+    $('#tabla-tipos').DataTable({ "language": { "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json" } });
+
+    // --- Lógica para Modales ---
+    const modalTipo = document.getElementById('modalTipo');
+    const modalReporte = document.getElementById('modalReporte');
+
+    $('#abrirModalTipo').on('click', () => {
+        $('#formTipo')[0].reset();
+        $('#tipoId').val('');
+        $('#modalTipoTitulo').text('Crear Tipo de Incidencia');
+        modalTipo.style.display = 'flex';
+    });
+
+    $('#abrirModalReporte').on('click', () => {
+        $('#formReporte')[0].reset();
+        // Poner fecha y hora actual por defecto
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('reporteFecha').value = now.toISOString().slice(0,16);
+        modalReporte.style.display = 'flex';
+    });
+
+    $('#cerrarModalTipo, #cerrarModalReporte').on('click', function() {
+        $(this).closest('.modal').hide();
+    });
+
+    window.onclick = function(event) {
+        if (event.target == modalTipo) modalTipo.style.display = "none";
+        if (event.target == modalReporte) modalReporte.style.display = "none";
+    }
+
+    // --- Lógica para Formularios (API) ---
+
+    // Formulario para Tipos de Incidencia (Crear y Actualizar)
+    $('#formTipo').on('submit', async function(e) {
+        e.preventDefault();
+        const id = $('#tipoId').val();
+        const descripcion = $('#tipoDescripcion').val();
+        const url = id ? `/api/incidencias/${id}` : '/api/incidencias';
+        const method = id ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ descripcion })
+            });
+            if (!response.ok) throw new Error('Error al guardar el tipo de incidencia.');
+            alert('Tipo de incidencia guardado con éxito.');
+            location.reload();
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+
+    // Formulario para Reportes de Incidencia (Crear)
+    $('#formReporte').on('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch('/api/reporte_incidencias', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (!response.ok) throw new Error('Error al crear el reporte.');
+            alert('Reporte creado con éxito.');
+            location.reload();
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+});
+
+// --- Funciones para botones de las tablas ---
+
+function editarTipo(id, descripcion) {
+    $('#formTipo')[0].reset();
+    $('#tipoId').val(id);
+    $('#tipoDescripcion').val(descripcion);
+    $('#modalTipoTitulo').text('Editar Tipo de Incidencia');
+    document.getElementById('modalTipo').style.display = 'flex';
+}
+
+async function eliminarTipo(id) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este tipo de incidencia?')) return;
+    try {
+        const response = await fetch(`/api/incidencias/${id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('No se pudo eliminar.');
+        alert('Tipo de incidencia eliminado.');
+        location.reload();
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+async function eliminarReporte(id) {
+    if (!confirm('¿Estás seguro de que deseas eliminar este reporte?')) return;
+    try {
+        const response = await fetch(`/api/reporte_incidencias/${id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('No se pudo eliminar el reporte.');
+        alert('Reporte eliminado.');
+        location.reload();
+    } catch (error) {
+        alert(error.message);
+    }
+}
+</script>
+</body>
+</html>
