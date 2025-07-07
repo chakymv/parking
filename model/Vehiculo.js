@@ -1,141 +1,93 @@
 const supabase = require('../supabaseClient');
 
 class Vehiculo {
-  constructor(
-    id = null,
-    placa = null,
-    color = null,
-    modelo = null,
-    marca = null,
-    tipo = null,
-    usuario_id_usuario = null
-  ) {
-    this._id = id;
-    this._placa = placa;
-    this._color = color;
-    this._modelo = modelo;
-    this._marca = marca;
-    this._tipo = tipo;
-    this._usuario_id_usuario = usuario_id_usuario;
-  }
-
-  get id() { return this._id; }
-  get placa() { return this._placa; }
-  get color() { return this._color; }
-  get modelo() { return this._modelo; }
-  get marca() { return this._marca; }
-  get tipo() { return this._tipo; }
-  get usuario_id_usuario() { return this._usuario_id_usuario; }
-
-  set id(value) { this._id = value; }
-  set placa(value) { this._placa = value; }
-  set color(value) { this._color = value; }
-  set modelo(value) { this._modelo = value; }
-  set marca(value) { this._marca = value; }
-  set tipo(value) { this._tipo = value; }
-  set usuario_id_usuario(value) { this._usuario_id_usuario = value; }
-
-  async create() {
-    const insertObj = {
-      placa: this._placa,
-      color: this._color,
-      modelo: this._modelo,
-      marca: this._marca,
-      tipo: this._tipo,
-      usuario_id_usuario: this._usuario_id_usuario
-    };
-    const { data, error } = await supabase.from('vehiculo').insert([insertObj]).select().single();
-    if (error) throw new Error(`Error creating Vehiculo: ${error.message}`);
-    this._mapRowToObject(data);
-    return this;
-  }
-
-  async findById(id) {
-    const { data, error } = await supabase.from('vehiculo').select('*').eq('id', id).single();
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      throw new Error(`Error finding Vehiculo: ${error.message}`);
-    }
-    if (data) {
-      this._mapRowToObject(data);
-      return this;
-    }
-    return null;
-  }
-
-  static async findAll() {
-    const { data, error } = await supabase.from('vehiculo').select('*');
-    if (error) throw new Error(`Error finding all Vehiculo: ${error.message}`);
-    return (data || []).map(row => {
-      const vehiculo = new Vehiculo();
-      vehiculo._mapRowToObject(row);
-      return vehiculo;
-    });
-  }
-
-  async findByPlaca(placa) {
-    const { data, error } = await supabase.from('vehiculo').select('*').eq('placa', placa).single();
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      throw new Error(`Error finding Vehiculo by placa: ${error.message}`);
-    }
-    if (data) {
-      this._mapRowToObject(data);
-      return this;
-    }
-    return null;
-  }
-
-  static async findByUserId(userId) {
-    const { data, error } = await supabase.from('vehiculo').select('*').eq('usuario_id_usuario', userId);
-    if (error) throw new Error(`Error finding Vehiculo by user ID: ${error.message}`);
-    return (data || []).map(row => {
-      const vehiculo = new Vehiculo();
-      vehiculo._mapRowToObject(row);
-      return vehiculo;
-    });
-  }
-
-  async update() {
-    const updateObj = {
-      placa: this._placa,
-      color: this._color,
-      modelo: this._modelo,
-      marca: this._marca,
-      tipo: this._tipo,
-      usuario_id_usuario: this._usuario_id_usuario
-    };
-    const { error } = await supabase.from('vehiculo').update(updateObj).eq('id', this._id);
-    if (error) throw new Error(`Error updating Vehiculo: ${error.message}`);
-    return this;
-  }
-
-  async delete() {
-    const { error } = await supabase.from('vehiculo').delete().eq('id', this._id);
-    if (error) throw new Error(`Error deleting Vehiculo: ${error.message}`);
-    return true;
-  }
-
-  _mapRowToObject(row) {
-    this._id = row.id;
-    this._placa = row.placa;
-    this._color = row.color;
-    this._modelo = row.modelo;
-    this._marca = row.marca;
-    this._tipo = row.tipo;
-    this._usuario_id_usuario = row.usuario_id_usuario;
+  constructor(id = null, placa = null, color = null, modelo = null, marca = null, tipo = null, usuario_id_usuario = null) {
+    this.id = id;
+    this.placa = placa;
+    this.color = color;
+    this.modelo = modelo;
+    this.marca = marca;
+    this.tipo = tipo;
+    this.usuario_id_usuario = usuario_id_usuario;
   }
 
   toJSON() {
     return {
-      id: this._id,
-      placa: this._placa,
-      color: this._color,
-      modelo: this._modelo,
-      marca: this._marca,
-      tipo: this._tipo,
-      usuario_id_usuario: this._usuario_id_usuario
+      id: this.id,
+      placa: this.placa,
+      color: this.color,
+      modelo: this.modelo,
+      marca: this.marca,
+      tipo: this.tipo,
+      usuario_id_usuario: this.usuario_id_usuario,
     };
+  }
+
+  _fromDbRow(row) {
+    this.id = row.id;
+    this.placa = row.placa;
+    this.color = row.color;
+    this.modelo = row.modelo;
+    this.marca = row.marca;
+    this.tipo = row.tipo;
+    this.usuario_id_usuario = row.usuario_id_usuario;
+    return this;
+  }
+
+  static async findById(id) {
+    const { data, error } = await supabase.from('vehiculo').select('*').eq('id', id).single();
+    if (error && error.code !== 'PGRST116') throw new Error(`Error encontrando vehículo por ID: ${error.message}`);
+    return data ? new Vehiculo()._fromDbRow(data) : null;
+  }
+
+  static async findByPlaca(placa) {
+    const { data, error } = await supabase.from('vehiculo').select('*').eq('placa', placa).single();
+    if (error && error.code !== 'PGRST116') {
+      throw new Error(`Error buscando vehículo por placa: ${error.message}`);
+    }
+    return data ? new Vehiculo()._fromDbRow(data) : null;
+  }
+
+  static async findAll() {
+    const { data, error } = await supabase.from('vehiculo').select('*');
+    if (error) throw new Error(`Error encontrando todos los vehículos: ${error.message}`);
+    return data.map(row => new Vehiculo()._fromDbRow(row));
+  }
+
+  async save() {
+    const record = {
+      placa: this.placa,
+      color: this.color,
+      modelo: this.modelo,
+      marca: this.marca,
+      tipo: this.tipo,
+      usuario_id_usuario: this.usuario_id_usuario,
+    };
+
+    let query;
+    if (this.id) {
+      // Update
+      query = supabase.from('vehiculo').update(record).eq('id', this.id);
+    } else {
+      // Create
+      query = supabase.from('vehiculo').insert(record);
+    }
+
+    const { data, error } = await query.select().single();
+
+    if (error) throw new Error(`Error guardando vehículo: ${error.message}`);
+    return this._fromDbRow(data);
+  }
+
+  async delete() {
+    if (!this.id) {
+      throw new Error('No se puede eliminar un vehículo sin ID.');
+    }
+    const { error } = await supabase.from('vehiculo').delete().eq('id', this.id);
+    if (error) {
+      throw new Error(`Error eliminando vehículo: ${error.message}`);
+    }
+    return true;
   }
 }
 

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Vehículos</title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script>
+    // ...existing code...
+  </script>
+</head>
+<body>
+
+<%- include('header') %>
+
+<main>
+<div class="contenido-principal">
+  <h1 class="centrar">Gestionar Vehículos ingresados</h1>
+  <p class="centrar">Esta tabla permite realizar búsqueda de vehículos</p>
+  <hr class="linea-windows">
+  <div class="filtros-vehiculos">
+    <div id="column-selector" class="dropdown"></div>
+    <input id="filtro" class="input-filtro" placeholder="Buscar..." oninput="filterTable()" />
+  </div>
+  <table border="1" id="vehiculos-table" class="datatable tabla-vehiculos"></table>
+</div>
+</main>
+</body>
+</html>

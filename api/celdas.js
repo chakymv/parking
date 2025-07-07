@@ -1,56 +1,78 @@
-const express = require('express');
-const router = express.Router();
-const supabase = require('../supabaseClient');
-
-function mapCeldaBody(body) {
-  return {
-    tipo: body.tipo || null,
-    estado: body.estado || null
-  };
-}
-
-function mapCeldaUpdateBody(body) {
-  const allowed = ['tipo','estado'];
-  const updateObj = {};
-  for (const key of allowed) {
-    if (body[key] !== undefined) updateObj[key] = body[key];
+class Celda {
+  constructor(id = null, tipo = null, estado = null, zona = null, nivel = null) {
+    this._id = id;
+    this._tipo = tipo;
+    this._estado = estado;
+    this._zona = zona;
+    this._nivel = nivel;
   }
-  return updateObj;
-}
 
-router.get('/', async (req, res) => {
-  const { data, error } = await supabase.from('celda').select('*');
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
-});
+  // Getters
+  get id() { return this._id; }
+  get tipo() { return this._tipo; }
+  get estado() { return this._estado; }
+  get zona() { return this._zona; }
+  get nivel() { return this._nivel; }
 
-router.get('/:id', async (req, res) => {
-  const { data, error } = await supabase.from('celda').select('*').eq('id', req.params.id).single();
-  if (error || !data) return res.status(404).json({ error: error ? error.message : 'Celda no encontrada' });
-  res.json(data);
-});
+  // Setters
+  set id(val) { this._id = val; }
+  set tipo(val) { this._tipo = val; }
+  set estado(val) { this._estado = val; }
+  set zona(val) { this._zona = val; }
+  set nivel(val) { this._nivel = val; }
 
-router.post('/', async (req, res) => {
-  const celda = mapCeldaBody(req.body);
-  if (!celda.tipo || !celda.estado) {
-    return res.status(400).json({ error: 'Faltan campos obligatorios' });
+  // … continúa igual para findById, findAll, etc.
+
+  async save() {
+    const celdaData = {
+      tipo: this._tipo,
+      estado: this._estado,
+      zona: this._zona,
+      nivel: this._nivel
+    };
+
+    if (this._id) {
+      const { data, error } = await supabase
+        .from('celda')
+        .update(celdaData)
+        .eq('id', this._id)
+        .select()
+        .single();
+      if (error) throw new Error(`Error actualizando celda: ${error.message}`);
+      this._mapFromRow(data);
+    } else {
+      const { data, error } = await supabase
+        .from('celda')
+        .insert([celdaData])
+        .select()
+        .single();
+      if (error) throw new Error(`Error creando celda: ${error.message}`);
+      this._mapFromRow(data);
+    }
+    return this;
   }
-  const { data, error } = await supabase.from('celda').insert([celda]).select().single();
-  if (error) return res.status(400).json({ error: error.message });
-  res.status(201).json(data);
-});
 
-router.put('/:id', async (req, res) => {
-  const celda = mapCeldaUpdateBody(req.body);
-  const { data, error } = await supabase.from('celda').update(celda).eq('id', req.params.id).select().single();
-  if (error) return res.status(400).json({ error: error.message });
-  res.json(data);
-});
+  _mapFromRow(row) {
+    this._id = row.id;
+    this._tipo = row.tipo;
+    this._estado = row.estado;
+    this._zona = row.zona;
+    this._nivel = row.nivel;
+  }
 
-router.delete('/:id', async (req, res) => {
-  const { error } = await supabase.from('celda').delete().eq('id', req.params.id);
-  if (error) return res.status(400).json({ error: error.message });
-  res.status(204).send();
-});
+  static _fromRow(row) {
+    const celda = new Celda();
+    celda._mapFromRow(row);
+    return celda;
+  }
 
-module.exports = router;
+  toJSON() {
+    return {
+      id: this._id,
+      tipo: this._tipo,
+      estado: this._estado,
+      zona: this._zona,
+      nivel: this._nivel
+    };
+  }
+}

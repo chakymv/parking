@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title><%= titulo || 'Gestionar Celdas' %></title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Gestionar Celdas de Parqueo</h1>
+      <hr class="linea-windows">
+      <div id="gestion-celdas-content">
+        <button class="btn-agregar" id="btn-abrir-modal-crear">Agregar Celda</button>
+        <table id="celdas-table" class="dataTable" style="width:100%;margin-top:20px;"></table>
+      </div>
+
+      <!-- Modal para crear/editar celda -->
+      <div class="modal" id="modal-celda">
+        <div class="contenido-modal">
+          <div class="encabezado-modal">
+            <span id="modal-titulo"></span>
+            <button class="cerrar" id="btn-cerrar-modal">&times;</button>
+          </div>
+          <div class="cuerpo-modal">
+            <form id="form-celda" autocomplete="off">
+              <input type="hidden" id="id_celda" name="id_celda">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div>
+                  <label>Tipo de Vehículo</label>
+                  <select id="tipo" name="tipo" required>
+                    <option value="Carro">Carro</option>
+                    <option value="Moto">Moto</option>
+                    <option value="Bicicleta">Bicicleta</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Estado</label>
+                  <select id="estado" name="estado" required>
+                    <option value="disponible">Disponible</option>
+                    <option value="ocupado">Ocupado</option>
+                    <option value="mantenimiento">Mantenimiento</option>
+                  </select>
+                </div>
+              </div>
+              <div id="modal-msg" style="color:red;margin-top:10px;text-align:center;"></div>
+              <div class="pie-modal" style="margin-top:15px;text-align:right;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="submit" id="btn-guardar-celda" class="btn-guardar">Guardar</button>
+                <button type="button" id="btn-eliminar-celda" class="btn-eliminar" style="display:none;">Eliminar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script src="/public/js/header.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let celdas = [];
+      let dataTableInstance = null;
+      let celdaSeleccionadaId = null;
+
+      const modal = document.getElementById('modal-celda');
+      const modalTitulo = document.getElementById('modal-titulo');
+      const form = document.getElementById('form-celda');
+      const table = document.getElementById('celdas-table');
+      const modalMsg = document.getElementById('modal-msg');
+      const btnCerrarModal = document.getElementById('btn-cerrar-modal');
+      const btnAbrirModalCrear = document.getElementById('btn-abrir-modal-crear');
+      const btnGuardar = document.getElementById('btn-guardar-celda');
+      const btnEliminar = document.getElementById('btn-eliminar-celda');
+
+      function abrirModalCrear() {
+        celdaSeleccionadaId = null;
+        modalTitulo.innerText = 'Crear Nueva Celda';
+        form.reset();
+        if(modalMsg) modalMsg.innerText = '';
+        btnEliminar.style.display = 'none';
+        btnGuardar.innerText = 'Guardar';
+        modal.classList.add('active');
+      }
+
+      function abrirModalEditar(celda) {
+        if (!celda) return;
+        celdaSeleccionadaId = celda.id_celda;
+        modalTitulo.innerText = 'Editar Celda';
+        form.reset();
+        if(modalMsg) modalMsg.innerText = '';
+        for (const key in celda) {
+          if (form.elements[key]) {
+            form.elements[key].value = celda[key] || '';
+          }
+        }
+        btnEliminar.style.display = 'inline-block';
+        btnGuardar.innerText = 'Guardar Cambios';
+        modal.classList.add('active');
+      }
+
+      function cerrarModal() { modal.classList.remove('active'); }
+
+      async function cargarCeldas() {
+        try {
+          const res = await fetch('/api/celdas');
+          if (!res.ok) throw new Error('Error al cargar las celdas.');
+          const rawCeldas = await res.json();
+          // Mapeamos los datos crudos al formato que espera el frontend
+          celdas = rawCeldas.map(c => ({
+            id_celda: c.id,
+            tipo: c.tipo,
+            estado: c.estado
+          }));
+          if (dataTableInstance) dataTableInstance.clear().rows.add(celdas).draw();
+        } catch (error) {
+          console.error(error);
+          if (dataTableInstance) $('#celdas-table tbody').html('<tr><td colspan="3" style="text-align:center;">No se pudieron cargar las celdas.</td></tr>');
+        }
+      }
+
+      function inicializarTabla() {
+        dataTableInstance = $(table).DataTable({
+          data: [],
+          columns: [
+            { data: 'id_celda', title: 'ID Celda' },
+            { data: 'tipo', title: 'Tipo' },
+            { data: 'estado', title: 'Estado' }
+          ],
+          responsive: true,
+          language: { url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json" },
+          createdRow: (row) => $(row).addClass('clickable-row')
+        });
+        $('#celdas-table tbody').on('click', 'tr', function () {
+          const rowData = dataTableInstance.row(this).data();
+          if (rowData) abrirModalEditar(celdas.find(c => c.id_celda == rowData.id_celda));
+        });
+      }
+
+      async function guardarCelda(e) {
+        e.preventDefault();
+        if(modalMsg) modalMsg.innerText = '';
+        const data = Object.fromEntries(new FormData(form));
+        const url = celdaSeleccionadaId ? `/api/celdas/${data.id_celda}` : '/api/celdas';
+        const method = celdaSeleccionadaId ? 'PUT' : 'POST';
+        try {
+          const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+          if (!res.ok) throw new Error((await res.json()).error || 'Ocurrió un error.');
+          cerrarModal();
+          await cargarCeldas();
+        } catch (error) {
+          if(modalMsg) modalMsg.innerText = error.message;
+        }
+      }
+
+      async function eliminarCelda() {
+        if (!celdaSeleccionadaId || !confirm(`¿Eliminar celda ID ${celdaSeleccionadaId}?`)) return;
+        try {
+          const res = await fetch(`/api/celdas/${celdaSeleccionadaId}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error((await res.json()).error || 'Error al eliminar.');
+          cerrarModal();
+          await cargarCeldas();
+        } catch (error) {
+          if(modalMsg) modalMsg.innerText = error.message;
+        }
+      }
+
+      btnAbrirModalCrear?.addEventListener('click', abrirModalCrear);
+      btnCerrarModal?.addEventListener('click', cerrarModal);
+      form?.addEventListener('submit', guardarCelda);
+      btnEliminar?.addEventListener('click', eliminarCelda);
+
+      inicializarTabla();
+      cargarCeldas();
+    });
+  </script>
+</body>
+</html>

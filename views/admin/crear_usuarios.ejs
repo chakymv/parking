@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title><%= titulo || 'Administrar usuarios del sistema' %></title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <% if (typeof extraHead !== 'undefined') { %>
+    <%- extraHead %>
+  <% } %>
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Administrar usuarios del sistema</h1>
+      <hr class="linea-windows">
+      <div id="gestion-usuarios-content">
+        <button class="btn-agregar" id="btn-abrir-modal-crear">Agregar Usuario</button>
+        <table id="usuarios-table" class="dataTable" style="width:100%;margin-top:20px;"></table>
+      </div>
+
+      <!-- Modal para crear/editar usuario -->
+      <div class="modal" id="modal-usuario">
+        <div class="contenido-modal">
+          <div class="encabezado-modal">
+            <span id="modal-titulo"></span>
+            <button class="cerrar" id="btn-cerrar-modal">&times;</button>
+          </div>
+          <div class="cuerpo-modal">
+            <form id="form-usuario" autocomplete="off">
+              <input type="hidden" id="id_usuario" name="id_usuario">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div>
+                  <label>Tipo Documento</label>
+                  <select id="tipo_documento" name="tipo_documento" required>
+                    <option value="CC">Cédula</option>
+                    <option value="TI">Tarjeta Identidad</option>
+                    <option value="CE">Cédula Extranjería</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Número Documento</label>
+                  <input type="text" id="numero_documento" name="numero_documento" required>
+                </div>
+                <div>
+                  <label>Primer Nombre</label>
+                  <input type="text" id="primer_nombre" name="primer_nombre" required>
+                </div>
+                <div>
+                  <label>Segundo Nombre</label>
+                  <input type="text" id="segundo_nombre" name="segundo_nombre">
+                </div>
+                <div>
+                  <label>Primer Apellido</label>
+                  <input type="text" id="primer_apellido" name="primer_apellido" required>
+                </div>
+                <div>
+                  <label>Segundo Apellido</label>
+                  <input type="text" id="segundo_apellido" name="segundo_apellido">
+                </div>
+                <div>
+                  <label>Correo</label>
+                  <input type="email" id="direccion_correo" name="direccion_correo" required>
+                </div>
+                <div>
+                  <label>Celular</label>
+                  <input type="text" id="numero_celular" name="numero_celular">
+                </div>
+                <div>
+                  <label>Estado</label>
+                  <select id="estado" name="estado" required>
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Perfil</label>
+                  <select id="perfil_usuario_id" name="perfil_usuario_id" required>
+                    <option value="1">Administrador</option>
+                    <option value="2">Operador</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Contraseña</label>
+                  <input type="password" id="clave" name="clave" placeholder="Dejar en blanco para no cambiar">
+                </div>
+              </div>
+              <div id="modal-msg" style="color:red;margin-top:10px;text-align:center;"></div>
+              <div class="pie-modal" style="margin-top:15px;text-align:right;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="submit" id="btn-guardar-usuario" class="btn-guardar">Guardar</button>
+                <button type="button" id="btn-eliminar-usuario" class="btn-eliminar" style="display:none;">Eliminar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- Scripts al final para mejor rendimiento -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script src="/public/js/header.js" defer></script>
+  <script src="/public/js/gestion-usuarios.js" defer></script>
+  <% if (typeof extraBody !== 'undefined') { %>
+    <%- extraBody %>
+  <% } %>
+</body>
+</html>

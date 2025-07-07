@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <link rel="stylesheet" href="css/estilo.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <title>Vehiculos registrados</title>
+</head>
+
+<body>
+
+<header>
+<div class="sidebar" id="sidebar">
+<div class="logo">
+<img src="/imagenes/logo-grande.png" alt="Logo Grande" class="logo-expandido">
+<img src="/imagenes/logo-mini.png" alt="Logo Miniatura" class="logo-compacto">
+</div>
+<ul>
+<li><a href="index.html"><i class="fas fa-home"></i><span class="menu-text">Inicio</span></a></li>
+<li class="submenu">
+<a href="#"><i class="fa-solid fa-list-check"></i> <span class="menu-text">Gestionar</span></a>
+<ul>
+
+<li><a href="usuarios_p.html"><i class="fa-solid fa-users-between-lines"></i><span class="menu-text">Usuarios Parqueadero</span></a></li>
+<li><a href="#"><i class="fa-solid fa-calendar-days"></i><span class="menu-text">Turnos del Operador</span></a></li>
+        
+</ul>
+</li>
+
+<li class="submenu">
+<a href="#"><i class="fa-solid fa-user-tie"></i><span class="menu-text">Administrar</span></a>
+<ul>
+
+<li><a href="crear_zonas.html"><i class="fa-solid fa-square-parking"></i><span class="menu-text">Crear Parqueaderos</span></a></li>
+<li><a href="crear_celdas.html"><i class="fa-solid fa-square-parking"></i><span class="menu-text">Crear Estacionamientos</span></a></li>  
+<li><a href="crear_usuarios.html"><i class="fa-solid fa-user-tie"></i><span class="menu-text">Usuarios del sistema </span></a></li>
+<li><a href="#"><i class="fa-solid fa-gear"></i><span class="menu-text">Configuracion</span></a></li>
+
+</ul>
+</li>
+
+<li><a href="#"><i class="fa-solid fa-headset"></i><span class="menu-text">Soporte</span></a></li>
+</ul>
+</div>
+
+<nav class="navbar">
+
+<ul class="navbar-menu">            
+<li class="dropdown">
+<a href="#" class="dropdown-toggle">Servicios</a>     
+<ul class="dropdown-menu">    
+<li><a href="#">Enlace</a></li>        
+</ul>
+</li>
+<li><a href="#">Cerrar Sesion</a></li>        
+</ul>
+</nav>
+
+</header>
+
+
+
+<main>
+
+<div class="contenido-principal">
+
+<h1 class="centrar">Gestionar Vehiculos ingresados</h1>
+<p class="centrar">Esta tabla permite realizar busqueda de vehiculos</p>
+<hr class="linea-windows">
+
+ <!--Aca inicia el modal  -->  
+<div id="modal" class="modal">
+<div class="contenido-modal">
+<div class="encabezado-modal">
+<h2>Actualizacion de datos de usuario y vehiculo</h2>
+  
+</div>
+
+<hr class="linea-windows">
+<div class="cuerpo-modal">
+
+<form action="#" method="POST" class="formulario">
+<fieldset>
+
+<legend>Datos Personales</legend>
+<label for="primer-n">Primer Nombre:</label>
+<input type="text" name="primer-n" placeholder="Ingresa tu primer nombre" required>
+              
+<label for="segundo-n">Segundo Nombre:</label>
+<input type="text" id="segundo-n" name="segundo-n" placeholder="Ingresa tu segundo nombre">
+    
+<label for="primer-a">Primer Apellido:</label>
+<input type="text" id="primer-a" name="primer-a" placeholder="Ingresa tu primer apellido" required>
+    
+<label for="segundo-a">Segundo Apellido:</label>
+<input type="text" id="segundo-a" name="segundo-a" placeholder="Ingresa tu segundo apellido">
+    
+<label for="telefono">Número de Teléfono:</label>
+<input type="tel" id="telefono" name="telefono" placeholder="Ingresa tu teléfono" required>
+    
+<label for="tipo-documento">Tipo de Documento:</label>
+<select id="tipo-documento" name="tipo-documento" required>
+<option value="">-- Seleccione una opción --</option>
+<option value="cedula">Cédula</option>
+<option value="extranjera">Cédula Extranjera</option>
+<option value="pasaporte">Pasaporte</option>
+</select>
+    
+<label for="documento">Número de Documento:</label>
+<input type="text" id="documento" name="documento" placeholder="Ingresa tu documento" required>
+
+</fieldset>
+            
+      
+<button type="button" id="agregarvehiculo">Agregar Vehiculo</button>
+            
+<fieldset id="vehiculoFields">
+<legend>Información de los Vehículos</legend>
+               
+</fieldset>
+          
+<button type="submit" class="boton"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
+</form>
+    
+
+</div>
+<div class="pie-modal">
+  <button class="cerrar" id="cerrarModal"><i class="fa-solid fa-xmark"></i></button>
+  
+</div>
+</div>
+</div><!--Aca Termina el modal  -->
+
+
+<title>Buscar vehiculo</title>
+
+<div class="busqueda-contenedor">
+
+<select id="criterio">
+<option value="modelo">Id</option>    
+<option value="placa">Placa</option>
+<option value="color">Color</option>
+ <option value="tipo">Tipo</option>
+<option value="marca">Marca</option>
+<option value="modelo">Modelo</option>
+
+</select>
+        
+
+
+<input type="text" id="campoBusqueda" placeholder="Escribe aquí...">
+
+</div>
+    
+<!-- Inicia laa Tabla -->
+  
+<table id="tablaUsuarios">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre y Apellido</th>
+            <th>Teléfono</th>
+            <th>Tipo de Documento</th>
+            <th>Documento</th>
+            <th>Rol</th>
+            <th># de Vehículos</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr data-vehiculos='["ABC123"]'>
+            <td>1</td>
+            <td>Juan Pérez</td>
+            <td>3001234567</td>
+            <td>Cédula</td>
+            <td>123456789</td>
+            <td>Aprendiz</td>
+            <td>1</td>
+        </tr>
+        <tr data-vehiculos='["DEF456"]'>
+            <td>2</td>
+            <td>María López</td>
+            <td>3019876543</td>
+            <td>Pasaporte</td>
+            <td>987654321</td>
+            <td>Empleado</td>
+            <td>1</td>
+        </tr>
+        <tr data-vehiculos='["GHI789"]'>
+            <td>3</td>
+            <td>Carlos Gómez</td>
+            <td>3204567890</td>
+            <td>Cédula Extranjera</td>
+            <td>1122334455</td>
+            <td>Empleado</td>
+            <td>1</td>
+        </tr>
+    </tbody>
+</table>
+
+<div id="popover" class="popover">
+    <h3>Vehiculos</h3>
+    <ul id="listaVehiculos"></ul>
+</div>
+<!-- Termina la tabla de vehiculos -->
+    
+</div>
+</main>
+
+
+<script>
+ const sidebar = document.getElementById("sidebar");
+const contenidoPrincipal = document.querySelector(".contenido-principal");
+
+sidebar.addEventListener("mouseenter", () => {
+    sidebar.classList.add("expanded");
+    contenidoPrincipal.style.marginLeft = "250px"; 
+});
+
+sidebar.addEventListener("mouseleave", () => {
+    sidebar.classList.remove("expanded");
+    contenidoPrincipal.style.marginLeft = "50px"; 
+});
+   
+</script>
+
+<script>
+
+$(document).ready(function() {
+    $('#tablaVehiculos').DataTable({
+        paging: true,
+        searching: true,
+        language: {
+            search: "Buscar:",
+            lengthMenu: "Mostrar _MENU_ registros por página",
+            info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+            paginate: {
+                first: "Primero",
+                last: "Último",
+                next: "Siguiente",
+                previous: "Anterior"
+            }
+        }
+    });
+});
+
+ </script>
+
+<script>
+    const modal = document.getElementById('modal');
+  const abrirModal = document.getElementById('abrirModal');
+  const cerrarModal = document.getElementById('cerrarModal');
+  
+  abrirModal.addEventListener('click', (e) => {
+    e.preventDefault(); 
+    modal.style.display = 'flex';
+  });
+  
+  cerrarModal.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+    </script>
+  
+
+  <script>
+    const campoBusqueda = document.getElementById('campoBusqueda');
+    const criterio = document.getElementById('criterio');
+    const tabla = document.getElementById('tablaVehiculos');
+    const filas = Array.from(tabla.querySelectorAll('tbody tr'));
+
+    function filtrarTabla() {
+        const valorBusqueda = campoBusqueda.value.toLowerCase();
+        const campoFiltrar = criterio.value;
+
+        filasUsuarios.forEach(fila => {
+            const textoCampo = fila.querySelector(`td:nth-child(${obtenerIndiceColumna(campoFiltrar)})`).textContent.toLowerCase();
+            fila.style.display = textoCampo.includes(valorBusqueda) ? '' : 'none';
+        });
+    }
+
+    function obtenerIndiceColumna(campo) {
+        const campos = ['placa', 'color', 'tipo', 'marca', 'modelo'];
+        return campos.indexOf(campo) + 1; 
+    }
+
+    campoBusqueda.addEventListener('input', filtrarTabla);
+</script>
+
+
+
+<script>
+
+const botonAgregarVehiculo = document.getElementById("agregarvehiculo");
+const contenedorVehiculoFields = document.getElementById("vehiculoFields");
+
+let vehiculoCount = 0;
+
+botonAgregarVehiculo.addEventListener("click", () => {
+    vehiculoCount++;
+
+
+    const nuevoFormulario = document.createElement("div");
+    nuevoFormulario.classList.add("formulario-vehiculo");
+    nuevoFormulario.innerHTML = `
+        <fieldset>
+            <legend>Vehículo ${vehiculoCount}</legend>
+            <label for="placa-${vehiculoCount}">Placa:</label>
+            <input type="text" id="placa-${vehiculoCount}" name="placa-${vehiculoCount}" placeholder="Ingresa la placa" required>
+            
+            <label for="marca-${vehiculoCount}">Marca:</label>
+            <input type="text" id="marca-${vehiculoCount}" name="marca-${vehiculoCount}" placeholder="Ingresa la marca" required>
+            
+            <label for="modelo-${vehiculoCount}">Modelo:</label>
+            <input type="text" id="modelo-${vehiculoCount}" name="modelo-${vehiculoCount}" placeholder="Ingresa el modelo" required>
+            
+            <label for="color-${vehiculoCount}">Color:</label>
+            <input type="text" id="color-${vehiculoCount}" name="color-${vehiculoCount}" placeholder="Ingresa el color" required>
+            
+            <label for="tipo-${vehiculoCount}">Tipo:</label>
+            <select id="tipo-${vehiculoCount}" name="tipo-${vehiculoCount}" required>
+                <option value="">-- Seleccione una opción --</option>
+                <option value="automovil">Automóvil</option>
+                <option value="camioneta">Camioneta</option>
+                <option value="moto">Moto</option>
+                <option value="camion">Camión</option>
+            </select>
+        </fieldset>
+    `;
+
+
+    contenedorVehiculoFields.appendChild(nuevoFormulario);
+});
+
+</script>
+
+
+
+
+<footer>
+</footer>
+</body>
+</html>

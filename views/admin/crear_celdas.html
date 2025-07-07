@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/admin/css/estilo.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <title>Detalles de usuario</title>
+</head>
+<body>
+   <header>
+   <div class="sidebar" id="sidebar">
+  <div class="logo">
+    <img src="/imagenes/logo-grande.png" alt="Logo Grande" class="logo-expandido">
+    <img src="/imagenes/logo-mini.png" alt="Logo Miniatura" class="logo-compacto">
+  </div>
+  <ul>
+    <li><a href="index.html"><i class="fas fa-home"></i><span class="menu-text">Inicio</span></a></li>
+    <li class="submenu">
+      <a href="#"><i class="fa-solid fa-list-check"></i> <span class="menu-text">Gestionar</span></a>
+      <ul>
+       
+        <li><a href="#"><i class="fa-solid fa-headset"></i><span class="menu-text">Turnos</span></a></li>
+        
+      </ul>
+    </li>
+
+    <li class="submenu">
+        <a href="#"><i class="fa-solid fa-user-tie"></i><span class="menu-text">Administrar</span></a>
+        <ul>
+          <li><a href="crear_zonas.html"><i class="fa-solid fa-square-parking"></i><span class="menu-text">Crear Parqueaderos</span></a></li>
+          <li><a href="crear_celdas.html"><i class="fa-solid fa-square-parking"></i><span class="menu-text">Crear Estacionamientos</span></a></li>  
+        <li><a href="crear_usuarios.html"><i class="fa-solid fa-users"></i><span class="menu-text">Crear Usuarios</span></a></li>
+          <li><a href="#"><i class="fa-solid fa-gear"></i><span class="menu-text">Configuracion</span></a></li>
+         </ul>
+      </li>
+
+    <li><a href="#"><i class="fa-solid fa-headset"></i><span class="menu-text">Soporte</span></a></li>
+  </ul>
+</div>
+
+
+<nav class="navbar">
+    <ul class="navbar-menu">
+      
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle">Servicios</a>
+        <ul class="dropdown-menu">
+          <li><a href="#">Diseño Web</a></li>
+        
+        </ul>
+      </li>
+      <li><a href="#">Cerrar Sesion</a></li>
+     
+    </ul>
+  </nav>
+
+
+  <div class="contenido-principal">
+    <h1 class="centrar">Crear nuevo estacionamiento</h1>
+    <p class="centrar">Se crean nuevos estacionamientos</p>
+<hr class="linea-windows">
+   
+<div id="modal" class="modal">
+    <div class="contenido-modal">
+      <div class="encabezado-modal">
+        <h2>Crear estacionamiento</h2>
+  
+      </div>
+      <hr class="linea-windows">
+      <div class="cuerpo-modal">
+<form action="#" method="POST" class="formulario">
+    <fieldset>
+    <legend>Datos estacionamiento</legend>
+    <label for="estacionamiento-n">Nombre estacionamiento:</label>
+    <input type="text" name="estacionamiento-n" placeholder="Nombre del estacionamiento" required>
+       
+    <label for="n-parqueadero">Numero</label>
+    <select id="n-parqueadero" name="n-parqueadero" required>
+      <option value="">Seleccione un parqueadero</option>
+      <option value="p1">P1</option>
+      <option value="p2">P2</option>
+      <option value="p3">P3</option>
+    </select>   
+
+    <label for="t-parqueadero">Tipo de estacionamiento</label>
+    <select id="t-parqueadero" name="t-parqueadero" required>
+      <option value="">Seleccione un tipo</option>
+      <option value="Discapacidad">Discapacidad</option>
+      <option value="Motos">Motos</option>
+      <option value="Carros">Carros</option>
+      <option value="Camioneta">Camioneta</option>
+      <option value="Camion">Camion</option>
+      <option value="Otros">Otros</option>
+      <option value="Institucional">Institucional</option>
+    </select>   
+
+    <label for="capacidad-est">Capacidad:</label>
+    <input type="number" name="capacidad-est" placeholder="Capacidad" required>
+
+    <button type="submit" class="crear">Crear</button>
+    </fieldset>
+</form>
+
+</div>
+<div class="pie-modal">
+  <button class="cerrar" id="cerrarModal"><i class="fa-solid fa-xmark"></i></button>
+  
+</div>
+</div>
+</div>
+
+<div class="filtros">
+    <button id="abrirModal" class="botones-min btn-agregar"><i class="fa-solid fa-plus"></i></button>
+    <input type="text" id="buscadorNombre" placeholder="Buscar por Nombre...">
+    <input type="date" id="filtroFecha">
+    <input type="number" id="filtroNumero" placeholder="Número de parqueadero">
+  </div>
+
+
+  <table class="tabla-estacionamientos">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Fecha</th>
+        <th>N° Parqueadero</th>
+        <th>Tipo de Estacionamiento</th>
+        <th>Capacidad</th>
+        <th>Creado por</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="tablaCuerpo">
+      <tr>
+        <td>E1</td>
+        <td>2023-03-10</td>
+        <td>P1</td>
+        <td>Carros</td>
+        <td>1</td>
+        <td>Admin</td>
+        <td>
+            <button class="botones-min btn-editar"><i class="fa-solid fa-pen"></i></button>
+            <button class="botones-min btn-eliminar "><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+      <tr>
+        <td>E2</td>
+        <td>2023-03-15</td>
+        <td>P2</td>
+        <td>Carros</td>
+        <td>1</td>
+        <td>Admin</td>
+        <td>
+            <button class="botones-min btn-editar"><i class="fa-solid fa-pen"></i></button>
+            <button class="botones-min btn-eliminar "><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+      <tr>
+        <td>E3</td>
+        <td>2023-03-18</td>
+        <td>P3</td>
+        <td>Carros</td>
+        <td>1</td>
+        <td>Admin</td>
+        <td>
+          
+          <button class="botones-min btn-editar"><i class="fa-solid fa-pen"></i></button>
+          <button class="botones-min btn-eliminar "><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+    
+</div>
+
+
+</header> 
+
+<script>
+
+const sidebar = document.getElementById("sidebar");
+
+sidebar.addEventListener("mouseenter", () => {
+  sidebar.classList.add("expanded"); 
+});
+
+sidebar.addEventListener("mouseleave", () => {
+  sidebar.classList.remove("expanded"); 
+});
+
+//Iniciar script del navbar
+const toggle = document.getElementById("navbar-toggle");
+const menu = document.getElementById("navbar-menu");
+
+toggle.addEventListener("click", () => {
+  menu.classList.toggle("active"); 
+});
+
+
+
+        $(document).ready(function() {
+            $('#tabla-estacionamientos').DataTable();
+        });
+
+ </script>
+
+<script>
+    const modal = document.getElementById('modal');
+  const abrirModal = document.getElementById('abrirModal');
+  const cerrarModal = document.getElementById('cerrarModal');
+  
+  abrirModal.addEventListener('click', (e) => {
+    e.preventDefault(); 
+    modal.style.display = 'flex';
+  });
+  
+  cerrarModal.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+    </script>
+  
+
+
+
+</body>
+</html>

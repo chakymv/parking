@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Vehículos</title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Gestionar Vehículos ingresados</h1>
+      <hr class="linea-windows">
+      <div id="gestion-vehiculos-content">
+        <button class="btn-agregar" id="btn-abrir-modal-crear">Agregar Vehículo</button>
+        <table id="vehiculos-table" class="dataTable" style="width:100%;margin-top:20px;"></table>
+      </div>
+
+      <!-- Modal para crear/editar vehículo -->
+      <div class="modal" id="modal-vehiculo">
+        <div class="contenido-modal">
+          <div class="encabezado-modal">
+            <span id="modal-titulo"></span>
+            <button class="cerrar" id="btn-cerrar-modal">&times;</button>
+          </div>
+          <div class="cuerpo-modal">
+            <form id="form-vehiculo" autocomplete="off">
+              <input type="hidden" name="id" id="id_vehiculo">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div><label>Placa</label><input type="text" name="placa" id="placa" required></div>
+                <div><label>Color</label><input type="text" name="color" id="color" required></div>
+                <div><label>Modelo</label><input type="text" name="modelo" id="modelo" required></div>
+                <div><label>Marca</label><input type="text" name="marca" id="marca" required></div>
+                <div><label>Tipo</label><input type="text" name="tipo" id="tipo" required></div>
+              </div>
+              <div style="margin-top:15px;">
+                <label>Propietario</label>
+                <input type="text" id="usuario-buscar-doc" placeholder="Buscar usuario por documento..." style="width:100%; margin-bottom: 5px;">
+                <select id="usuario_id_usuario" name="usuario_id_usuario" style="width:100%;" required>
+                  <option value="">Seleccione un propietario</option>
+                </select>
+              </div>
+              <div id="modal-msg" style="color:red;margin-top:10px;text-align:center;"></div>
+              <div class="pie-modal" style="margin-top:15px;text-align:right;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="submit" id="btn-guardar-vehiculo" class="btn-guardar">Guardar</button>
+                <button type="button" id="btn-eliminar-vehiculo" class="btn-eliminar" style="display:none;">Eliminar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <!-- Incluir jQuery y DataTables -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <!-- Incluir el script de la página -->
+  <script src="/public/js/gestion-vehiculos.js" defer></script>
+</body>
+</html>

@@ -12,8 +12,7 @@ router.get('/', catchAsync(async (req, res) => {
 
 // Obtener usuario por ID
 router.get('/:id', catchAsync(async (req, res) => {
-  const usuario = new Usuario();
-  const encontrado = await usuario.findById(req.params.id);
+  const encontrado = await Usuario.findById(req.params.id);
   if (encontrado) {
     res.json(encontrado.toJSON());
   } else {
@@ -23,8 +22,7 @@ router.get('/:id', catchAsync(async (req, res) => {
 
 // Obtener usuario por número de documento
 router.get('/documento/:numero', catchAsync(async (req, res) => {
-  const usuario = new Usuario();
-  const encontrado = await usuario.findByDocument(req.params.numero);
+  const encontrado = await Usuario.findByDocument(req.params.numero);
   if (encontrado) {
     res.json(encontrado.toJSON());
   } else {
@@ -56,8 +54,7 @@ router.post('/', catchAsync(async (req, res) => {
 
 // Actualizar usuario por ID
 router.put('/:id', catchAsync(async (req, res) => {
-  const usuario = new Usuario();
-  const encontrado = await usuario.findById(req.params.id);
+  const encontrado = await Usuario.findById(req.params.id);
   if (!encontrado) {
     return res.status(404).json({ error: 'Usuario no encontrado' });
   }
@@ -68,8 +65,7 @@ router.put('/:id', catchAsync(async (req, res) => {
 
 // Eliminar usuario por ID
 router.delete('/:id', catchAsync(async (req, res) => {
-  const usuario = new Usuario();
-  const encontrado = await usuario.findById(req.params.id);
+  const encontrado = await Usuario.findById(req.params.id);
   if (!encontrado) {
     return res.status(404).json({ error: 'Usuario no encontrado' });
   }

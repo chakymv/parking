@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/admin/css/estilo.css" />
+  <link rel="stylesheet" href="/admin/css/pequeno.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>Escritorio</title>
+</head>
+
+<body>
+<header>
+
+<div class="sidebar" id="sidebar"><!-- Inicia el sidebar menu -->
+<div class="logo">
+<img src="/imagenes/logo-grande.png" alt="Logo Grande" class="logo-expandido" />
+<img src="/imagenes/logo-mini.png" alt="Logo Miniatura" class="logo-compacto" />
+</div>
+
+<ul>
+<li>
+<a href="index.html"><i class="fas fa-home"></i><span class="menu-text">Inicio</span></a>
+</li>
+
+<li class="submenu">
+  <a href="#"><i class="fa-solid fa-users-line"></i>
+  <span class="menu-text"> Gestionar Usuarios</span></a>
+  <ul>
+  <li>
+  <a href="usuarios.html"><i class="fa-solid fa-users"></i><span class="menu-text">Usuarios</span></a>
+  </li>
+  
+  <li>
+  <a href="crear_parqueadero.html"><i class="fa-solid fa-square-parking"></i><span class="menu-text">Crear
+  Parqueadero</span></a>
+   </li>
+  
+
+  </ul>
+  </li>
+
+<li class="submenu">
+<a href="#"><i class="fa-solid fa-list-check"></i>
+<span class="menu-text"> Gestionar Parqueaderos</span></a>
+<ul>
+<li>
+<a href="vehiculos.html"><i class="fa-solid fa-car"></i><span class="menu-text">Vehiculos</span></a>
+</li>
+
+<li>
+<a href="crear_parqueadero.html"><i class="fa-solid fa-square-parking"></i><span class="menu-text">Crear
+Parqueadero</span></a>
+ </li>
+
+<li><a href="crear_zonas.html"><i class="fa-solid fa-expand"></i><span class="menu-text">Crear
+Zonas</span></a></li>
+
+<li><a href="historico.html"><i class="fa-solid fa-book-open"></i><span class="menu-text">Historico</span></a>
+</li>
+
+</ul>
+</li>
+
+
+<li class="submenu">
+<a href="#"><i class="fa-solid fa-person-military-pointing"></i>
+<span class="menu-text">Operadores</span></a>
+<ul>
+           
+<li><a href="#"><i class="fa-solid fa-calendar-days"></i><span class="menu-text">Gestionar Turnos</span></a>
+</li>
+</ul>
+</li>
+
+<li class="submenu">
+<a href="#"><i class="fa-solid fa-user-tie"></i><span class="menu-text">Administrar</span></a>
+<ul>
+          
+<li><a href="crear_usuarios.html"><i class="fa-solid fa-user-tie"></i><span class="menu-text">Usuarios del
+sistema </span></a>
+</li>
+<li><a href="#"><i class="fa-solid fa-gear"></i><span class="menu-text">Configuracion</span></a></li>
+</ul>
+</li>
+
+<li><a href="#"><i class="fa-solid fa-headset"></i><span class="menu-text">Soporte</span></a></li>
+</ul>
+</div><!-- Finaliza el sidebar menu -->
+
+    <nav class="navbar"><!-- Inicia el navbar -->
+      <ul class="navbar-menu">
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle">Servicios</a>
+          <ul class="dropdown-menu">
+            <li><a href="#">Cosas</a></li>
+          </ul>
+        </li>
+        <li><a href="#">Cerrar Sesion</a></li>
+      </ul>
+    </nav><!-- Finaliza el navbar -->
+  </header>
+
+  <main>
+ 
+    <div class="contenido-principal"><!-- Inicia el contenido principal -->
+      <div class="encabezado-principal">
+        <h1>Bienvenido Administrador</h1>
+        <p>Gestiona el parqueadero de manera eficiente</p>
+      </div>  
+    <div class="contadores">
+      <div class="columnas">
+        <div class="contenedor-grafico">
+          <canvas id="graficoCircular"></canvas>
+        </div>
+      </div>
+
+
+      <div class="columnas">
+        <div class="contenedor-grafico">
+          <canvas id="graficoIncidencias"></canvas>
+        </div>
+      </div>
+
+      <div class="columnas">
+        <div class="contenedor-grafico">
+          <canvas id="GraficoTotalVehiculos"></canvas>
+        </div>
+      </div>
+    </div><!-- Finaliza contadores -->
+
+
+    <div class="caja-oscura">
+      <div class="columnas">
+        <div class="botonera">
+          <p>Formulario de registro de usuarios y vehiculos</p>
+          <button id="abrirModal" class="btn-agregar">
+            Agregar <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="columnas">
+        <div class="botonera">
+          <p>Exportar reporte del dia,mes,año en unos pocos clics</p>
+          <button id="abrirModal" class="btn-agregar">
+            Exportar <i class="fa-solid fa-file-export"></i>
+          </button>
+        </div>
+      </div>
+
+
+      <div class="columnas">
+        <div class="botonera">
+          <p>Para dar ingreso y salida de vehiculos</p>
+          <button class="btn-operar"> <a class="white" href="operar.html">
+           Operar S/E  <i class="fa-solid fa-building-shield"></i></a>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="contenedor">
+      <!-- Inicia zona1 -->
+      <div class="tarjeta-base">
+        <div class="columna">
+          <div class="encabezado_general">
+            <h2 class="titulo-parqueadero">
+              <i class="fa-solid fa-square-parking"></i> Parqueadero 1
+            </h2>
+            <p class="descripcion_parqueadero">
+              Zonas dentro del parqueadero
+            </p>
+          </div>
+          <hr class="linea-windows" />
+          <div class="encabezado-acordeon zona1">
+            Zona Carros <i class="fa-solid fa-car-side"></i>
+          </div>
+          <div class="contenido-acordeon">
+            <ul class="lista-grupo">
+              <li>
+                Disponibilidad:
+
+                <div class="barra-progreso">
+                  <div class="barra-progreso-interna" style="width: 68%"></div>
+                </div>
+                <hr class="linea-windows" />
+                <p><strong>Estado de Zona:</strong> Activo</p>
+                <p><strong>Cantidad:</strong> 10</p>
+                <p>
+                  <strong>Cantidad maxima:</strong>
+                  <input type="number" id="cantidad" value="20" />
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="columna">
+          <div class="encabezado-acordeon zona1">
+            Zona Motos <i class="fa-solid fa-motorcycle"></i>
+          </div>
+          <div class="contenido-acordeon">
+            <ul class="lista-grupo">
+              <li>
+                Disponibilidad:
+
+                <div class="barra-progreso">
+                  <div class="barra-progreso-interna" style="width: 38%"></div>
+                </div>
+                <hr class="linea-windows" />
+                <p><strong>Estado de Zona:</strong> Activo</p>
+                <p><strong>Cantidad:</strong> 10</p>
+                <p>
+                  <strong>Cantidad maxima:</strong>
+                  <input type="number" id="cantidad" value="30" />
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="columna">
+          <div class="encabezado-acordeon zona1">
+            Zona Institucional <i class="fa-solid fa-building-columns"></i>
+          </div>
+          <div class="contenido-acordeon">
+            <ul class="lista-grupo">
+              <li>
+                Disponibilidad:
+
+                <div class="barra-progreso">
+                  <div class="barra-progreso-interna" style="width: 90%"></div>
+                </div>
+                <hr class="linea-windows" />
+                <p><strong>Estado de Zona:</strong> Activo</p>
+                <p><strong>Cantidad:</strong> 10</p>
+                <p>
+                  <strong>Cantidad maxima:</strong>
+                  <input type="number" id="cantidad" value="15" />
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inicia zona2 -->
+      <div class="tarjeta-base">
+        <div class="columna">
+          <div class="encabezado_general">
+            <h2 class="titulo-parqueadero">
+              <i class="fa-solid fa-square-parking"></i> Parqueadero 2
+            </h2>
+            <p class="descripcion_parqueadero">
+              Zonas dentro del parqueadero
+            </p>
+          </div>
+          <hr class="linea-windows" />
+          <div class="encabezado-acordeon zona2">
+            Zona Carros <i class="fa-solid fa-car-side"></i>
+          </div>
+          <div class="contenido-acordeon">
+            <ul class="lista-grupo">
+              <li>
+                Disponibilidad:
+
+                <div class="barra-progreso">
+                  <div class="barra-progreso-interna" style="width: 100%"></div>
+                </div>
+                <hr />
+                <p><strong>Estado de Zona:</strong> Activo</p>
+                <p><strong>Cantidad:</strong> 10</p>
+                <p>
+                  <strong>Cantidad maxima:</strong>
+                  <input type="number" id="cantidad" value="10" />
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="columna">
+          <div class="encabezado-acordeon zona2">
+            Zona Motos <i class="fa-solid fa-motorcycle"></i>
+          </div>
+          <div class="contenido-acordeon">
+            <ul class="lista-grupo">
+              <li>
+                Disponibilidad:
+
+                <div class="barra-progreso">
+                  <div class="barra-progreso-interna" style="width: 60%"></div>
+                </div>
+                <hr class="linea-windows" />
+                <p><strong>Estado de Zona:</strong> Activo</p>
+                <p><strong>Cantidad:</strong> 10</p>
+                <p>
+                  <strong>Cantidad maxima:</strong>
+                  <input type="number" id="cantidad" value="28" />
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="columna">
+          <div class="encabezado-acordeon zona2">
+            Zona Institucional <i class="fa-solid fa-building-columns"></i>
+          </div>
+          <div class="contenido-acordeon">
+            <ul class="lista-grupo">
+              <li>
+                Disponibilidad:
+
+                <div class="barra-progreso">
+                  <div class="barra-progreso-interna" style="width: 10%"></div>
+                </div>
+                <hr class="linea-windows" />
+                <p><strong>Estado de Zona:</strong> Activo</p>
+                <p><strong>Cantidad:</strong> 10</p>
+                <p>
+                  <strong>Cantidad maxima:</strong>
+                  <input type="number" id="cantidad" value="60" />
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inicia zona3 -->
+      <div class="tarjeta-base">
+        <div class="columna">
+          <div class="encabezado_general">
+            <h2 class="titulo-parqueadero">
+              <i class="fa-solid fa-square-parking"></i> Parqueadero 3
+            </h2>
+            <p class="descripcion_parqueadero">
+              Zonas dentro del parqueadero
+            </p>
+          </div>
+          <hr class="linea-windows" />
+          <div class="encabezado-acordeon">
+            Zona Carros <i class="fa-solid fa-car-side"></i>
+          </div>
+          <div class="contenido-acordeon">
+            <ul class="lista-grupo">
+              <li>
+                Disponibilidad:
+
+                <div class="barra-progreso">
+                  <div class="barra-progreso-interna" style="width: 25%"></div>
+                </div>
+                <hr class="linea-windows" />
+                <p><strong>Estado de Zona:</strong> Activo</p>
+                <p><strong>Cantidad:</strong> 10</p>
+                <p>
+                  <strong>Cantidad maxima:</strong>
+                  <input type="number" id="cantidad" value="55" />
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="columna">
+          <div class="encabezado-acordeon">
+            Zona Motos <i class="fa-solid fa-motorcycle"></i>
+          </div>
+          <div class="contenido-acordeon">
+            <ul class="lista-grupo">
+              <li>
+                Disponibilidad:
+
+                <div class="barra-progreso">
+                  <div class="barra-progreso-interna" style="width: 50%"></div>
+                </div>
+                <hr class="linea-windows" />
+                <p><strong>Estado de Zona:</strong> Activo</p>
+                <p><strong>Cantidad:</strong> 10</p>
+                <p>
+                  <strong>Cantidad maxima:</strong>
+                  <input type="number" id="cantidad" value="20" />
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="columna">
+          <div class="encabezado-acordeon">
+            Zona Institucional <i class="fa-solid fa-building-columns"></i>
+          </div>
+          <div class="contenido-acordeon">
+            <ul class="lista-grupo">
+              <li>
+                Disponibilidad:
+
+                <div class="barra-progreso">
+                  <div class="barra-progreso-interna" style="width: 15%"></div>
+                </div>
+                <hr class="linea-windows" />
+                <p><strong>Estado de Zona:</strong> Activo</p>
+                <p><strong>Cantidad:</strong> 10</p>
+                <p>
+                  <strong>Cantidad maxima:</strong>
+                  <input type="number" id="cantidad" value="55" />
+                </p>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div><!-- Final del Contenedor -->
+
+    <!-- Aca inicial el modal-->
+    <div id="modal" class="modal">
+      <div class="contenido-modal">
+        <div class="encabezado-modal">
+          <h2>Crear nuevo usuario con roles</h2>
+        </div>
+        <hr class="linea-windows" />
+        <div class="cuerpo-modal">
+          <form action="#" method="POST" class="formulario">
+            <fieldset>
+              <legend>Datos Usuario</legend>
+              <label for="p_nombre">Primer Nombre:</label>
+              <input type="text" name="p_nombre" required />
+              <label for="s_nombre">Segundo Nombre:</label>
+              <input type="text" name="s_nombre" />
+              <label for="p_apellido">Primer Apellido:</label>
+              <input type="text" name="s_apellido" required />
+              <label for="s_apellido">Segundo Apellido:</label>
+              <input type="text" name="s_apellido" />
+              <label for="email">E-mail:</label>
+              <input type="email" name="email" required />
+
+              <label for="t-documento">Tipo de documento</label>
+              <select id="t-documento" name="t-documento" required>
+                <option value="">Seleccione un tipo de documento</option>
+                <option value="cedula_c">Cedula Ciudadania</option>
+                <option value="t_identidad">Tarjeta de identidad</option>
+                <option value="t_propiedad">Tarjeta de propiedad</option>
+                <option value="c_extranjera">Cedula extranjera</option>
+              </select>
+
+              <label for="n_docuemnto">Numero de documento:</label>
+              <input type="text" name="n_docuemnto" required />
+              <label for="direccion">Direccion:</label>
+              <input type="text" name="direccion" required />
+              <label for="tel1">Telefono:</label>
+              <input type="text" name="tel1" required />
+
+              <label for="t-documento">Roles</label>
+              <select id="t-documento" name="t-documento" required>
+                <option value="">Seleccione un rol</option>
+                <option value="rol_operador">Operador</option>
+                <option value="rol_administrador">Administrador</option>
+              </select>
+
+              <button type="submit" class="crear">Crear usuario</button>
+            </fieldset>
+          </form>
+        </div>
+        <div class="pie-modal">
+          <button class="cerrar" id="cerrarModal">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+    </div> <!-- Aca termina el modal-->
+
+    </div><!-- Finaliza el contenido principal -->
+
+  </main><!-- Finaliza el main -->
+
+  
+  <script>/*Se inicia el script del sidebar menu que permite hacerle cambios a las propiedades del css al contenido 
+  al pasar el cursor sobre el y al salir del area del sidebar*/
+    const sidebar = document.getElementById("sidebar");
+   const contenidoPrincipal = document.querySelector(".contenido-principal");
+   
+   sidebar.addEventListener("mouseenter", () => {
+       sidebar.classList.add("expanded");
+       contenidoPrincipal.style.marginLeft = "250px"; /*Al expandir va a restar 250px a la izquierda*/
+   });
+   
+   sidebar.addEventListener("mouseleave", () => {
+       sidebar.classList.remove("expanded");
+       contenidoPrincipal.style.marginLeft = "50px"; /*Al salir del area del sidebar a restar 200px y dejar solo 50px*/
+   });
+      
+   </script>
+
+  <script>
+    const modal = document.getElementById("modal");
+    const abrirModal = document.getElementById("abrirModal");
+    const cerrarModal = document.getElementById("cerrarModal");
+
+    abrirModal.addEventListener("click", (e) => {
+      e.preventDefault();
+      modal.style.display = "flex";
+    });
+
+    cerrarModal.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+  </script>
+
+  <script>
+    document.querySelectorAll(".encabezado-acordeon").forEach((header) => {
+      header.addEventListener("click", () => {
+        const content = header.nextElementSibling;
+        content.style.display =
+          content.style.display === "block" ? "none" : "block";
+      });
+    });
+/*Si el % llega  a estos limites ira cambiando de color en estos % de ancho dados*/
+    document.querySelectorAll(".barra-progreso-interna").forEach((bar) => {
+      const width = parseInt(bar.style.width);
+      if (width <= 25) {
+        bar.style.backgroundColor = "#4caf50";
+      } else if (width <= 50) {
+        bar.style.backgroundColor = "#ff9900";
+      } else {
+        bar.style.backgroundColor = "#ff0000";
+      }
+    });
+  </script>
+
+  <script>/*Para este se uso la libraria chart.js*/
+    const ctx = document.getElementById("graficoCircular").getContext("2d");
+    const ctx2 = document.getElementById("graficoIncidencias").getContext("2d");
+    const ctx3 = document.getElementById("GraficoTotalVehiculos").getContext("2d");
+
+    const data2 = {
+      labels: ["Con incidencias", "Sin incidencias"],/*Un texto para mostrar en las graficas*/
+      datasets: [
+        {
+          label: "Incidencias",/*Un texto para mostrar en las graficas*/
+          data: [2, 15],/*Aca se le da el valor a cada uno de los casos*/
+          backgroundColor: ["#ff0000", "#F4C79A",],/*Aca damos los colores que usara para cada uno de los casos*/
+          hoverOffset: 4,/*Aca se le da el tamaño de la sombra que tendra al pasar el mouse por encima*/
+        },
+      ],
+    };
+    //Cantidad total de tipo de vehiculos en el parqueadero//
+    const data3 = {
+      labels: ["Carros", "Motos", "Institucionales"],/*Un texto para mostrar en las graficas*/
+      datasets: [
+        {
+          label: "Total de vehiculos",/*Un texto para mostrar en las graficas*/
+          data: [20, 10, 5],/*Aca se le da el valor a cada uno de los casos*/
+          backgroundColor: ["#7556F5", "#A4ACF5", "#4BD800"],/*Ingual que lo anterior*/
+          hoverOffset: 4,/*Aca ya podemos entender los script de estas graficas*/
+        },
+      ],
+    };
+    //Cantidad de vihiculos ingresados y salidos en el dia//
+    const data = {
+      labels: ["V.Ingresados", "V. Salidos"],
+      datasets: [
+        {
+          data: [301, 60],
+          backgroundColor: ["#3AA1F5", "#ff0000"],
+          hoverOffset: 4,
+        },
+      ],
+    };
+
+    // Totalidad de vehiculos //
+    const config = {
+      type: "doughnut",
+      data: data,
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "top",
+          },
+          title: {
+            display: true,
+            text: "Totalidad de Vehículos Ingresados y Salidos en el Día",
+          },
+        },
+      },
+    };
+    const graficoCircular = new Chart(ctx, config);
+
+
+
+
+    const config2 = {
+      type: "doughnut",
+      data: data2,
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "top",
+          },
+          title: {
+            display: true,
+            text: "Incidencias en el Parqueadero",
+          },
+        },
+      },
+    };
+    const graficoIncidencias = new Chart(ctx2, config2);
+
+    const config3 = {
+      type: "doughnut",
+      data: data3,
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "top",
+          },
+          title: {
+            display: true,
+            text: "Total de Vehículos en el Parqueadero",
+          },
+        },
+      },
+    };
+    const graficoTotalVehiculos = new Chart(ctx3, config3);
+
+  </script>
+
+
+
+</body>
+
+</html>

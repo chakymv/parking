@@ -1,4 +1,6 @@
 const supabase = require('../supabaseClient');
+const { hashPassword } = require('./hash');
+const bcrypt = require('bcryptjs');
 
 class Usuario {
   constructor(
@@ -61,8 +63,11 @@ class Usuario {
   set clave(value) { this._clave = value; }
   set perfil_usuario_id(value) { this._perfil_usuario_id = value; }
 
-  // CREATE - Insert new user
+  // CREATE
   async create() {
+    if (this._clave) {
+      this._clave = await hashPassword(this._clave);
+    }
     const insertObj = {
       tipo_documento: this._tipo_documento,
       numero_documento: this._numero_documento,
@@ -83,18 +88,39 @@ class Usuario {
     return this;
   }
 
-  // READ - Get user by ID
-  async findById(id) {
+  // READ
+  static async findById(id) {
     const { data, error } = await supabase.from('usuario').select('*').eq('id_usuario', id).single();
-    if (error) throw new Error(`Error finding Usuario: ${error.message}`);
+    if (error && error.code !== 'PGRST116') {
+        throw new Error(`Error finding Usuario by ID: ${error.message}`);
+    }
     if (data) {
-      this._mapRowToObject(data);
-      return this;
+      const usuario = new Usuario();
+      usuario._mapRowToObject(data);
+      return usuario;
     }
     return null;
   }
 
-  // READ - Get all users
+  static async findByEmail(email) {
+    const { data, error } = await supabase
+      .from('usuario')
+      .select('*')
+      .eq('direccion_correo', email)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw new Error(`Error finding Usuario by email: ${error.message}`);
+    }
+
+    if (data) {
+      const usuario = new Usuario();
+      usuario._mapRowToObject(data);
+      return usuario;
+    }
+    return null;
+  }
+
   static async findAll() {
     const { data, error } = await supabase.from('usuario').select('*');
     if (error) throw new Error(`Error finding all Usuario: ${error.message}`);
@@ -105,19 +131,24 @@ class Usuario {
     });
   }
 
-  // READ - Find by document number
-  async findByDocument(numero_documento) {
+  static async findByDocument(numero_documento) {
     const { data, error } = await supabase.from('usuario').select('*').eq('numero_documento', numero_documento).single();
-    if (error) throw new Error(`Error finding Usuario by document: ${error.message}`);
+    if (error && error.code !== 'PGRST116') {
+      throw new Error(`Error finding Usuario by document: ${error.message}`);
+    }
     if (data) {
-      this._mapRowToObject(data);
-      return this;
+      const usuario = new Usuario();
+      usuario._mapRowToObject(data);
+      return usuario;
     }
     return null;
   }
 
-  // UPDATE - Update user
+  // UPDATE
   async update() {
+    if (this._clave && !this._clave.startsWith('$2a$')) {
+      this._clave = await hashPassword(this._clave);
+    }
     const updateObj = {
       tipo_documento: this._tipo_documento,
       numero_documento: this._numero_documento,
@@ -137,14 +168,22 @@ class Usuario {
     return this;
   }
 
-  // DELETE - Delete user
+  // DELETE
   async delete() {
     const { error } = await supabase.from('usuario').delete().eq('id_usuario', this._id_usuario);
     if (error) throw new Error(`Error deleting Usuario: ${error.message}`);
     return true;
   }
 
-  // Helper method to map database row to object properties
+  // PASSWORD
+  async comparePassword(plainPassword) {
+    if (!this.clave || !plainPassword) {
+      return false;
+    }
+    return await bcrypt.compare(plainPassword, this.clave);
+  }
+
+  // UTILIDAD
   _mapRowToObject(row) {
     this._id_usuario = row.id_usuario;
     this._tipo_documento = row.tipo_documento;
@@ -161,7 +200,6 @@ class Usuario {
     this._perfil_usuario_id = row.perfil_usuario_id;
   }
 
-  // Convert to JSON
   toJSON() {
     return {
       id_usuario: this._id_usuario,
@@ -182,4 +220,3 @@ class Usuario {
 }
 
 module.exports = Usuario;
-

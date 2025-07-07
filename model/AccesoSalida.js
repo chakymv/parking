@@ -17,6 +17,7 @@ class AccesoSalida {
     this._vehiculo_id = vehiculo_id;
   }
 
+  // Getters
   get id() { return this._id; }
   get movimiento() { return this._movimiento; }
   get fecha_hora() { return this._fecha_hora; }
@@ -24,6 +25,7 @@ class AccesoSalida {
   get tiempo_estadia() { return this._tiempo_estadia; }
   get vehiculo_id() { return this._vehiculo_id; }
 
+  // Setters
   set id(value) { this._id = value; }
   set movimiento(value) { this._movimiento = value; }
   set fecha_hora(value) { this._fecha_hora = value; }
@@ -31,6 +33,7 @@ class AccesoSalida {
   set tiempo_estadia(value) { this._tiempo_estadia = value; }
   set vehiculo_id(value) { this._vehiculo_id = value; }
 
+  // INSERT
   async create() {
     const insertObj = {
       movimiento: this._movimiento,
@@ -45,6 +48,7 @@ class AccesoSalida {
     return this;
   }
 
+  // READ by ID
   async findById(id) {
     const { data, error } = await supabase.from('acceso_salida').select('*').eq('id', id).single();
     if (error) {
@@ -58,6 +62,7 @@ class AccesoSalida {
     return null;
   }
 
+  // READ all
   static async findAll() {
     const { data, error } = await supabase.from('acceso_salida').select('*');
     if (error) throw new Error(`Error finding all AccesoSalida: ${error.message}`);
@@ -68,6 +73,7 @@ class AccesoSalida {
     });
   }
 
+  // UPDATE
   async update() {
     const updateObj = {
       movimiento: this._movimiento,
@@ -81,12 +87,14 @@ class AccesoSalida {
     return this;
   }
 
+  // DELETE
   async delete() {
     const { error } = await supabase.from('acceso_salida').delete().eq('id', this._id);
     if (error) throw new Error(`Error deleting AccesoSalida: ${error.message}`);
     return true;
   }
 
+  // Mapper
   _mapRowToObject(row) {
     this._id = row.id;
     this._movimiento = row.movimiento;
@@ -96,6 +104,7 @@ class AccesoSalida {
     this._vehiculo_id = row.vehiculo_id;
   }
 
+  // JSON Export
   toJSON() {
     return {
       id: this._id,

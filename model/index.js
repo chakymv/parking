@@ -10,6 +10,9 @@ const Incidencia = require('./Incidencia');
 const ReporteIncidencia = require('./ReporteIncidencia');
 const Celda = require('./Celda');
 const HistorialParqueo = require('./HistorialParqueo');
+const Zona = require('./Zona');
+const Nivel = require('./Nivel');
+const Parqueadero = require('./Parqueadero');
 
 module.exports = {
   PerfilUsuario,
@@ -20,5 +23,8 @@ module.exports = {
   Incidencia,
   ReporteIncidencia,
   Celda,
-  HistorialParqueo
+  HistorialParqueo,
+  Zona,
+  Nivel,
+  Parqueadero
 }; 

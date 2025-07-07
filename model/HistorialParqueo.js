@@ -69,6 +69,63 @@ class HistorialParqueo {
     return true;
   }
 
+  /**
+   * Busca todos los registros del historial y los une con los detalles del vehículo usando Supabase.
+   * Devuelve un array de objetos planos listos para ser enviados como JSON.
+   */
+  static async findAllWithVehicleDetails() {
+    // Supabase permite hacer "joins" especificando las relaciones en el select.
+    // 'vehiculo(*)' le dice a Supabase que traiga todas las columnas de la tabla 'vehiculo' relacionada.
+    // Esto asume que tienes una relación de clave foránea configurada en Supabase.
+    const { data, error } = await supabase
+      .from('historial_parqueo')
+      .select(`
+        celda_id,
+        fecha_hora,
+        vehiculo (
+          placa,
+          marca,
+          modelo,
+          color,
+          tipo
+        )
+      `)
+      .order('fecha_hora', { ascending: false });
+
+    if (error) {
+      console.error("Error en HistorialParqueo.findAllWithVehicleDetails:", error);
+      throw new Error('Error al obtener el historial detallado del parqueo desde Supabase.');
+    }
+    
+    // Aplanamos el resultado para que sea más fácil de usar en el frontend.
+    return (data || []).map(row => {
+      const { vehiculo, ...historialData } = row;
+      return { ...historialData, ...(vehiculo || {}) };
+    });
+  }
+
+  /**
+   * Busca un registro de parqueo activo por el ID del vehículo.
+   * Se asume que un vehículo solo puede tener un registro activo a la vez.
+   * @param {number} vehiculo_id - El ID del vehículo a buscar.
+   * @returns {Promise<HistorialParqueo|null>} Una instancia del registro o null si no se encuentra.
+   */
+  static async findByVehicleId(vehiculo_id) {
+    const { data, error } = await supabase
+      .from('historial_parqueo')
+      .select('*')
+      .eq('vehiculo_id', vehiculo_id)
+      .limit(1)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null; // No rows found, not an error in this context.
+      throw new Error(`Error buscando historial por ID de vehículo: ${error.message}`);
+    }
+
+    return data ? new HistorialParqueo(data.celda_id, data.vehiculo_id, data.fecha_hora) : null;
+  }
+
   _mapRowToObject(row) {
     this._celda_id = row.celda_id;
     this._vehiculo_id = row.vehiculo_id;

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Iniciar Sesión</title>
+  <link rel="stylesheet" href="/estilo-us.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.css" />
+ 
+</head>
+<body>
+  <body>
+    <div class="columna">
+      <div class="contenedor-formulario">
+        <div class="logo-sistema animate__animated animate__backInLeft">
+          <img class="logo-imagen" src="/img/logo.png" alt="Logo" />
+        </div>
+        <div class="t_descripcion animate__animated animate__backInLeft">
+          <h3>INGRESA TU CEDULA O ESCANEA</h3>
+          <p>Ingresa tus datos de ingreso</p>
+        </div>
+        <form id="loginForm" class="formulario-login animate__animated animate__backInLeft">
+          <input type="email" id="correo" name="correo" placeholder="Correo electrónico" required />
+          <input type="password" id="clave" name="clave" placeholder="Contraseña" required />
+          <button class="btn-ingreso" type="submit">Iniciar sesión</button>
+        </form>
+        <div class="form-footer" style="margin-top:16px; text-align:center;">
+          ¿No tienes cuenta? <a href="registrarse.html">Regístrate</a>
+        </div>
+      </div>
+    </div>
+    <div class="columna imagen-login">
+      <h1 class="titulo-imagen">Bienvenido</h1>
+    </div>
+  <script>
+    document.getElementById('loginForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const correo = document.getElementById('correo').value;
+      const clave = document.getElementById('clave').value;
+      const res = await fetch('/api/usuarios/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correo, clave })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert('Bienvenido ' + (data.primer_nombre || ''));
+        // Redirigir a dashboard o página principal
+      } else {
+        alert(data.error || 'Credenciales incorrectas');
+      }
+    }
+  </script>
+</body>
+</html>

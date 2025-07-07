@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/admin/css/estilo.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <title>Administrar usuarios del sistema</title>
+</head>
+<body>
+   <header>
+   <div class="sidebar" id="sidebar">
+  <div class="logo">
+    <img src="/imagenes/logo-grande.png" alt="Logo Grande" class="logo-expandido">
+    <img src="/imagenes/logo-mini.png" alt="Logo Miniatura" class="logo-compacto">
+  </div>
+  <ul>
+    <li><a href="index.html"><i class="fas fa-home"></i><span class="menu-text">Inicio</span></a></li>
+    <li class="submenu">
+      <a href="#"><i class="fa-solid fa-list-check"></i> <span class="menu-text">Gestionar</span></a>
+      <ul>
+        <li><a href="usuarios_p.html"><i class="fa-solid fa-users-between-lines"></i><span class="menu-text">Usuarios Parqueadero</span></a></li>
+        <li><a href="#"><i class="fa-solid fa-calendar-days"></i><span class="menu-text">Turnos del Operador</span></a></li>
+        
+      </ul>
+    </li>
+
+    <li class="submenu">
+        <a href="#"><i class="fa-solid fa-user-tie"></i><span class="menu-text">Administrar</span></a>
+        <ul>
+          <li><a href="crear_zonas.html"><i class="fa-solid fa-square-parking"></i><span class="menu-text">Crear Parqueaderos</span></a></li>
+          <li><a href="crear_celdas.html"><i class="fa-solid fa-square-parking"></i><span class="menu-text">Crear Estacionamientos</span></a></li>  
+        <li><a href="crear_usuarios.html"><i class="fa-solid fa-user-tie"></i><span class="menu-text">Usuarios del sistema </span></a></li>
+          <li><a href="#"><i class="fa-solid fa-gear"></i><span class="menu-text">Configuracion</span></a></li>
+         </ul>
+      </li>
+
+    <li><a href="#"><i class="fa-solid fa-headset"></i><span class="menu-text">Soporte</span></a></li>
+  </ul>
+</div>
+
+
+<nav class="navbar">
+    <ul class="navbar-menu">
+      
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle">Servicios</a>
+        <ul class="dropdown-menu">
+          <li><a href="#">Enlace</a></li>
+        
+        </ul>
+      </li>
+      <li><a href="#">Cerrar Sesion</a></li>
+     
+    </ul>
+  </nav>
+
+
+  <div class="contenido-principal">
+    <h1 class="centrar">Crear y gestionar usuarios del sistema</h1>
+    <p class="centrar">Administracion de usuarios para el sistema unicamente, esta tabla solo mostrara los que tienen un rol de Operador y Administrador</p>
+<hr class="linea-windows">
+   
+<div id="modal" class="modal">
+    <div class="contenido-modal">
+      <div class="encabezado-modal">
+        <h2>Crear nuevo usuario con roles</h2>
+  
+      </div>
+      <hr class="linea-windows">
+      <div class="cuerpo-modal">
+<form action="#" method="POST" class="formulario">
+    <fieldset>
+    <legend>Datos Usuario</legend>
+    <label for="p_nombre">Primer Nombre:</label>
+    <input type="text" name="p_nombre" required>
+    <label for="s_nombre">Segundo Nombre:</label>
+    <input type="text" name="s_nombre" >
+    <label for="p_apellido">Primer Apellido:</label>
+    <input type="text" name="s_apellido" required> 
+    <label for="s_apellido">Segundo Apellido:</label>
+    <input type="text" name="s_apellido">     
+    <label for="email">E-mail:</label>
+    <input type="email" name="email" required>     
+
+
+    <label for="t-documento">Tipo de documento</label>
+    <select id="t-documento" name="t-documento" required>
+      <option value="">Seleccione un tipo de documento</option>
+      <option value="cedula_c">Cedula Ciudadania</option>
+      <option value="t_identidad">Tarjeta de identidad</option>
+      <option value="t_propiedad">Tarjeta de propiedad </option>
+      <option value="c_extranjera">Cedula extranjera</option>
+    </select>   
+
+    <label for="n_docuemnto">Numero de documento:</label>
+    <input type="text" name="n_docuemnto" required>
+    <label for="direccion">Direccion:</label>
+    <input type="text" name="direccion" required>
+    <label for="tel1">Telefono:</label>
+    <input type="text" name="tel1" required>
+   
+    <label for="t-documento">Roles</label>
+    <select id="t-documento" name="t-documento" required>
+      <option value="">Seleccione un rol</option>
+      <option value="rol_operador">Operador</option>
+      <option value="rol_administrador">Administrador </option>
+   
+    </select>   
+
+    <button type="submit" class="crear">Crear usuario</button>
+    </fieldset>
+</form>
+
+</div>
+<div class="pie-modal">
+  <button class="cerrar" id="cerrarModal"><i class="fa-solid fa-xmark"></i></button>
+  
+</div>
+</div>
+</div>
+
+<div class="filtros">
+    <button id="abrirModal" class="botones-min btn-agregar"><i class="fa-solid fa-plus"></i></button>
+    <input type="text" id="buscadorNombre" placeholder="Buscar por Nombre...">
+    <input type="date" id="filtroFecha">
+ 
+  </div>
+
+
+  <table class="tabla-usuarios">
+    <thead>
+      <tr>
+        <th>Nombres y apellidos</th>
+        <th>E-mail</th>
+        <th>Tipo de documento</th>
+        <th>N° Documento</th>
+        <th>Fecha y hora de registro</th>
+        <th>Direccion</th>
+        <th>N° Telefono</th>
+        <th>Rol</th>
+        <th>Opciones</th>
+      </tr>
+    </thead>
+    <tbody id="tablaCuerpo">
+      <tr>
+        <td>Juan Alimaña Cardona</td>
+        <td>juan123@mail.com</td>
+        <td>Cedula</td>
+        <td>123456789</td>
+        <td>2025-03-20 20:00:00</td>
+        <td>Calle 66 AA # 39A00</td>
+        <td>3246892004</td>
+        <td>Operador</td>
+      
+        <td>
+            <button class="botones-min btn-editar"><i class="fa-solid fa-pen"></i></button>
+            <button class="botones-min btn-eliminar "><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+      <tr>
+        <td>Carlos Estiben Cuervo</td>
+        <td>carloses123@mail.com</td>
+        <td>Cedula</td>
+        <td>123453058</td>
+        <td>2025-03-20 13:00:00</td>
+        <td>Calle 75 AA # 26A02</td>
+        <td>3106810004</td>
+        <td>Operador</td>
+        <td>
+            <button class="botones-min btn-editar"><i class="fa-solid fa-pen"></i></button>
+            <button class="botones-min btn-eliminar "><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+      <tr>
+        <td>Diana Maria Gomez Castrillon</td>
+        <td>carloses123@mail.com</td>
+        <td>Cedula</td>
+        <td>127453156</td>
+        <td>2024-01-26 15:12:00</td>
+        <td>Calle 45 B # 12A65</td>
+        <td>3127892023</td>
+        <td>Administrador</td>
+        <td>
+          <button class="botones-min btn-editar"><i class="fa-solid fa-pen"></i></button>
+          <button class="botones-min btn-eliminar "><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+    
+</div>
+
+
+</header> 
+
+<script>
+
+const sidebar = document.getElementById("sidebar");
+
+sidebar.addEventListener("mouseenter", () => {
+  sidebar.classList.add("expanded"); 
+});
+
+sidebar.addEventListener("mouseleave", () => {
+  sidebar.classList.remove("expanded"); 
+});
+
+//Iniciar script del navbar
+const toggle = document.getElementById("navbar-toggle");
+const menu = document.getElementById("navbar-menu");
+
+toggle.addEventListener("click", () => {
+  menu.classList.toggle("active"); 
+});
+
+
+
+        $(document).ready(function() {
+            $('#tabla-estacionamientos').DataTable();
+        });
+
+ </script>
+
+<script>
+    const modal = document.getElementById('modal');
+  const abrirModal = document.getElementById('abrirModal');
+  const cerrarModal = document.getElementById('cerrarModal');
+  
+  abrirModal.addEventListener('click', (e) => {
+    e.preventDefault(); // Previene el comportamiento predeterminado del enlace
+    modal.style.display = 'flex';
+  });
+  
+  cerrarModal.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+    </script>
+  
+
+
+
+</body>
+</html>
