@@ -1,12 +1,12 @@
 const supabase = require('../supabaseClient');
 
 class Celda {
-  constructor(id_celda = null, tipo = null, estado = 'disponible', zona_id = null, nivel_id = null) {
+  constructor(id_celda = null, tipo = null, estado = 'disponible', zona_id = null) {
     this.id_celda = id_celda;
     this.tipo = tipo;
     this.estado = estado;
     this.zona_id = zona_id;
-    this.nivel_id = nivel_id;
+    
   }
 
   toJSON() {
@@ -15,7 +15,7 @@ class Celda {
       tipo: this.tipo,
       estado: this.estado,
       zona_id: this.zona_id,
-      nivel_id: this.nivel_id,
+      
     };
   }
 
@@ -25,7 +25,7 @@ class Celda {
     this.tipo = row.tipo;
     this.estado = row.estado;
     this.zona_id = row.zona_id;
-    this.nivel_id = row.nivel_id;
+  
     return this;
   }
 
@@ -35,18 +35,18 @@ class Celda {
     if (filters.estado) query = query.eq('estado', filters.estado);
     if (filters.tipo) query = query.eq('tipo', filters.tipo);
     if (filters.zona_id) query = query.eq('zona_id', filters.zona_id);
-    if (filters.nivel_id) query = query.eq('nivel_id', filters.nivel_id);
+    
 
     const { data, error } = await query;
     if (error) throw new Error(`Error encontrando celdas: ${error.message}`);
-    return data.map(row => new Celda(row.id, row.tipo, row.estado, row.zona_id, row.nivel_id));
+    return data.map(row => new Celda(row.id, row.tipo, row.estado, row.zona_id));
   }
 
   // 🔍 Busca celda específica por ID
   static async findById(id) {
     const { data, error } = await supabase.from('celda').select('*').eq('id', id).single();
     if (error && error.code !== 'PGRST116') throw new Error(`Error encontrando celda por ID: ${error.message}`);
-    return data ? new Celda(data.id, data.tipo, data.estado, data.zona_id, data.nivel_id) : null;
+    return data ? new Celda(data.id, data.tipo, data.estado, data.zona_id) : null;
   }
 
   // 🧠 Guarda (create o update según existencia de ID)
@@ -58,7 +58,7 @@ class Celda {
   async _create() {
     const { data, error } = await supabase
       .from('celda')
-      .insert({ tipo: this.tipo, estado: this.estado, zona_id: this.zona_id, nivel_id: this.nivel_id })
+      .insert({ tipo: this.tipo, estado: this.estado, zona_id: this.zona_id })
       .select()
       .single();
     if (error) throw new Error(`Error creando celda: ${error.message}`);
@@ -69,7 +69,7 @@ class Celda {
   async _update() {
     const { data, error } = await supabase
       .from('celda')
-      .update({ tipo: this.tipo, estado: this.estado, zona_id: this.zona_id, nivel_id: this.nivel_id })
+      .update({ tipo: this.tipo, estado: this.estado, zona_id: this.zona_id })
       .eq('id', this.id_celda)
       .select()
       .single();
