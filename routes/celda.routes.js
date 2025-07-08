@@ -19,7 +19,7 @@ router.get('/', catchAsync(async (req, res) => {
 // ✅ Obtener celdas libres por tipo (usado en operar.ejs)
 router.get('/disponibles/:tipo', catchAsync(async (req, res) => {
   const tipo = req.params.tipo;
-  const celdas = await Celda.findAll({ estado: 'disponible', tipo });
+  const celdas = await Celda.findAll({ estado: 'libre', tipo });
 
   res.json(celdas.map(c => c.toJSON()));
 }));

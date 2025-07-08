@@ -22,7 +22,7 @@ router.get('/login', (req, res) => {
 router.post('/login', catchAsync(async (req, res) => {
   const { 'admin-us': email, 'admin-clave': password } = req.body;
 
-  const usuario = await Usuario.findByEmail(email);
+  const usuario = await Usuario.findByEmail(email)
   if (!usuario) {
    
     return res.status(401).send('Credenciales inválidas. <a href="/admin/login">Intentar de nuevo</a>');
@@ -102,8 +102,6 @@ router.get('/incidencia', requireLogin, (req, res) => {
 });
 
 
-router.get('/niveles', requireLogin, (req, res) => {
-res.render('admin/niveles', { titulo: 'Gestionar Niveles', userName: req.session.userName });
-});
+
 
 module.exports = router;
