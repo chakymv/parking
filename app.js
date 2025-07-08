@@ -14,7 +14,7 @@ const reporteIncidenciasRoutes = require('./routes/reporte_incidencia.routes');
 const picoPlacaRoutes = require('./routes/pico_placa.routes');
 const perfilUsuarioRoutes = require('./routes/perfil_usuario.routes');
 const zonaRoutes = require('./routes/zona.routes');
-const nivelRoutes = require('./routes/nivel.routes');
+
 const parqueaderoRoutes = require('./routes/parqueadero.routes');
 const statsRoutes = require('./routes/stats.routes.js');
 const adminRoutes = require('./routes/admin.routes');
@@ -59,7 +59,7 @@ app.use('/api/reporte_incidencias', reporteIncidenciasRoutes);
 app.use('/api/pico_placa', picoPlacaRoutes);
 app.use('/api/perfil_usuario', perfilUsuarioRoutes);
 app.use('/api/zonas', zonaRoutes);
-app.use('/api/niveles', nivelRoutes);
+
 app.use('/api/parqueaderos', parqueaderoRoutes);
 app.use('/api/stats', statsRoutes);
 
