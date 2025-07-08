@@ -9,7 +9,7 @@
 </head>
 <body>
   <%- include('header') %>
-  <main>
+ <main>
     <div class="contenido-principal">
       <h1 class="centrar">Gestionar Celdas de Parqueo</h1>
       <hr class="linea-windows">
@@ -18,7 +18,7 @@
         <table id="celdas-table" class="dataTable" style="width:100%;margin-top:20px;"></table>
       </div>
 
-      <!-- Modal para crear/editar celda -->
+      <!-- Modal -->
       <div class="modal" id="modal-celda">
         <div class="contenido-modal">
           <div class="encabezado-modal">
@@ -27,7 +27,7 @@
           </div>
           <div class="cuerpo-modal">
             <form id="form-celda" autocomplete="off">
-              <input type="hidden" id="id_celda" name="id_celda">
+              <input type="hidden" id="id" name="id">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                 <div>
                   <label>Tipo de Vehículo</label>
@@ -40,7 +40,7 @@
                 <div>
                   <label>Estado</label>
                   <select id="estado" name="estado" required>
-                    <option value="disponible">Disponible</option>
+                    <option value="libre">Libre</option>
                     <option value="ocupado">Ocupado</option>
                     <option value="mantenimiento">Mantenimiento</option>
                   </select>
@@ -61,122 +61,173 @@
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
   <script src="/public/js/header.js" defer></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      let celdas = [];
-      let dataTableInstance = null;
-      let celdaSeleccionadaId = null;
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    let celdas = [];
+    let dataTableInstance = null;
+    let celdaSeleccionadaId = null;
 
-      const modal = document.getElementById('modal-celda');
-      const modalTitulo = document.getElementById('modal-titulo');
-      const form = document.getElementById('form-celda');
-      const table = document.getElementById('celdas-table');
-      const modalMsg = document.getElementById('modal-msg');
-      const btnCerrarModal = document.getElementById('btn-cerrar-modal');
-      const btnAbrirModalCrear = document.getElementById('btn-abrir-modal-crear');
-      const btnGuardar = document.getElementById('btn-guardar-celda');
-      const btnEliminar = document.getElementById('btn-eliminar-celda');
+    const modal = document.getElementById('modal-celda');
+    const modalTitulo = document.getElementById('modal-titulo');
+    const form = document.getElementById('form-celda');
+    const table = document.getElementById('celdas-table');
+    const modalMsg = document.getElementById('modal-msg');
+    const btnCerrarModal = document.getElementById('btn-cerrar-modal');
+    const btnAbrirModalCrear = document.getElementById('btn-abrir-modal-crear');
+    const btnGuardar = document.getElementById('btn-guardar-celda');
+    const btnEliminar = document.getElementById('btn-eliminar-celda');
 
-      function abrirModalCrear() {
-        celdaSeleccionadaId = null;
-        modalTitulo.innerText = 'Crear Nueva Celda';
-        form.reset();
-        if(modalMsg) modalMsg.innerText = '';
-        btnEliminar.style.display = 'none';
-        btnGuardar.innerText = 'Guardar';
-        modal.classList.add('active');
+    function abrirModalCrear() {
+      celdaSeleccionadaId = null;
+      modalTitulo.innerText = 'Crear Nueva Celda';
+      form.reset();
+      if (modalMsg) modalMsg.innerText = '';
+      form.elements['id'].value = ''; // ✅ corregido
+      btnEliminar.style.display = 'none';
+      btnGuardar.innerText = 'Guardar';
+      modal.classList.add('active');
+    }
+
+    function abrirModalEditar(celda) {
+      if (!celda) return;
+      celdaSeleccionadaId = celda.id;
+      modalTitulo.innerText = 'Editar Celda';
+      form.reset();
+      if (modalMsg) modalMsg.innerText = '';
+      for (const key in celda) {
+        if (form.elements[key]) {
+          form.elements[key].value = celda[key] || '';
+        }
       }
+      btnEliminar.style.display = 'inline-block';
+      btnGuardar.innerText = 'Guardar Cambios';
+      modal.classList.add('active');
+    }
 
-      function abrirModalEditar(celda) {
-        if (!celda) return;
-        celdaSeleccionadaId = celda.id_celda;
-        modalTitulo.innerText = 'Editar Celda';
-        form.reset();
-        if(modalMsg) modalMsg.innerText = '';
-        for (const key in celda) {
-          if (form.elements[key]) {
-            form.elements[key].value = celda[key] || '';
+    function cerrarModal() {
+      modal.classList.remove('active');
+    }
+
+    async function cargarCeldas() {
+      try {
+        const res = await fetch('/api/celdas');
+        if (!res.ok) throw new Error('Error al cargar las celdas.');
+        const rawCeldas = await res.json();
+        celdas = rawCeldas.map(c => ({
+          id: c.id,
+          tipo: c.tipo,
+          estado: c.estado
+        }));
+        if (dataTableInstance) {
+          dataTableInstance.clear().rows.add(celdas).draw();
+        }
+      } catch (error) {
+        console.error(error);
+        if (dataTableInstance) {
+          $('#celdas-table tbody').html('<tr><td colspan="3" style="text-align:center;">No se pudieron cargar las celdas.</td></tr>');
+        }
+      }
+    }
+
+    function inicializarTabla() {
+      dataTableInstance = $(table).DataTable({
+        data: [],
+        columns: [
+          { data: 'id', title: 'ID Celda', visible: false },
+          { data: 'tipo', title: 'Tipo' },
+          { data: 'estado', title: 'Estado' }
+        ],
+        responsive: true,
+        language: {
+          info: "Mostrando _START_ a _END_ de _TOTAL_ celdas",
+          lengthMenu: "Mostrar _MENU_ celdas",
+          search: "Buscar:",
+          paginate: {
+            first: "Primero",
+            last: "Último",
+            next: "Siguiente",
+            previous: "Anterior"
           }
+        },
+        createdRow: (row) => $(row).addClass('clickable-row')
+      });
+
+      $('#celdas-table tbody').on('click', 'tr', function () {
+        const rowData = dataTableInstance.row(this).data();
+        if (rowData) {
+          const celda = celdas.find(c => c.id == rowData.id);
+          abrirModalEditar(celda);
         }
-        btnEliminar.style.display = 'inline-block';
-        btnGuardar.innerText = 'Guardar Cambios';
-        modal.classList.add('active');
-      }
+      });
+    }
 
-      function cerrarModal() { modal.classList.remove('active'); }
+    async function guardarCelda(e) {
+      e.preventDefault();
+      if (modalMsg) modalMsg.innerText = '';
+      const data = Object.fromEntries(new FormData(form));
+      const url = celdaSeleccionadaId ? `/api/celdas/${data.id}` : '/api/celdas';
+      const method = celdaSeleccionadaId ? 'PUT' : 'POST';
 
-      async function cargarCeldas() {
-        try {
-          const res = await fetch('/api/celdas');
-          if (!res.ok) throw new Error('Error al cargar las celdas.');
-          const rawCeldas = await res.json();
-          // Mapeamos los datos crudos al formato que espera el frontend
-          celdas = rawCeldas.map(c => ({
-            id_celda: c.id,
-            tipo: c.tipo,
-            estado: c.estado
-          }));
-          if (dataTableInstance) dataTableInstance.clear().rows.add(celdas).draw();
-        } catch (error) {
-          console.error(error);
-          if (dataTableInstance) $('#celdas-table tbody').html('<tr><td colspan="3" style="text-align:center;">No se pudieron cargar las celdas.</td></tr>');
-        }
-      }
-
-      function inicializarTabla() {
-        dataTableInstance = $(table).DataTable({
-          data: [],
-          columns: [
-            { data: 'id_celda', title: 'ID Celda' },
-            { data: 'tipo', title: 'Tipo' },
-            { data: 'estado', title: 'Estado' }
-          ],
-          responsive: true,
-          language: { url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json" },
-          createdRow: (row) => $(row).addClass('clickable-row')
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
         });
-        $('#celdas-table tbody').on('click', 'tr', function () {
-          const rowData = dataTableInstance.row(this).data();
-          if (rowData) abrirModalEditar(celdas.find(c => c.id_celda == rowData.id_celda));
-        });
-      }
 
-      async function guardarCelda(e) {
-        e.preventDefault();
-        if(modalMsg) modalMsg.innerText = '';
-        const data = Object.fromEntries(new FormData(form));
-        const url = celdaSeleccionadaId ? `/api/celdas/${data.id_celda}` : '/api/celdas';
-        const method = celdaSeleccionadaId ? 'PUT' : 'POST';
-        try {
-          const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-          if (!res.ok) throw new Error((await res.json()).error || 'Ocurrió un error.');
-          cerrarModal();
-          await cargarCeldas();
-        } catch (error) {
-          if(modalMsg) modalMsg.innerText = error.message;
+        if (!res.ok) {
+          let mensajeError = 'Ocurrió un error.';
+          try {
+            const json = await res.clone().json(); // ✅ uso defensivo
+            mensajeError = json.error || mensajeError;
+          } catch {
+            const texto = await res.text();
+            mensajeError = texto || mensajeError;
+          }
+          throw new Error(mensajeError);
         }
-      }
 
-      async function eliminarCelda() {
-        if (!celdaSeleccionadaId || !confirm(`¿Eliminar celda ID ${celdaSeleccionadaId}?`)) return;
-        try {
-          const res = await fetch(`/api/celdas/${celdaSeleccionadaId}`, { method: 'DELETE' });
-          if (!res.ok) throw new Error((await res.json()).error || 'Error al eliminar.');
-          cerrarModal();
-          await cargarCeldas();
-        } catch (error) {
-          if(modalMsg) modalMsg.innerText = error.message;
+        cerrarModal();
+        await cargarCeldas();
+      } catch (error) {
+        if (modalMsg) modalMsg.innerText = error.message;
+      }
+    }
+
+    async function eliminarCelda() {
+      const id = form.elements['id'].value;
+      if (!id || !confirm(`¿Eliminar celda ID ${id}?`)) return;
+      try {
+        const res = await fetch(`/api/celdas/${id}`, { method: 'DELETE' });
+
+        if (!res.ok) {
+          let mensajeError = 'Error al eliminar.';
+          try {
+            const json = await res.clone().json();
+            mensajeError = json.error || mensajeError;
+          } catch {
+            const texto = await res.text();
+            mensajeError = texto || mensajeError;
+          }
+          throw new Error(mensajeError);
         }
+
+        cerrarModal();
+        await cargarCeldas();
+      } catch (error) {
+        if (modalMsg) modalMsg.innerText = error.message;
       }
+    }
 
-      btnAbrirModalCrear?.addEventListener('click', abrirModalCrear);
-      btnCerrarModal?.addEventListener('click', cerrarModal);
-      form?.addEventListener('submit', guardarCelda);
-      btnEliminar?.addEventListener('click', eliminarCelda);
+    btnAbrirModalCrear?.addEventListener('click', abrirModalCrear);
+    btnCerrarModal?.addEventListener('click', cerrarModal);
+    form?.addEventListener('submit', guardarCelda);
+    btnEliminar?.addEventListener('click', eliminarCelda);
 
-      inicializarTabla();
-      cargarCeldas();
-    });
-  </script>
+    inicializarTabla();
+    cargarCeldas();
+  });
+</script>
+
 </body>
 </html>

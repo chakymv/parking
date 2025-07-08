@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <title><%= titulo || 'Administrar usuarios del sistema' %></title>
   <link rel="stylesheet" href="/admin/css/estilo.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <% if (typeof extraHead !== 'undefined') { %>
     <%- extraHead %>
   <% } %>
@@ -16,8 +17,8 @@
     <div class="contenido-principal">
       <h1 class="centrar">Administrar usuarios del sistema</h1>
       <hr class="linea-windows">
-      <div id="gestion-usuarios-content">
-        <button class="btn-agregar" id="btn-abrir-modal-crear">Agregar Usuario</button>
+      <div id="crear-usuarios-content">
+        <button class="btn-agregar" onclick="abrirModalCrear()">Agregar Usuario</button>
         <table id="usuarios-table" class="dataTable" style="width:100%;margin-top:20px;"></table>
       </div>
 
@@ -25,8 +26,8 @@
       <div class="modal" id="modal-usuario">
         <div class="contenido-modal">
           <div class="encabezado-modal">
-            <span id="modal-titulo"></span>
-            <button class="cerrar" id="btn-cerrar-modal">&times;</button>
+            <span id="modal-titulo">Crear Usuario</span>
+            <button class="cerrar" onclick="cerrarModal()">&times;</button>
           </div>
           <div class="cuerpo-modal">
             <form id="form-usuario" autocomplete="off">
@@ -84,13 +85,11 @@
                 </div>
                 <div>
                   <label>Contraseña</label>
-                  <input type="password" id="clave" name="clave" placeholder="Dejar en blanco para no cambiar">
+                  <input type="password" id="clave" name="clave" required>
                 </div>
               </div>
-              <div id="modal-msg" style="color:red;margin-top:10px;text-align:center;"></div>
-              <div class="pie-modal" style="margin-top:15px;text-align:right;display:flex;justify-content:flex-end;gap:10px;">
-                <button type="submit" id="btn-guardar-usuario" class="btn-guardar">Guardar</button>
-                <button type="button" id="btn-eliminar-usuario" class="btn-eliminar" style="display:none;">Eliminar</button>
+              <div style="margin-top:15px;text-align:right;">
+                <button type="submit" class="btn-guardar">Guardar</button>
               </div>
             </form>
           </div>
@@ -98,11 +97,96 @@
       </div>
     </div>
   </main>
-  <!-- Scripts al final para mejor rendimiento -->
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-  <script src="/public/js/header.js" defer></script>
-  <script src="/public/js/gestion-usuarios.js" defer></script>
+  <script>
+    let usuarios = [];
+    let editando = false;
+
+    function abrirModalCrear() {
+      editando = false;
+      document.getElementById('modal-titulo').innerText = 'Crear Usuario';
+      document.getElementById('form-usuario').reset();
+      document.getElementById('id_usuario').value = '';
+      document.getElementById('modal-usuario').classList.add('active');
+    }
+    function abrirModalEditar(usuario) {
+      editando = true;
+      document.getElementById('modal-titulo').innerText = 'Editar Usuario';
+      for (const key in usuario) {
+        if(document.getElementById(key)) document.getElementById(key).value = usuario[key] || '';
+      }
+      document.getElementById('modal-usuario').classList.add('active');
+    }
+    function cerrarModal() {
+      document.getElementById('modal-usuario').classList.remove('active');
+    }
+
+    async function cargarUsuarios() {
+      const res = await fetch('/api/usuarios');
+      usuarios = await res.json();
+      renderTabla();
+    }
+
+    function renderTabla() {
+      const table = document.getElementById('usuarios-table');
+      let html = `<thead><tr><th>Tipo Doc</th><th>Num Doc</th><th>Nombre</th><th>Apellido</th><th>Correo</th><th>Celular</th><th>Estado</th><th>Perfil</th><th>Acciones</th>
+      </tr></thead><tbody>`;
+      usuarios.filter(u => u.perfil_usuario_id !== 3).forEach(u => {
+        html += `<tr>
+          <td>${u.tipo_documento}</td>
+          <td>${u.numero_documento}</td>
+          <td>${u.primer_nombre} ${u.segundo_nombre||''}</td>
+          <td>${u.primer_apellido} ${u.segundo_apellido||''}</td>
+          <td>${u.direccion_correo}</td>
+          <td>${u.numero_celular||''}</td>
+          <td>${u.estado}</td>
+          <td>${perfilTexto(u.perfil_usuario_id)}</td>
+          <td>
+            <button class="btn-editar" onclick='abrirModalEditar(${JSON.stringify(u)})'>Editar</button>
+            <button class="btn-eliminar" onclick='eliminarUsuario(${u.id_usuario})'>Eliminar</button>
+          </td>
+        </tr>`;
+      });
+      html += '</tbody>';
+      table.innerHTML = html;
+    }
+
+    function perfilTexto(id) {
+      if(id==1) return 'Administrador';
+      if(id==2) return 'Operador';
+      return 'Desconocido';
+    }
+
+    document.getElementById('form-usuario').onsubmit = async function(e) {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(this));
+      let url = '/api/usuarios';
+      let method = 'POST';
+      if(editando && data.id_usuario) {
+        url += '/' + data.id_usuario;
+        method = 'PUT';
+      }
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if(res.ok) {
+        cerrarModal();
+        cargarUsuarios();
+      } else {
+        alert('Error al guardar usuario');
+      }
+    };
+
+    async function eliminarUsuario(id) {
+      if(!confirm('¿Eliminar usuario?')) return;
+      const res = await fetch('/api/usuarios/' + id, { method: 'DELETE' });
+      if(res.ok) cargarUsuarios();
+      else alert('Error al eliminar');
+    }
+
+    window.onload = cargarUsuarios;
+  </script>
   <% if (typeof extraBody !== 'undefined') { %>
     <%- extraBody %>
   <% } %>

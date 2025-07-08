@@ -16,6 +16,7 @@
       <h1 class="centrar">Gestionar Usuarios</h1>
       <p class="centrar">Esta tabla permite realizar búsqueda y gestión de usuarios</p>
       <hr class="linea-windows">
+
       <div class="filtros-usuarios">
         <input id="filtro-usuarios" class="input-filtro" placeholder="Buscar usuario..." oninput="filterUsuariosTable()" />
       </div>
@@ -82,8 +83,21 @@
   </main>
   <script>
     // --- USUARIOS ---
+    const usuariosColNames = {
+      id_usuario: 'ID',
+      tipo_documento: 'Tipo Doc.',
+      numero_documento: 'Documento',
+      primer_nombre: 'Primer Nombre',
+      segundo_nombre: 'Segundo Nombre',
+      primer_apellido: 'Primer Apellido',
+      segundo_apellido: 'Segundo Apellido',
+      direccion_correo: 'Correo',
+      numero_celular: 'Celular',
+      estado: 'Estado',
+      perfil_usuario_id: 'Perfil'
+    };
     const usuariosAllColumns = ['id_usuario', 'tipo_documento', 'numero_documento', 'primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'direccion_correo', 'numero_celular', 'estado', 'perfil_usuario_id'];
-    let usuariosColumns = [...usuariosAllColumns];
+    let usuariosColumns = ['numero_documento', 'primer_nombre', 'primer_apellido', 'direccion_correo', 'estado', 'perfil_usuario_id'];
     let usuariosData = [];
     let usuariosDataTableInstance = null;
 
@@ -112,13 +126,21 @@
         return;
       }
       let header = '<thead><tr>';
-      usuariosColumns.forEach(col => header += `<th>${col}</th>`);
+      usuariosColumns.forEach(col => header += `<th>${usuariosColNames[col] || col}</th>`);
       header += '</tr></thead>';
       table.innerHTML += header;
       let rows = '<tbody>';
       (filteredData || usuariosData).forEach((row, idx) => {
         let tr = `<tr class='usuario-row' data-id='${row.id_usuario}' style='cursor:pointer;'>`;
-        usuariosColumns.forEach(col => tr += `<td>${row[col] ?? ''}</td>`);
+        usuariosColumns.forEach(col => {
+          let cellValue = row[col] ?? '';
+          if (col === 'perfil_usuario_id') {
+            if (cellValue === 1) cellValue = 'Administrador';
+            else if (cellValue === 2) cellValue = 'Operador';
+            else if (cellValue === 3) cellValue = 'Usuario';
+          }
+          tr += `<td>${cellValue}</td>`
+        });
         tr += '</tr>';
         rows += tr;
       });

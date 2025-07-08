@@ -103,7 +103,7 @@
                 <option value="">Seleccione un propietario</option>
               </select>
               <div id="usuario-no-encontrado-msg" style="color:red;margin-top:5px;display:none;">
-                Usuario no encontrado. <a href="/admin/usuarios" target="_blank">Registrar usuario</a>.
+                Usuario no encontrado. <a href="/admin/crear_usuarios" target="_blank">Registrar usuario</a>.
               </div>
             </div>
             <div id="modal-registrar-msg" style="color:red;margin-top:10px;text-align:center;"></div>
@@ -136,249 +136,237 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const placaInput = document.getElementById('placa-input');
-      const btnIngreso = document.getElementById('btn-ingreso');
-      const btnSalida = document.getElementById('btn-salida');
-      const mensajeAccion = document.getElementById('mensaje-accion');
+  const placaInput = document.getElementById('placa-input');
+  const btnIngreso = document.getElementById('btn-ingreso');
+  const btnSalida = document.getElementById('btn-salida');
+  const mensajeAccion = document.getElementById('mensaje-accion');
 
-      // Modal de asignación de celdas
-      const modalAsignarCelda = document.getElementById('modal-asignar-celda');
-      const btnCerrarModalCelda = document.getElementById('btn-cerrar-modal-celda');
-      const celdasGrid = document.getElementById('celdas-disponibles-grid');
-      const placaModalSpan = document.getElementById('placa-modal-span');
-      const btnConfirmarAsignacion = document.getElementById('btn-confirmar-asignacion');
-      const modalCeldaMsg = document.getElementById('modal-celda-msg');
+  const modalAsignarCelda = document.getElementById('modal-asignar-celda');
+  const modalRegistrarVehiculo = document.getElementById('modal-registrar-vehiculo');
+  const formRegistrarVehiculo = document.getElementById('form-registrar-vehiculo');
+  const placaModalSpan = document.getElementById('placa-modal-span');
+  const celdasGrid = document.getElementById('celdas-disponibles-grid');
+  const modalCeldaMsg = document.getElementById('modal-celda-msg');
+  const selectUsuario = document.getElementById('usuario_id_usuario_operar');
+  const inputBuscarUsuario = document.getElementById('usuario-buscar-doc-operar');
 
-      // Modal de registro de vehículo
-      const modalRegistrarVehiculo = document.getElementById('modal-registrar-vehiculo');
-      const btnCerrarModalRegistrar = document.getElementById('btn-cerrar-modal-registrar');
-      const formRegistrarVehiculo = document.getElementById('form-registrar-vehiculo');
-      const inputBuscarUsuario = document.getElementById('usuario-buscar-doc-operar');
-      const selectUsuario = document.getElementById('usuario_id_usuario_operar');
+  let vehiculoActual = null, celdaSeleccionadaId = null;
 
-      let vehiculoActual = null;
-      let celdaSeleccionadaId = null;
+  const mostrarMensaje = (msg, tipo = 'exito') => {
+    const clase = tipo === 'exito' ? 'mensaje-exito' : 'mensaje-error';
+    mensajeAccion.innerHTML = `<h2><i class="fa-solid fa-${tipo === 'exito' ? 'check' : 'x'}-circle icono-mensaje"></i> ${msg}</h2>`;
+    mensajeAccion.className = `centrar-texto ${clase}`;
+    mensajeAccion.classList.remove('oculto');
+    setTimeout(() => mensajeAccion.classList.add('oculto'), 6000);
+  };
 
-      function mostrarMensaje(mensaje, tipo = 'exito') {
-        const clase = tipo === 'exito' ? 'mensaje-exito' : 'mensaje-error';
-        mensajeAccion.innerHTML = `<h2><i class="fa-solid ${tipo === 'exito' ? 'fa-check-circle' : 'fa-times-circle'} icono-mensaje"></i> ${mensaje}</h2>`;
-        mensajeAccion.className = `centrar-texto ${clase}`;
-        mensajeAccion.classList.remove('oculto');
-        setTimeout(() => mensajeAccion.classList.add('oculto'), 6000);
+  const abrirModalRegistrarVehiculo = placa => {
+    formRegistrarVehiculo.reset();
+    document.getElementById('placa_registrar').value = placa;
+    document.getElementById('placa-registrar-span').innerText = placa;
+    document.getElementById('usuario-no-encontrado-msg').style.display = 'none';
+    document.getElementById('modal-registrar-msg').innerText = '';
+    selectUsuario.innerHTML = '<option value="">Seleccione un propietario</option>';
+    modalRegistrarVehiculo.classList.add('active');
+  };
+
+  const limpiarModalCeldas = () => {
+    celdasGrid.innerHTML = '<p>Cargando celdas...</p>';
+    celdaSeleccionadaId = null;
+    document.getElementById('btn-confirmar-asignacion').disabled = true;
+    modalCeldaMsg.innerText = '';
+  };
+
+    async function handleIngreso() {
+    const placa = placaInput.value.trim().toUpperCase();
+    if (!placa) return mostrarMensaje('Por favor, ingrese una placa.', 'error');
+
+    try {
+      const resVehiculo = await fetch(`/api/vehiculos/placa/${placa}`);
+      if (!resVehiculo.ok) {
+        if (resVehiculo.status === 404) return abrirModalRegistrarVehiculo(placa);
+        throw new Error('Error al verificar el vehículo.');
+      }
+      vehiculoActual = await resVehiculo.json();
+
+      const resHistorial = await fetch(`/api/historial_parqueo/activo/${vehiculoActual.id}`);
+      if (resHistorial.ok) return mostrarMensaje(`El vehículo ${placa} ya tiene un ingreso activo.`, 'error');
+
+      placaModalSpan.innerText = vehiculoActual.placa;
+      limpiarModalCeldas();
+      modalAsignarCelda.classList.add('active');
+
+      const resCeldas = await fetch(`/api/celdas/disponibles/${vehiculoActual.tipo}`);
+     if (!resCeldas.ok) throw new Error('No se pudieron cargar las celdas disponibles.');
+      const celdas = await resCeldas.json();
+
+      celdasGrid.innerHTML = celdas.length
+        ? ''
+        : `<p style="color:red;text-align:center;">No hay celdas disponibles para tipo '${vehiculoActual.tipo}'.</p>`;
+
+      celdas.forEach(c => {
+        const celdaDiv = document.createElement('div');
+        celdaDiv.className = 'celda-item';
+        celdaDiv.dataset.id = c.id;
+        celdaDiv.innerHTML = `<h4>Celda ${c.id}</h4><p>${c.tipo}</p><p style="color:green;font-weight:bold;">${c.estado}</p>`;
+        celdaDiv.onclick = () => {
+          celdasGrid.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+          celdaDiv.classList.add('selected');
+          celdaSeleccionadaId = c.id;
+          document.getElementById('btn-confirmar-asignacion').disabled = false;
+        };
+        celdasGrid.appendChild(celdaDiv);
+      });
+    } catch (error) {
+      console.error(error);
+      mostrarMensaje(error.message || 'Error inesperado.', 'error');
+    }
+  }
+
+  // CONFIRMAR ASIGNACION Y SALIDA DEL VEHICULO
+  async function confirmarAsignacion() {
+    if (!vehiculoActual || !celdaSeleccionadaId) {
+      modalCeldaMsg.innerText = 'Error: No se ha seleccionado vehículo o celda.';
+      return;
+    }
+
+    modalCeldaMsg.innerText = 'Procesando...';
+    document.getElementById('btn-confirmar-asignacion').disabled = true;
+
+    try {
+      const res = await fetch('/api/historial_parqueo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vehiculo_id: vehiculoActual.id, celda_id: celdaSeleccionadaId })
+      });
+
+      let resultado;
+      try {
+        resultado = await res.clone().json();
+      } catch {
+        const texto = await res.text();
+        throw new Error(texto || 'Error al registrar el ingreso.');
       }
 
-      function limpiarModalCeldas() {
-        celdasGrid.innerHTML = '<p>Cargando celdas...</p>';
-        celdaSeleccionadaId = null;
-        btnConfirmarAsignacion.disabled = true;
-        modalCeldaMsg.innerText = '';
+      if (!res.ok) throw new Error(resultado.error || 'Error al registrar el ingreso.');
+
+      modalAsignarCelda.classList.remove('active');
+      placaInput.value = '';
+      mostrarMensaje(`Ingreso exitoso: placa ${vehiculoActual.placa}, celda ${celdaSeleccionadaId}.`);
+    } catch (error) {
+      modalCeldaMsg.innerText = error.message;
+      document.getElementById('btn-confirmar-asignacion').disabled = false;
+    }
+  }
+
+  async function handleSalida() {
+    const placa = placaInput.value.trim().toUpperCase();
+    if (!placa) return mostrarMensaje('Por favor, ingrese una placa.', 'error');
+
+    try {
+      const resVehiculo = await fetch(`/api/vehiculos/placa/${placa}`);
+      if (!resVehiculo.ok) {
+        const msg = resVehiculo.status === 404
+          ? `Vehículo con placa ${placa} no está registrado.`
+          : 'Error al verificar el vehículo.';
+        throw new Error(msg);
       }
 
-      function abrirModalRegistrarVehiculo(placa) {
-        formRegistrarVehiculo.reset();
-        document.getElementById('placa_registrar').value = placa;
-        document.getElementById('placa-registrar-span').innerText = placa;
+      const vehiculo = await resVehiculo.json();
+      const res = await fetch('/api/historial_parqueo/salida', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vehiculo_id: vehiculo.id })
+      });
+
+      let resultado;
+      try {
+        resultado = await res.clone().json();
+      } catch {
+        const texto = await res.text();
+        throw new Error(texto || 'Error procesando la salida.');
+      }
+
+      if (!res.ok) throw new Error(resultado.error || 'Error procesando salida.');
+
+      placaInput.value = '';
+      mostrarMensaje(`Salida exitosa. Celda ${resultado.celda_id} liberada.`);
+    } catch (error) {
+      mostrarMensaje(error.message, 'error');
+    }
+  }
+//Registro de vehiculo y eventos finales
+  inputBuscarUsuario.addEventListener('input', async () => {
+    const doc = inputBuscarUsuario.value.trim();
+    const msgNotFound = document.getElementById('usuario-no-encontrado-msg');
+    msgNotFound.style.display = 'none';
+
+    if (doc.length < 3) {
+      selectUsuario.innerHTML = '<option value="">Seleccione un propietario</option>';
+      return;
+    }
+
+    selectUsuario.innerHTML = '<option value="">Buscando...</option>';
+    try {
+      const res = await fetch(`/api/usuarios/documento/${encodeURIComponent(doc)}`);
+      if (!res.ok) {
         selectUsuario.innerHTML = '<option value="">Seleccione un propietario</option>';
-        document.getElementById('usuario-no-encontrado-msg').style.display = 'none';
-        document.getElementById('modal-registrar-msg').innerText = '';
-        modalRegistrarVehiculo.classList.add('active');
+        if (res.status === 404) msgNotFound.style.display = 'block';
+        return;
       }
+      const usuario = await res.json();
+      const nombre = `${usuario.primer_nombre || ''} ${usuario.primer_apellido || ''}`.trim();
+      selectUsuario.innerHTML = `<option value="${usuario.id_usuario}" selected>${nombre} (${usuario.numero_documento})</option>`;
+    } catch {
+      selectUsuario.innerHTML = '<option value="">Error de búsqueda</option>';
+    }
+  });
 
-      async function handleIngreso() {
-        const placa = placaInput.value.trim().toUpperCase();
-        if (!placa) {
-          mostrarMensaje('Por favor, ingrese una placa.', 'error');
-          return;
-        }
+  formRegistrarVehiculo.addEventListener('submit', async e => {
+    e.preventDefault();
+    const modalMsg = document.getElementById('modal-registrar-msg');
+    modalMsg.innerText = '';
+    const data = Object.fromEntries(new FormData(formRegistrarVehiculo));
 
-        try {
-          // 1. Verificar si el vehículo existe
-          const resVehiculo = await fetch(`/api/vehiculos/placa/${placa}`);
-          if (!resVehiculo.ok) {
-            if (resVehiculo.status === 404) {
-              abrirModalRegistrarVehiculo(placa);
-            } else {
-              throw new Error('Error al verificar el vehículo.');
-            }
-            return;
-          }
-          vehiculoActual = await resVehiculo.json();
+    if (!data.usuario_id_usuario) {
+      modalMsg.innerText = 'Debe seleccionar un propietario para el vehículo.';
+      return;
+    }
 
-          // 2. Verificar si el vehículo ya tiene un ingreso activo
-          const resHistorial = await fetch(`/api/historial_parqueo/activo/${vehiculoActual.id}`);
-          if (resHistorial.ok) {
-              mostrarMensaje(`El vehículo con placa ${placa} ya tiene un ingreso activo.`, 'error');
-              return;
-          }
-
-          // 3. Cargar celdas disponibles y abrir modal
-          placaModalSpan.innerText = vehiculoActual.placa;
-          limpiarModalCeldas();
-          modalAsignarCelda.classList.add('active');
-
-          const resCeldas = await fetch(`/api/celdas/disponibles/${vehiculoActual.tipo}`);
-          if (!resCeldas.ok) throw new Error('No se pudieron cargar las celdas disponibles.');
-          
-          const celdasDisponibles = await resCeldas.json();
-          
-          if (celdasDisponibles.length === 0) {
-            celdasGrid.innerHTML = `<p style="color: red; text-align: center;">No hay celdas disponibles para tipo '${vehiculoActual.tipo}'.</p>`;
-          } else {
-            celdasGrid.innerHTML = '';
-            celdasDisponibles.forEach(celda => {
-              const celdaDiv = document.createElement('div');
-              celdaDiv.className = 'celda-item';
-              celdaDiv.dataset.id = celda.id_celda;
-              celdaDiv.innerHTML = `<h4>Celda ${celda.id_celda}</h4><p>${celda.tipo}</p><p style="color: #28a745; font-weight: bold; text-transform: capitalize;">${celda.estado}</p>`;
-              celdaDiv.addEventListener('click', () => {
-                const seleccionadaAnterior = celdasGrid.querySelector('.selected');
-                if (seleccionadaAnterior) seleccionadaAnterior.classList.remove('selected');
-                celdaDiv.classList.add('selected');
-                celdaSeleccionadaId = celda.id_celda;
-                btnConfirmarAsignacion.disabled = false;
-              });
-              celdasGrid.appendChild(celdaDiv);
-            });
-          }
-
-        } catch (error) {
-          console.error('Error en el proceso de ingreso:', error);
-          mostrarMensaje(error.message || 'Ocurrió un error inesperado.', 'error');
-        }
-      }
-
-      async function confirmarAsignacion() {
-        if (!vehiculoActual || !celdaSeleccionadaId) {
-          modalCeldaMsg.innerText = 'Error: No se ha seleccionado vehículo o celda.';
-          return;
-        }
-
-        btnConfirmarAsignacion.disabled = true;
-        modalCeldaMsg.innerText = 'Procesando...';
-
-        try {
-          // 1. Crear el registro en el historial de parqueo
-          const resHistorial = await fetch('/api/historial_parqueo', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ vehiculo_id: vehiculoActual.id, celda_id: celdaSeleccionadaId })
-          });
-          const resultado = await resHistorial.json();
-          if (!resHistorial.ok) throw new Error(resultado.error || 'Error al registrar el ingreso.');
-
-          // 3. Cerrar modal y mostrar mensaje de éxito
-          modalAsignarCelda.classList.remove('active');
-          placaInput.value = '';
-          mostrarMensaje(`Ingreso exitoso para placa ${vehiculoActual.placa} en celda ${celdaSeleccionadaId}.`, 'exito');
-
-        } catch (error) {
-          console.error('Error al confirmar asignación:', error);
-          modalCeldaMsg.innerText = error.message;
-          btnConfirmarAsignacion.disabled = false;
-        }
-      }
-      
-      async function handleSalida() {
-        const placa = placaInput.value.trim().toUpperCase();
-        if (!placa) {
-          mostrarMensaje('Por favor, ingrese una placa.', 'error');
-          return;
-        }
-
-        try {
-            const resVehiculo = await fetch(`/api/vehiculos/placa/${placa}`);
-            if (!resVehiculo.ok) {
-                if (resVehiculo.status === 404) throw new Error(`Vehículo con placa ${placa} no está registrado.`);
-                throw new Error('Error al verificar el vehículo.');
-            }
-            const vehiculo = await resVehiculo.json();
-
-            const resSalida = await fetch(`/api/historial_parqueo/salida`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ vehiculo_id: vehiculo.id })
-            });
-
-            if (!resSalida.ok) throw new Error((await resSalida.json()).error || 'Error al procesar la salida.');
-
-            const resultadoSalida = await resSalida.json();
-            placaInput.value = '';
-            mostrarMensaje(`Salida exitosa para placa ${placa}. Celda ${resultadoSalida.celda_id} ahora está disponible.`, 'exito');
-
-        } catch (error) {
-            console.error('Error en el proceso de salida:', error);
-            mostrarMensaje(error.message, 'error');
-        }
-      }
-
-      // Lógica para el modal de registro de vehículo
-      inputBuscarUsuario.addEventListener('input', async () => {
-        const doc = inputBuscarUsuario.value.trim();
-        const msgUsuarioNoEncontrado = document.getElementById('usuario-no-encontrado-msg');
-        msgUsuarioNoEncontrado.style.display = 'none';
-
-        if (doc.length < 3) { // No buscar hasta que haya al menos 3 caracteres
-          selectUsuario.innerHTML = '<option value="">Seleccione un propietario</option>';
-          return;
-        }
-        
-        selectUsuario.innerHTML = '<option value="">Buscando...</option>';
-
-        try {
-            const res = await fetch(`/api/usuarios/documento/${encodeURIComponent(doc)}`);
-            if (!res.ok) {
-                if (res.status === 404) {
-                    selectUsuario.innerHTML = '<option value="">Seleccione un propietario</option>';
-                    msgUsuarioNoEncontrado.style.display = 'block';
-                } else {
-                    selectUsuario.innerHTML = '<option value="">Error al buscar</option>';
-                }
-                return;
-            }
-            const usuario = await res.json();
-            const nombres = `${usuario.primer_nombre || ''} ${usuario.primer_apellido || ''}`.trim();
-            selectUsuario.innerHTML = `<option value="${usuario.id_usuario}" selected>${nombres} (${usuario.numero_documento})</option>`;
-        } catch (error) {
-            console.error('Error buscando usuario:', error);
-            selectUsuario.innerHTML = '<option value="">Error de búsqueda</option>';
-        }
+    try {
+      const res = await fetch('/api/vehiculos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
       });
 
-      formRegistrarVehiculo.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const modalMsg = document.getElementById('modal-registrar-msg');
-        modalMsg.innerText = '';
-        
-        const data = Object.fromEntries(new FormData(formRegistrarVehiculo));
+      let resultado;
+      try {
+        resultado = await res.clone().json();
+      } catch {
+        const texto = await res.text();
+        throw new Error(texto || 'No se pudo registrar el vehículo.');
+      }
 
-        if (!data.usuario_id_usuario) {
-            modalMsg.innerText = 'Debe seleccionar un propietario para el vehículo.';
-            return;
-        }
+      if (!res.ok) throw new Error(resultado.error || 'No se pudo registrar el vehículo.');
 
-        try {
-            const res = await fetch('/api/vehiculos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
+      modalRegistrarVehiculo.classList.remove('active');
+      mostrarMensaje(`Vehículo ${data.placa} registrado. Ahora asigne una celda.`, 'exito');
+      await handleIngreso(); // Reintenta ingreso después de registrar
+    } catch (error) {
+      modalMsg.innerText = error.message;
+    }
+  });
 
-            if (!res.ok) throw new Error((await res.json()).error || 'No se pudo registrar el vehículo.');
+  // Eventos finales
+  btnIngreso.addEventListener('click', handleIngreso);
+  btnSalida.addEventListener('click', handleSalida);
+  document.getElementById('btn-cerrar-modal-celda').onclick = () => modalAsignarCelda.classList.remove('active');
+  document.getElementById('btn-cerrar-modal-registrar').onclick = () => modalRegistrarVehiculo.classList.remove('active');
+  document.getElementById('btn-confirmar-asignacion').addEventListener('click', confirmarAsignacion);
+});
+</script>
 
-            modalRegistrarVehiculo.classList.remove('active');
-            mostrarMensaje(`Vehículo ${data.placa} registrado. Ahora asigne una celda.`, 'exito');
-            await handleIngreso(); // Re-intentar el ingreso ahora que el vehículo existe
-        } catch (error) {
-            modalMsg.innerText = error.message;
-        }
-      });
-
-      btnIngreso.addEventListener('click', handleIngreso);
-      btnSalida.addEventListener('click', handleSalida);
-      btnCerrarModalCelda.addEventListener('click', () => modalAsignarCelda.classList.remove('active'));
-      btnCerrarModalRegistrar.addEventListener('click', () => modalRegistrarVehiculo.classList.remove('active'));
-      btnConfirmarAsignacion.addEventListener('click', confirmarAsignacion);
-    });
-  </script>
+  
 </body>
 </html>
