@@ -1,6 +1,8 @@
-const supabase = require('../supabaseClient');
+const supabase = require('./../supabaseClient');
 const { hashPassword } = require('./hash');
 const bcrypt = require('bcryptjs');
+const { normalizeDocumento, normalizeCorreo } = require('./../utils/normalizer');
+
 
 class Usuario {
   constructor(
@@ -68,6 +70,9 @@ class Usuario {
     if (this._clave) {
       this._clave = await hashPassword(this._clave);
     }
+    const documento = normalizeDocumento(this._numero_documento);
+const correo = normalizeCorreo(this._direccion_correo);
+
     const insertObj = {
       tipo_documento: this._tipo_documento,
       numero_documento: this._numero_documento,
@@ -82,7 +87,11 @@ class Usuario {
       clave: this._clave,
       perfil_usuario_id: this._perfil_usuario_id
     };
-    const { data, error } = await supabase.from('usuario').insert([insertObj]).select().single();
+    const { data, error } = await supabase
+      .from('usuario')
+      .insert([insertObj])
+      .select()
+      .single();
     if (error) throw new Error(`Error creating Usuario: ${error.message}`);
     this._mapRowToObject(data);
     return this;
@@ -90,9 +99,18 @@ class Usuario {
 
   // READ
   static async findById(id) {
-    const { data, error } = await supabase.from('usuario').select('*').eq('id_usuario', id).single();
+    const idNum = Number(id);
+    if (isNaN(idNum)) {
+      throw new Error(`ID inválido proporcionado a findById: ${id}`);
+    }
+
+    const { data, error } = await supabase
+      .from('usuario')
+      .select('*')
+      .eq('id_usuario', idNum)
+      .single();
     if (error && error.code !== 'PGRST116') {
-        throw new Error(`Error finding Usuario by ID: ${error.message}`);
+      throw new Error(`Error finding Usuario by ID: ${error.message}`);
     }
     if (data) {
       const usuario = new Usuario();
@@ -108,11 +126,9 @@ class Usuario {
       .select('*')
       .eq('direccion_correo', email)
       .single();
-
     if (error && error.code !== 'PGRST116') {
       throw new Error(`Error finding Usuario by email: ${error.message}`);
     }
-
     if (data) {
       const usuario = new Usuario();
       usuario._mapRowToObject(data);
@@ -132,7 +148,14 @@ class Usuario {
   }
 
   static async findByDocument(numero_documento) {
-    const { data, error } = await supabase.from('usuario').select('*').eq('numero_documento', numero_documento).single();
+    const documento = numero_documento?.trim();
+    if (!documento) throw new Error('Número de documento vacío o inválido');
+
+    const { data, error } = await supabase
+      .from('usuario')
+      .select('*')
+      .eq('numero_documento', documento)
+      .single();
     if (error && error.code !== 'PGRST116') {
       throw new Error(`Error finding Usuario by document: ${error.message}`);
     }
@@ -163,14 +186,20 @@ class Usuario {
       clave: this._clave,
       perfil_usuario_id: this._perfil_usuario_id
     };
-    const { error } = await supabase.from('usuario').update(updateObj).eq('id_usuario', this._id_usuario);
+    const { error } = await supabase
+      .from('usuario')
+      .update(updateObj)
+      .eq('id_usuario', this._id_usuario);
     if (error) throw new Error(`Error updating Usuario: ${error.message}`);
     return this;
   }
 
   // DELETE
   async delete() {
-    const { error } = await supabase.from('usuario').delete().eq('id_usuario', this._id_usuario);
+    const { error } = await supabase
+      .from('usuario')
+      .delete()
+      .eq('id_usuario', this._id_usuario);
     if (error) throw new Error(`Error deleting Usuario: ${error.message}`);
     return true;
   }
@@ -197,7 +226,7 @@ class Usuario {
     this._foto_perfil = row.foto_perfil;
     this._estado = row.estado;
     this._clave = row.clave;
-    this._perfil_usuario_id = row.perfil_usuario_id;
+    this._perfil_usuario_id = row.perfil_usuario_id
   }
 
   toJSON() {
@@ -209,11 +238,10 @@ class Usuario {
       segundo_nombre: this._segundo_nombre,
       primer_apellido: this._primer_apellido,
       segundo_apellido: this._segundo_apellido,
-      direccion_correo: this._direccion_correo,
+      direccion_correo: this._direccion,
       numero_celular: this._numero_celular,
       foto_perfil: this._foto_perfil,
       estado: this._estado,
-      clave: this._clave,
       perfil_usuario_id: this._perfil_usuario_id
     };
   }

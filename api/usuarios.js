@@ -45,6 +45,17 @@ router.get('/:id', async (req, res) => {
   res.json(data);
 });
 
+// Obtener usuario por número de documento
+router.get('/documento/:numero', async (req, res) => {
+  const { data, error } = await supabase
+    .from('usuario')
+    .select('*')
+    .eq('numero_documento', req.params.numero)
+    .single();
+  if (error || !data) return res.status(404).json({ error: error ? error.message : 'Usuario no encontrado' });
+  res.json(data);
+});
+
 router.post('/', async (req, res) => {
   const usuario = mapUsuarioBody(req.body);
   const { data, error } = await supabase.from('usuario').insert([usuario]).select().single();

@@ -1,3 +1,4 @@
+
 // ORM Models Index File
 // This file exports all the model classes for easy importing
 
@@ -15,16 +16,23 @@ const Zona = require('./Zona');
 const Parqueadero = require('./Parqueadero');
 
 module.exports = {
+ //Usuarios
   PerfilUsuario,
   Usuario,
+//vehiculos y parqueo
   Vehiculo,
-  PicoPlaca,
+  Parqueadero,
   AccesoSalida,
-  Incidencia,
-  ReporteIncidencia,
   Celda,
   HistorialParqueo,
   Zona,
+
+  //incidencia
+  Incidencia,
+  ReporteIncidencia,
+
   
-  Parqueadero
+  //reglas
+  PicoPlaca
+
 }; 

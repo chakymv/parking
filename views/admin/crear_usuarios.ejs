@@ -6,10 +6,6 @@
   <link rel="stylesheet" href="/admin/css/estilo.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <% if (typeof extraHead !== 'undefined') { %>
-    <%- extraHead %>
-  <% } %>
 </head>
 <body>
   <%- include('header') %>
@@ -17,77 +13,60 @@
     <div class="contenido-principal">
       <h1 class="centrar">Administrar usuarios del sistema</h1>
       <hr class="linea-windows">
+
+      <!-- 🔍 Filtros -->
+      <div style="margin-bottom:15px;display:flex;gap:10px;">
+        <select id="filtro-estado" class="input-filtro">
+          <option value="">-- Estado --</option>
+          <option value="activo">Activo</option>
+          <option value="inactivo">Inactivo</option>
+        </select>
+        <select id="filtro-perfil" class="input-filtro">
+          <option value="">-- Perfil --</option>
+          <option value="1">Administrador</option>
+          <option value="2">Operador</option>
+        </select>
+      </div>
+
       <div id="crear-usuarios-content">
-        <button class="btn-agregar" onclick="abrirModalCrear()">Agregar Usuario</button>
+        <button class="btn-agregar" id="btn-agregar-usuario">Agregar Usuario</button>
         <table id="usuarios-table" class="dataTable" style="width:100%;margin-top:20px;"></table>
       </div>
 
-      <!-- Modal para crear/editar usuario -->
+      <!-- Modal -->
       <div class="modal" id="modal-usuario">
         <div class="contenido-modal">
           <div class="encabezado-modal">
             <span id="modal-titulo">Crear Usuario</span>
-            <button class="cerrar" onclick="cerrarModal()">&times;</button>
+            <button class="cerrar" id="btn-cerrar-modal">&times;</button>
           </div>
           <div class="cuerpo-modal">
             <form id="form-usuario" autocomplete="off">
               <input type="hidden" id="id_usuario" name="id_usuario">
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                <div>
-                  <label>Tipo Documento</label>
-                  <select id="tipo_documento" name="tipo_documento" required>
-                    <option value="CC">Cédula</option>
-                    <option value="TI">Tarjeta Identidad</option>
-                    <option value="CE">Cédula Extranjería</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Número Documento</label>
-                  <input type="text" id="numero_documento" name="numero_documento" required>
-                </div>
-                <div>
-                  <label>Primer Nombre</label>
-                  <input type="text" id="primer_nombre" name="primer_nombre" required>
-                </div>
-                <div>
-                  <label>Segundo Nombre</label>
-                  <input type="text" id="segundo_nombre" name="segundo_nombre">
-                </div>
-                <div>
-                  <label>Primer Apellido</label>
-                  <input type="text" id="primer_apellido" name="primer_apellido" required>
-                </div>
-                <div>
-                  <label>Segundo Apellido</label>
-                  <input type="text" id="segundo_apellido" name="segundo_apellido">
-                </div>
-                <div>
-                  <label>Correo</label>
-                  <input type="email" id="direccion_correo" name="direccion_correo" required>
-                </div>
-                <div>
-                  <label>Celular</label>
-                  <input type="text" id="numero_celular" name="numero_celular">
-                </div>
-                <div>
-                  <label>Estado</label>
-                  <select id="estado" name="estado" required>
-                    <option value="activo">Activo</option>
-                    <option value="inactivo">Inactivo</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Perfil</label>
-                  <select id="perfil_usuario_id" name="perfil_usuario_id" required>
-                    <option value="1">Administrador</option>
-                    <option value="2">Operador</option>
-                  </select>
-                </div>
-                <div>
-                  <label>Contraseña</label>
-                  <input type="password" id="clave" name="clave" required>
-                </div>
+                <div><label>Tipo Documento</label><select id="tipo_documento" name="tipo_documento" required>
+                  <option value="CC">Cédula</option>
+                  <option value="TI">Tarjeta Identidad</option>
+                  <option value="CE">Cédula Extranjería</option>
+                </select></div>
+                <div><label>Número Documento</label><input type="text" id="numero_documento" name="numero_documento" required></div>
+                <div><label>Primer Nombre</label><input type="text" id="primer_nombre" name="primer_nombre" required></div>
+                <div><label>Segundo Nombre</label><input type="text" id="segundo_nombre" name="segundo_nombre"></div>
+                <div><label>Primer Apellido</label><input type="text" id="primer_apellido" name="primer_apellido" required></div>
+                <div><label>Segundo Apellido</label><input type="text" id="segundo_apellido" name="segundo_apellido"></div>
+                <div><label>Correo</label><input type="email" id="direccion_correo" name="direccion_correo" required></div>
+                <div><label>Celular</label><input type="text" id="numero_celular" name="numero_celular"></div>
+                <div><label>Estado</label><select id="estado" name="estado" required>
+                  <option value="activo">Activo</option>
+                  <option value="inactivo">Inactivo</option>
+                </select></div>
+                <div><label>Perfil</label><select id="perfil_usuario_id" name="perfil_usuario_id" required>
+                  <option value="1">Administrador</option>
+                  <option value="2">Operador</option>
+                </select></div>
+                <div><label>Contraseña</label><input type="password" id="clave" name="clave" required></div>
               </div>
+              <div id="modal-msg" class="centrar" style="color:red;margin-top:10px;"></div>
               <div style="margin-top:15px;text-align:right;">
                 <button type="submit" class="btn-guardar">Guardar</button>
               </div>
@@ -97,98 +76,10 @@
       </div>
     </div>
   </main>
-  <script>
-    let usuarios = [];
-    let editando = false;
 
-    function abrirModalCrear() {
-      editando = false;
-      document.getElementById('modal-titulo').innerText = 'Crear Usuario';
-      document.getElementById('form-usuario').reset();
-      document.getElementById('id_usuario').value = '';
-      document.getElementById('modal-usuario').classList.add('active');
-    }
-    function abrirModalEditar(usuario) {
-      editando = true;
-      document.getElementById('modal-titulo').innerText = 'Editar Usuario';
-      for (const key in usuario) {
-        if(document.getElementById(key)) document.getElementById(key).value = usuario[key] || '';
-      }
-      document.getElementById('modal-usuario').classList.add('active');
-    }
-    function cerrarModal() {
-      document.getElementById('modal-usuario').classList.remove('active');
-    }
-
-    async function cargarUsuarios() {
-      const res = await fetch('/api/usuarios');
-      usuarios = await res.json();
-      renderTabla();
-    }
-
-    function renderTabla() {
-      const table = document.getElementById('usuarios-table');
-      let html = `<thead><tr><th>Tipo Doc</th><th>Num Doc</th><th>Nombre</th><th>Apellido</th><th>Correo</th><th>Celular</th><th>Estado</th><th>Perfil</th><th>Acciones</th>
-      </tr></thead><tbody>`;
-      usuarios.filter(u => u.perfil_usuario_id !== 3).forEach(u => {
-        html += `<tr>
-          <td>${u.tipo_documento}</td>
-          <td>${u.numero_documento}</td>
-          <td>${u.primer_nombre} ${u.segundo_nombre||''}</td>
-          <td>${u.primer_apellido} ${u.segundo_apellido||''}</td>
-          <td>${u.direccion_correo}</td>
-          <td>${u.numero_celular||''}</td>
-          <td>${u.estado}</td>
-          <td>${perfilTexto(u.perfil_usuario_id)}</td>
-          <td>
-            <button class="btn-editar" onclick='abrirModalEditar(${JSON.stringify(u)})'>Editar</button>
-            <button class="btn-eliminar" onclick='eliminarUsuario(${u.id_usuario})'>Eliminar</button>
-          </td>
-        </tr>`;
-      });
-      html += '</tbody>';
-      table.innerHTML = html;
-    }
-
-    function perfilTexto(id) {
-      if(id==1) return 'Administrador';
-      if(id==2) return 'Operador';
-      return 'Desconocido';
-    }
-
-    document.getElementById('form-usuario').onsubmit = async function(e) {
-      e.preventDefault();
-      const data = Object.fromEntries(new FormData(this));
-      let url = '/api/usuarios';
-      let method = 'POST';
-      if(editando && data.id_usuario) {
-        url += '/' + data.id_usuario;
-        method = 'PUT';
-      }
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if(res.ok) {
-        cerrarModal();
-        cargarUsuarios();
-      } else {
-        alert('Error al guardar usuario');
-      }
-    };
-
-    async function eliminarUsuario(id) {
-      if(!confirm('¿Eliminar usuario?')) return;
-      const res = await fetch('/api/usuarios/' + id, { method: 'DELETE' });
-      if(res.ok) cargarUsuarios();
-      else alert('Error al eliminar');
-    }
-
-    window.onload = cargarUsuarios;
-  </script>
-  <% if (typeof extraBody !== 'undefined') { %>
-    <%- extraBody %>
-  <% } %>
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="/admin/js/crear-usuarios.js"></script>
 </body>
 </html>

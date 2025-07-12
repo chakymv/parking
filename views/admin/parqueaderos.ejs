@@ -2,7 +2,6 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestionar Parqueaderos</title>
   <link rel="stylesheet" href="/admin/css/estilo.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
@@ -15,7 +14,7 @@
   <main>
     <div class="contenido-principal">
       <h1 class="centrar">Gestionar Parqueaderos</h1>
-      <p class="centrar">Cree, edite y elimine los parqueaderos del sistema.</p>
+      <p class="centrar">Cree, edite y asigne celdas a cada parqueadero.</p>
       <hr class="linea-windows">
 
       <div class="acciones-tabla">
@@ -41,7 +40,7 @@
 
   <!-- Modal para Crear/Editar Parqueadero -->
   <div class="modal" id="modal-parqueadero">
-    <div class="contenido-modal">
+    <div class="contenido-modal" style="max-width: 800px;">
       <div class="encabezado-modal">
         <span id="modal-titulo">Nuevo Parqueadero</span>
         <button class="cerrar" id="btn-cerrar-modal">&times;</button>
@@ -49,30 +48,31 @@
       <div class="cuerpo-modal">
         <form id="form-parqueadero" autocomplete="off">
           <input type="hidden" id="parqueadero-id" name="id">
+          <div class="form-group"><label>Nombre</label><input type="text" id="parqueadero-nombre" name="nombre" required></div>
+          <div class="form-group"><label>Código</label><input type="text" id="parqueadero-codigo" name="codigo" required></div>
+          <div class="form-group"><label>Tipo</label><input type="text" id="parqueadero-tipo" name="tipo"></div>
+          <div class="form-group"><label>Capacidad</label><input type="number" id="parqueadero-capacidad" name="capacidad"></div>
+          <div class="form-group"><label>Creado por</label><input type="text" id="parqueadero-creado" name="creado_por" value="<%= userName || 'Admin' %>" readonly></div>
+
           <div class="form-group">
-            <label for="parqueadero-nombre">Nombre del Parqueadero</label>
-            <input type="text" id="parqueadero-nombre" name="nombre" required>
+            <label>Zonas y Celdas disponibles</label>
+            <div id="grupo-celdas" style="max-height: 300px; overflow-y: auto;">
+              <% zonas.forEach(zona => { %>
+                <fieldset style="margin-bottom:10px; padding:8px; border:1px solid #ccc;">
+                  <legend><%= zona.nombre %></legend>
+                  <% celdas.filter(c => c.zona_id === zona.id).forEach(celda => { %>
+                    <label style="display:block; margin-left:10px;">
+                      <input type="checkbox" name="celda_ids" value="<%= celda.id %>">
+                      Celda <%= celda.id %> — <%= celda.tipo %>
+                    </label>
+                  <% }) %>
+                </fieldset>
+              <% }) %>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="parqueadero-codigo">Código Único</label>
-            <input type="text" id="parqueadero-codigo" name="codigo" required>
-          </div>
-          <div class="form-group">
-            <label for="parqueadero-tipo">Tipo</label>
-            <input type="text" id="parqueadero-tipo" name="tipo">
-          </div>
-          <div class="form-group">
-            <label for="parqueadero-capacidad">Capacidad</label>
-            <input type="number" id="parqueadero-capacidad" name="capacidad">
-          </div>
-           <div class="form-group">
-            <label for="parqueadero-creado">Creado por</label>
-            <input type="text" id="parqueadero-creado" name="creado_por" value="<%= userName || 'Admin' %>" readonly>
-          </div>
+
           <div id="modal-msg" class="mensaje-error" style="display:none;"></div>
-          <div class="pie-modal">
-            <button type="submit" class="btn-guardar">Guardar</button>
-          </div>
+          <div class="pie-modal"><button type="submit" class="btn-guardar">Guardar</button></div>
         </form>
       </div>
     </div>
@@ -90,29 +90,24 @@
       function cargarParqueaderos() {
         if (table) table.destroy();
         table = $('#parqueaderos-table').DataTable({
-          "ajax": {
-            "url": "/api/parqueaderos",
-            "dataSrc": ""
-          },
-          "columns": [
-            { "data": "id", visible: false },
-            { "data": "nombre" },
-            { "data": "codigo" },
-            { "data": "tipo" },
-            { "data": "capacidad" },
-            { "data": "creado_por" },
+          ajax: { url: "/api/parqueaderos", dataSrc: "" },
+          columns: [
+            { data: "id", visible: false },
+            { data: "nombre" },
+            { data: "codigo" },
+            { data: "tipo" },
+            { data: "capacidad" },
+            { data: "creado_por" },
             {
-              "data": null,
-              "orderable": false,
-              "render": function(data, type, row) {
-                return `
-                  <button class="btn-accion btn-editar" data-id="${row.id}"><i class="fas fa-edit"></i></button>
-                  <button class="btn-accion btn-eliminar" data-id="${row.id}"><i class="fas fa-trash"></i></button>
-                `;
-              }
+              data: null,
+              orderable: false,
+              render: data => `
+                <button class="btn-accion btn-editar" data-id="${data.id}"><i class="fas fa-edit"></i></button>
+                <button class="btn-accion btn-eliminar" data-id="${data.id}"><i class="fas fa-trash"></i></button>
+              `
             }
           ],
-          "language": { "url": "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json" }
+          language: { url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json" }
         });
       }
 
@@ -135,35 +130,27 @@
         modal.addClass('active');
       }
 
-      function cerrarModal() {
-        modal.removeClass('active');
-      }
-
       $('#btn-nuevo-parqueadero').on('click', () => abrirModal());
-
-      $('#btn-cerrar-modal').on('click', cerrarModal);
-      modal.on('click', function(e) {
-        if (e.target === this) {
-          cerrarModal();
-        }
-      });
+      $('#btn-cerrar-modal').on('click', () => modal.removeClass('active'));
+      modal.on('click', e => { if (e.target === modal[0]) modal.removeClass('active') });
 
       $('#parqueaderos-table').on('click', '.btn-editar', async function() {
         const id = $(this).data('id');
         try {
           const res = await fetch(`/api/parqueaderos/${id}`);
-          if (!res.ok) throw new Error('No se pudo obtener los datos del parqueadero.');
           const data = await res.json();
           abrirModal(id, data);
-        } catch (error) {
-          alert(error.message);
+        } catch (err) {
+          alert('No se pudo obtener los datos del parqueadero.');
         }
       });
 
       form.on('submit', async function(e) {
         e.preventDefault();
         const formData = new FormData(this);
+        formData.set("celda_ids", [...formData.getAll("celda_ids")]); // Asegura formato de array
         const data = Object.fromEntries(formData.entries());
+
         const url = editId ? `/api/parqueaderos/${editId}` : '/api/parqueaderos';
         const method = editId ? 'PUT' : 'POST';
 
@@ -174,23 +161,18 @@
             body: JSON.stringify(data)
           });
           if (!res.ok) throw new Error((await res.json()).error || 'Error al guardar el parqueadero.');
-          cerrarModal();
+          modal.removeClass('active');
           cargarParqueaderos();
-        } catch (error) {
-          modalMsg.text(error.message).show();
+        } catch (err) {
+          modalMsg.text(err.message).show();
         }
       });
 
       $('#parqueaderos-table').on('click', '.btn-eliminar', async function() {
         const id = $(this).data('id');
-        if (confirm('¿Estás seguro de que quieres eliminar este parqueadero?')) {
-          try {
-            const res = await fetch(`/api/parqueaderos/${id}`, { method: 'DELETE' });
-            if (!res.ok) throw new Error('No se pudo eliminar el parqueadero.');
-            cargarParqueaderos();
-          } catch (error) {
-            alert(error.message);
-          }
+        if (confirm('¿Eliminar este parqueadero?')) {
+          await fetch(`/api/parqueaderos/${id}`, { method: 'DELETE' });
+          cargarParqueaderos();
         }
       });
 

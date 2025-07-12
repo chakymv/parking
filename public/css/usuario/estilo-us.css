@@ -1,0 +1,355 @@
+/* Importar la fuente Roboto */
+@import url("https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap");
+
+/* Variables CSS (Consistentes con usuarios.css) */
+:root {
+    --color-primary: #007bff; /* Azul vibrante */
+    --color-secondary: #6c757d; /* Gris secundario */
+    --color-success: #28a745; /* Verde para éxito */
+    --color-danger: #dc3545; /* Rojo para errores */
+    --color-light: #f8f9fa; /* Gris muy claro */
+    --color-dark: #343a40; /* Gris oscuro */
+    --color-text-dark: #212529; /* Texto oscuro */
+    --color-text-light: #ffffff; /* Texto claro */
+    --color-background-light: rgba(255, 255, 255, 0.9); /* Fondo blanco semitransparente */
+    --color-background-dark: rgba(0, 0, 0, 0.8); /* Fondo oscuro semitransparente */
+
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-xxl: 48px;
+
+    --border-radius-base: 8px;
+    --box-shadow-base: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos globales y reseteo */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Roboto", sans-serif; /* Usar Roboto */
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    color: var(--color-text-dark);
+    background: linear-gradient(to right, #ece9e6, #ffffff); /* Fondo claro por defecto */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column; /* Para que el footer se quede abajo */
+}
+
+/* Modo Oscuro */
+body.dark-mode {
+    color: var(--color-light);
+    background: linear-gradient(to right, #2c3e50, #34495e); /* Fondo oscuro */
+}
+
+body.dark-mode .encabezado-login,
+body.dark-mode .login-container,
+body.dark-mode .footer-login {
+    background-color: var(--color-background-dark);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode h1,
+body.dark-mode label,
+body.dark-mode .registro-link,
+body.dark-mode .registro-link a,
+body.dark-mode .error-message,
+body.dark-mode .footer-login p {
+    color: var(--color-light);
+}
+
+/* Estilos del encabezado de login */
+.encabezado-login {
+    background-color: var(--color-primary);
+    padding: var(--spacing-md) var(--spacing-xl);
+    display: flex;
+    justify-content: flex-end; /* Alinea el botón de modo oscuro a la derecha */
+    align-items: center;
+    box-shadow: var(--box-shadow-base);
+}
+
+/* Estilos del botón de modo oscuro (reutilizado de usuarios.css) */
+.btn-dark-mode {
+    background-color: transparent;
+    border: none;
+    color: var(--color-text-light); /* Color del ícono */
+    font-size: 1.2em; /* Tamaño del ícono */
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius-base);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-dark-mode:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Estilos de la sección principal de login */
+.login-main {
+    flex-grow: 1; /* Permite que el main ocupe el espacio disponible y empuje el footer */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-xl) var(--spacing-md);
+}
+
+.login-container {
+    background-color: var(--color-background-light);
+    border-radius: var(--border-radius-base);
+    box-shadow: var(--box-shadow-base);
+    padding: var(--spacing-xl);
+    max-width: 450px; /* Ancho máximo del contenedor de login */
+    width: 90%; /* Ancho responsivo */
+    text-align: center;
+    border: 1px solid rgba(209, 213, 219, 0.3);
+}
+
+.login-container h1 {
+    font-size: 2rem;
+    margin-bottom: var(--spacing-lg);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+}
+
+.login-container h1 i {
+    font-size: 1.8rem;
+}
+
+/* Estilos de los grupos de formulario */
+.form-group {
+    margin-bottom: var(--spacing-md);
+    text-align: left; /* Alinea etiquetas e inputs a la izquierda */
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    color: var(--color-text-dark);
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius-base); /* Bordes más suaves */
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* Estilos del botón de enviar */
+.btn-submit {
+    width: 100%;
+    padding: var(--spacing-md);
+    color: var(--color-text-light);
+    border: none;
+    border-radius: var(--border-radius-base);
+    background: linear-gradient(263deg, rgba(6, 0, 107, 1) 0%, rgba(0, 0, 255, 1) 35%, rgba(0, 116, 255, 1) 100%);
+    box-shadow: var(--box-shadow-base);
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+    margin-top: var(--spacing-md);
+}
+
+.btn-submit:hover {
+    background: linear-gradient(156deg, rgba(6, 0, 107, 1) 0%, rgba(0, 0, 255, 1) 35%, rgba(0, 116, 255, 1) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilos del mensaje de error */
+.error-message {
+    color: var(--color-danger);
+    background-color: rgba(220, 53, 69, 0.1);
+    border: 1px solid var(--color-danger);
+    border-radius: var(--border-radius-base);
+    padding: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+}
+
+/* Estilos del enlace de registro */
+.registro-link {
+    margin-top: var(--spacing-lg);
+    font-size: 0.95rem;
+    color: var(--color-secondary);
+}
+
+.registro-link a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.registro-link a:hover {
+    color: var(--color-dark);
+}
+
+/* Estilos del footer de login */
+.footer-login {
+    text-align: center;
+    padding: var(--spacing-md);
+    color: var(--color-secondary);
+    font-size: 0.85rem;
+    background-color: var(--color-light); /* Fondo claro por defecto */
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ==================================== */
+/* Estilos para la página de Registro (mantener si se usa) */
+/* ==================================== */
+.contenedor-registro {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: var(--spacing-xl) var(--spacing-sm);
+    background-color: #f0f0f0; /* Fondo específico para registro, o usar variables */
+}
+
+body.dark-mode .contenedor-registro {
+    background-color: #222; /* Fondo oscuro para registro */
+}
+
+.contenedor-registro form {
+    background: var(--color-background-light);
+    border-radius: var(--border-radius-base);
+    box-shadow: var(--box-shadow-base);
+    padding: var(--spacing-xl) var(--spacing-lg);
+    width: 100%;
+    max-width: 700px; /* Aumentado para acomodar 2 columnas */
+    border: 1px solid rgba(209, 213, 219, 0.3);
+}
+
+body.dark-mode .contenedor-registro form {
+    background: var(--color-background-dark);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+}
+
+
+.grid-dos-columnas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg) var(--spacing-xl); /* Ajustado el gap */
+}
+
+.columna-form input[type="text"],
+.columna-form input[type="email"],
+.columna-form input[type="password"],
+.columna-form input[type="file"],
+.columna-form select { /* Añadido select si lo usas en registro */
+    width: 100%;
+    margin-bottom: var(--spacing-md); /* Ajustado margen */
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: var(--border-radius-base);
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.columna-form input:focus,
+.columna-form select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+
+/* Media Queries para responsividad */
+@media (max-width: 768px) {
+    .login-container {
+        padding: var(--spacing-lg);
+    }
+    .login-container h1 {
+        font-size: 1.8rem;
+    }
+    .btn-submit {
+        font-size: 1rem;
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+    .contenedor-registro form {
+        padding: var(--spacing-lg) var(--spacing-md);
+        max-width: 95%;
+    }
+    .grid-dos-columnas {
+        grid-template-columns: 1fr; /* Una columna para registro en tablets */
+        gap: var(--spacing-md);
+    }
+}
+
+@media (max-width: 480px) {
+    .encabezado-login {
+        justify-content: center; /* Centrar botón en móviles */
+    }
+    .login-main {
+        padding: var(--spacing-lg) var(--spacing-xs);
+    }
+    .login-container {
+        padding: var(--spacing-md);
+        width: 100%;
+    }
+    .login-container h1 {
+        font-size: 1.5rem;
+        gap: var(--spacing-xs);
+    }
+    .form-group input {
+        font-size: 0.9rem;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+    .btn-submit {
+        font-size: 0.95rem;
+        padding: var(--spacing-sm);
+    }
+    .error-message {
+        font-size: 0.85rem;
+        padding: var(--spacing-xs);
+    }
+    .registro-link {
+        font-size: 0.85rem;
+    }
+    .contenedor-registro {
+        padding: var(--spacing-md) var(--spacing-xs);
+    }
+    .contenedor-registro form {
+        padding: var(--spacing-md) var(--spacing-xs);
+    }
+    .columna-form input[type="text"],
+    .columna-form input[type="email"],
+    .columna-form input[type="password"],
+    .columna-form input[type="file"],
+    .columna-form select {
+        font-size: 0.9rem;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        margin-bottom: var(--spacing-sm);
+    }
+}

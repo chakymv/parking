@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iniciar Sesión - Refugio Parking</title>
+    <meta name="description" content="Inicia sesión en tu cuenta de Refugio Parking." />
+    <meta name="color-scheme" content="light dark">
+
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+
+    <!-- Integrar Roboto de Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+    <!-- Integrar Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+
+    <!-- Tu archivo de estilos principal para el login -->
+    <link rel="stylesheet" href="/css/usuario/estilo-us.css" />
+</head>
+<body>
+    <header class="encabezado-login">
+        <nav class="acciones">
+            <!-- Botón de modo oscuro -->
+            <button id="darkModeToggle" class="btn-dark-mode" aria-label="Alternar modo oscuro">
+                <i class="fas fa-moon"></i>
+            </button>
+        </nav>
+    </header>
+
+    <main class="login-main">
+        <div class="login-container">
+            <h1><i class="fas fa-lock"></i> Iniciar Sesión</h1>
+            <form action="/usuario/login" method="POST">
+                <div class="form-group">
+                    <label for="correo">Correo electrónico</label>
+                    <input type="email" id="correo" name="correo" required autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="contrasena">Contraseña</label>
+                    <input type="password" id="contrasena" name="contrasena" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn-submit">Ingresar</button>
+            </form>
+            <% if (typeof error !== 'undefined' && error) { %>
+                <p class="error-message"><i class="fas fa-exclamation-circle"></i> <%= error %></p>
+            <% } %>
+            <p class="registro-link">¿No tienes cuenta? <a href="/usuario/registro">Regístrate aquí</a></p>
+        </div>
+    </main>
+
+    <footer class="footer-login">
+        <p>&copy; <%= new Date().getFullYear() %> Refugio Parking. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Script para el modo oscuro (similar al de index.ejs) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const body = document.body;
+
+            // Cargar la preferencia guardada o del sistema
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                body.classList.toggle('dark-mode', savedTheme === 'dark');
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                body.classList.add('dark-mode');
+            }
+
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('click', () => {
+                    body.classList.toggle('dark-mode');
+                    if (body.classList.contains('dark-mode')) {
+                        localStorage.setItem('theme', 'dark');
+                        darkModeToggle.querySelector('i').classList.remove('fa-moon');
+                        darkModeToggle.querySelector('i').classList.add('fa-sun');
+                        darkModeToggle.setAttribute('aria-label', 'Alternar modo claro');
+                    } else {
+                        localStorage.setItem('theme', 'light');
+                        darkModeToggle.querySelector('i').classList.remove('fa-sun');
+                        darkModeToggle.querySelector('i').classList.add('fa-moon');
+                        darkModeToggle.setAttribute('aria-label', 'Alternar modo oscuro');
+                    }
+                });
+
+                // Inicializar el ícono basado en el tema actual al cargar
+                if (body.classList.contains('dark-mode')) {
+                    darkModeToggle.querySelector('i').classList.remove('fa-moon');
+                    darkModeToggle.querySelector('i').classList.add('fa-sun');
+                    darkModeToggle.setAttribute('aria-label', 'Alternar modo claro');
+                } else {
+                    darkModeToggle.querySelector('i').classList.remove('fa-sun');
+                    darkModeToggle.querySelector('i').classList.add('fa-moon');
+                    darkModeToggle.setAttribute('aria-label', 'Alternar modo oscuro');
+                }
+            }
+        });
+    </script>
+   
+  <script src="/js/iniciar-sesion.js"></script> 
+</body>
+</html>

@@ -1,76 +1,109 @@
-// Rutas de API para la clase Usuario
 const express = require('express');
 const router = express.Router();
 const { Usuario } = require('../model');
 const catchAsync = require('../utils/catchAsync'); // Importar el middleware
+const {
+  normalizeDocumento,
+  normalizeCorreo,
+} = require('../utils/normalizer');
 
-// Obtener todos los usuarios
+// 🔍 Obtener todos los usuarios
 router.get('/', catchAsync(async (req, res) => {
   const usuarios = await Usuario.findAll();
   res.json(usuarios.map(u => u.toJSON()));
 }));
 
-// Obtener usuario por ID
-router.get('/:id', catchAsync(async (req, res) => {
-  const encontrado = await Usuario.findById(req.params.id);
-  if (encontrado) {
-    res.json(encontrado.toJSON());
-  } else {
-    res.status(404).json({ error: 'Usuario no encontrado' });
-  }
-}));
-
-// Obtener usuario por número de documento
+// 🔍 Obtener usuario por número de documento
 router.get('/documento/:numero', catchAsync(async (req, res) => {
-  const encontrado = await Usuario.findByDocument(req.params.numero);
+  const doc = normalizeDocumento(req.params.numero);
+  if (!doc) return res.status(400).json({ error: 'Documento inválido' });
+
+  const encontrado = await Usuario.findByDocument(doc);
   if (encontrado) {
     res.json(encontrado.toJSON());
   } else {
-    res.status(404).json({ error: 'Usuario no encontrado' });
+    res.status(404).json({ error: 'Usuario no encontrado por documento' });
   }
 }));
 
-// Crear un nuevo usuario
+// 🔍 Obtener usuario por ID
+router.get('/:id', catchAsync(async (req, res) => {
+  const id = Number(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+
+  const encontrado = await Usuario.findById(id);
+  if (encontrado) {
+    res.json(encontrado.toJSON());
+  } else {
+    res.status(404).json({ error: 'Usuario no encontrado por ID' });
+  }
+}));
+
+// 🆕 Crear nuevo usuario
 router.post('/', catchAsync(async (req, res) => {
   const datos = req.body;
+
   const usuario = new Usuario(
     null,
-    datos.tipo_documento,
-    datos.numero_documento,
-    datos.primer_nombre,
-    datos.segundo_nombre,
-    datos.primer_apellido,
-    datos.segundo_apellido,
-    datos.direccion_correo,
-    datos.numero_celular,
+    datos.tipo_documento?.trim(),
+    normalizeDocumento(datos.numero_documento),
+    datos.primer_nombre?.trim(),
+    datos.segundo_nombre?.trim(),
+    datos.primer_apellido?.trim(),
+    datos.segundo_apellido?.trim(),
+    normalizeCorreo(datos.direccion_correo),
+    datos.numero_celular?.trim(),
     datos.foto_perfil,
-    datos.estado,
+    datos.estado?.trim(),
     datos.clave,
-    datos.perfil_usuario_id
+    Number(datos.perfil_usuario_id)
   );
+
   await usuario.create();
   res.status(201).json(usuario.toJSON());
 }));
 
-// Actualizar usuario por ID
+// ✏️ Actualizar usuario
 router.put('/:id', catchAsync(async (req, res) => {
-  const encontrado = await Usuario.findById(req.params.id);
+  const id = Number(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+
+  const encontrado = await Usuario.findById(id);
   if (!encontrado) {
     return res.status(404).json({ error: 'Usuario no encontrado' });
   }
-  Object.assign(encontrado, req.body);
+
+  Object.assign(encontrado, {
+    tipo_documento: req.body.tipo_documento?.trim(),
+    numero_documento: normalizeDocumento(req.body.numero_documento),
+    primer_nombre: req.body.primer_nombre?.trim(),
+    segundo_nombre: req.body.segundo_nombre?.trim(),
+    primer_apellido: req.body.primer_apellido?.trim(),
+    segundo_apellido: req.body.segundo_apellido?.trim(),
+    direccion_correo: normalizeCorreo(req.body.direccion_correo),
+    numero_celular: req.body.numero_celular?.trim(),
+    foto_perfil: req.body.foto_perfil,
+    estado: req.body.estado?.trim(),
+    clave: req.body.clave,
+    perfil_usuario_id: Number(req.body.perfil_usuario_id)
+  });
+
   await encontrado.update();
   res.json(encontrado.toJSON());
 }));
 
-// Eliminar usuario por ID
+// 🗑️ Eliminar usuario
 router.delete('/:id', catchAsync(async (req, res) => {
-  const encontrado = await Usuario.findById(req.params.id);
+  const id = Number(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+
+  const encontrado = await Usuario.findById(id);
   if (!encontrado) {
     return res.status(404).json({ error: 'Usuario no encontrado' });
   }
+
   await encontrado.delete();
-  res.json({ mensaje: 'Usuario eliminado' });
+  res.status(200).json({ mensaje: 'Usuario eliminado correctamente' });
 }));
 
 module.exports = router;

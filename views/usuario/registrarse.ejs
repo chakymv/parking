@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Usuario</title>
+  <link rel="stylesheet" href="/estilo-us.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+</head>
+<body>
+  <div class="columna">
+    <div class="contenedor-formulario">
+      <div class="logo-sistema animate__animated animate__fadeInLeft">
+        <img class="logo-imagen" src="/img/logo.png" alt="Logo del sistema" />
+      </div>
+
+      <div class="t_descripcion animate__animated animate__fadeInLeft">
+        <h3>Crear cuenta</h3>
+        <p>Regístrate como Usuario o Visitante</p>
+      </div>
+
+      <form id="registroForm" class="formulario-login animate__animated animate__fadeInLeft">
+        <label for="tipo_documento">Tipo de documento:</label>
+        <select id="tipo_documento" name="tipo_documento" required>
+          <option value="">Seleccione...</option>
+          <option value="CC">Cédula de ciudadanía</option>
+          <option value="TI">Tarjeta de identidad</option>
+          <option value="CE">Cédula de extranjería</option>
+        </select>
+
+        <input type="text" id="numero_documento" name="numero_documento" placeholder="Número de documento" required />
+
+        <input type="text" id="primer_nombre" name="primer_nombre" placeholder="Primer nombre" required />
+        <input type="text" id="segundo_nombre" name="segundo_nombre" placeholder="Segundo nombre (opcional)" />
+
+        <input type="text" id="primer_apellido" name="primer_apellido" placeholder="Primer apellido" required />
+        <input type="text" id="segundo_apellido" name="segundo_apellido" placeholder="Segundo apellido (opcional)" />
+
+        <input type="email" id="direccion_correo" name="direccion_correo" placeholder="Correo electrónico" required autocomplete="email" />
+        <input type="text" id="numero_celular" name="numero_celular" placeholder="Celular" required />
+
+        <label for="perfil_usuario_id">Perfil:</label>
+        <select id="perfil_usuario_id" name="perfil_usuario_id" required>
+          <option value="">Seleccione perfil...</option>
+          <% perfiles.forEach(p => {
+            if (p.perfil === 'usuario' || p.perfil === 'visitante') { %>
+              <option value="<%= p.id %>"><%= p.perfil.charAt(0).toUpperCase() + p.perfil.slice(1) %></option>
+          <% } }) %>
+        </select>
+
+        <input type="password" id="clave" name="clave" placeholder="Contraseña" required autocomplete="new-password" />
+
+        <button class="btn-ingreso" type="submit">Registrarse</button>
+      </form>
+
+      <div class="form-footer">
+        <p>¿Ya tienes cuenta? <a href="/iniciar-sesion">Inicia sesión</a></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="columna imagen-login">
+    <h1 class="titulo-imagen">Bienvenido</h1>
+  </div>
+
+ 
+     <script src="js/registrarse.js"></script>
+</body>
+</html>

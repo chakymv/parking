@@ -1,131 +1,51 @@
-const supabase = require('../supabaseClient');
+const supabase = require('./../supabaseClient');
 
 class ReporteIncidencia {
-  constructor(
-    id = null,
-    descripcion = null,
-    fecha = null,
-    usuario_id = null
-  ) {
-    this._id = id;
-    this._descripcion = descripcion;
-    this._fecha = fecha;
-    this._usuario_id = usuario_id;
+  constructor(vehiculo_id, incidencia_id, fecha_hora) {
+    this.vehiculo_id = Number(vehiculo_id);
+    this.incidencia_id = Number(incidencia_id);
+    this.fecha_hora = fecha_hora;
   }
-
-  get id() { return this._id; }
-  get descripcion() { return this._descripcion; }
-  get fecha() { return this._fecha; }
-  get usuario_id() { return this._usuario_id; }
-
-  set id(value) { this._id = value; }
-  set descripcion(value) { this._descripcion = value; }
-  set fecha(value) { this._fecha = value; }
-  set usuario_id(value) { this._usuario_id = value; }
 
   async create() {
-    const insertObj = {
-      descripcion: this._descripcion,
-      fecha: this._fecha,
-      usuario_id: this._usuario_id
-    };
-    const { data, error } = await supabase.from('reporte_incidencia').insert([insertObj]).select().single();
-    if (error) throw new Error(`Error creating ReporteIncidencia: ${error.message}`);
-    this._mapRowToObject(data);
-    return this;
-  }
-
-  async findById(id) {
-    const { data, error } = await supabase.from('reporte_incidencia').select('*').eq('id', id).single();
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      throw new Error(`Error finding ReporteIncidencia: ${error.message}`);
+    if (
+      !Number.isInteger(this.vehiculo_id) ||
+      !Number.isInteger(this.incidencia_id) ||
+      !this.fecha_hora
+    ) {
+      throw new Error('Datos inválidos para crear reporte');
     }
-    if (data) {
-      this._mapRowToObject(data);
-      return this;
-    }
-    return null;
+
+    const { error } = await supabase
+      .from('reporte_incidencia')
+      .insert([{
+        vehiculo_id: this.vehiculo_id,
+        incidencia_id: this.incidencia_id,
+        fecha_hora: this.fecha_hora
+      }]);
+
+    if (error) throw new Error(`Error al crear reporte: ${error.message}`);
   }
 
-  static async findAll() {
-    const { data, error } = await supabase.from('reporte_incidencia').select('*');
-    if (error) throw new Error(`Error finding all ReporteIncidencia: ${error.message}`);
-    return (data || []).map(row => {
-      const reporte = new ReporteIncidencia();
-      reporte._mapRowToObject(row);
-      return reporte;
-    });
+  static async delete(vehiculo_id, incidencia_id, fecha_hora) {
+    const { error } = await supabase
+      .from('reporte_incidencia')
+      .delete()
+      .match({
+        vehiculo_id: Number(vehiculo_id),
+        incidencia_id: Number(incidencia_id),
+        fecha_hora
+      });
+
+    if (error) throw new Error(`Error al eliminar reporte: ${error.message}`);
   }
 
-  async update() {
-    const updateObj = {
-      descripcion: this._descripcion,
-      fecha: this._fecha,
-      usuario_id: this._usuario_id
-    };
-    const { error } = await supabase.from('reporte_incidencia').update(updateObj).eq('id', this._id);
-    if (error) throw new Error(`Error updating ReporteIncidencia: ${error.message}`);
-    return this;
-  }
+  static async findAllExtendido() {
+    const { data, error } = await supabase
+      .rpc('reporte_incidencias_extendidas'); // vista o función que traiga placa y nombre
 
-  async delete() {
-    const { error } = await supabase.from('reporte_incidencia').delete().eq('id', this._id);
-    if (error) throw new Error(`Error deleting ReporteIncidencia: ${error.message}`);
-    return true;
-  }
-
-  _mapRowToObject(row) {
-    this._id = row.id;
-    this._descripcion = row.descripcion;
-    this._fecha = row.fecha;
-    this._usuario_id = row.usuario_id;
-  }
-
-  toJSON() {
-    return {
-      id: this._id,
-      descripcion: this._descripcion,
-      fecha: this._fecha,
-      usuario_id: this._usuario_id
-    };
-  }
-
-  // Static methods for convenience in routes
-  static async create(data) {
-    const newReporte = new ReporteIncidencia(
-      null,
-      data.descripcion,
-      data.fecha,
-      data.usuario_id
-    );
-    await newReporte.create();
-    return newReporte;
-  }
-
-  static async getById(id) {
-    const reporte = new ReporteIncidencia();
-    const found = await reporte.findById(id);
-    return found;
-  }
-
-  static async update(id, data) {
-    const reporte = await ReporteIncidencia.getById(id);
-    if (!reporte) {
-      throw new Error('Reporte de incidencia no encontrado para actualizar');
-    }
-    reporte.descripcion = data.descripcion || reporte.descripcion;
-    reporte.fecha = data.fecha || reporte.fecha;
-    reporte.usuario_id = data.usuario_id || reporte.usuario_id;
-    await reporte.update();
-    return reporte;
-  }
-
-  static async delete(id) {
-    const reporte = new ReporteIncidencia();
-    reporte.id = id;
-    await reporte.delete();
-    return true;
+    if (error) throw new Error(`Error al obtener reportes: ${error.message}`);
+    return data;
   }
 }
 

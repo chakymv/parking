@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cambiar Contraseña</title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal" style="max-width:400px;margin:0 auto;">
+      <h2 class="centrar">Cambiar Contraseña</h2>
+      <form id="form-cambio-clave" style="margin-top:20px;">
+        <div class="grupo-input">
+          <label>Clave Actual</label>
+          <input type="password" name="clave_actual" required>
+        </div>
+        <div class="grupo-input">
+          <label>Nueva Clave</label>
+          <input type="password" name="nueva_clave" required>
+        </div>
+        <div class="grupo-input">
+          <label>Confirmar Nueva Clave</label>
+          <input type="password" name="confirmar_clave" required>
+        </div>
+        <div id="msg-clave" class="centrar" style="margin-top:10px;color:red;"></div>
+        <div style="text-align:right;margin-top:15px;">
+          <button type="submit" class="btn-guardar">Actualizar</button>
+        </div>
+      </form>
+    </div>
+  </main>
+  <script>
+    document.getElementById('form-cambio-clave')?.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const msg = document.getElementById('msg-clave');
+      msg.innerText = '';
+      const data = Object.fromEntries(new FormData(this));
+
+      if (data.nueva_clave !== data.confirmar_clave) {
+        msg.innerText = 'Las nuevas claves no coinciden.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/usuarios/cambiar-clave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (!res.ok) {
+          const json = await res.json().catch(() => null);
+          msg.innerText = json?.error || 'Error al cambiar la clave.';
+          return;
+        }
+
+        msg.style.color = 'green';
+        msg.innerText = 'Contraseña actualizada correctamente ✅';
+        this.reset();
+      } catch (err) {
+        msg.innerText = err.message;
+      }
+    });
+  </script>
+</body>
+</html>

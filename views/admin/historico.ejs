@@ -33,7 +33,7 @@
           </tr>
         </thead>
         <tbody>
-          <!-- Los datos se cargarán aquí dinámicamente -->
+          <!-- Datos cargados dinámicamente -->
         </tbody>
       </table>
     </div>
@@ -42,46 +42,45 @@
   <script>
     $(document).ready(function() {
       const table = $('#historico-table').DataTable({
-        "ajax": {
-          "url": "/api/historial_parqueo", // Asumiendo que este es tu endpoint para el histórico
-          "dataSrc": "",
-          "error": function (jqXHR, textStatus, errorThrown) {
-            // Esto se activará si hay un error en la petición AJAX
+        ajax: {
+          url: "/api/historial_parqueo",
+          dataSrc: "",
+          error: function (jqXHR, textStatus, errorThrown) {
             console.error("Error de Ajax:", textStatus, errorThrown);
-            console.error("Respuesta del servidor:", jqXHR.responseText);
-            // Opcional: Mostrar un mensaje de error más amigable en la tabla
             $('#historico-table_processing').hide();
-            $('#historico-table tbody').html('<tr><td colspan="5" class="centrar" style="color:red;">Error al cargar los datos. Revise la consola del navegador (F12) para más detalles.</td></tr>');
+            $('#historico-table tbody').html(
+              '<tr><td colspan="5" class="centrar" style="color:red;">Error al cargar los datos. Revisa la consola (F12).</td></tr>'
+            );
           }
         },
-        "columns": [
-          { "data": "placa" },
-          { 
-            "data": null,
-            "render": function(data, type, row) {
-              // Combina campos para mostrar detalles del vehículo
-              return `${row.marca || ''}, ${row.modelo || ''}, ${row.color || ''}`;
+        columns: [
+          { data: "placa" },
+          {
+            data: null,
+            render: function(row) {
+              const marca = row.marca || '';
+              const modelo = row.modelo || '';
+              const color = row.color || '';
+              return `${marca}, ${modelo}, ${color}`.replace(/(, ){2,}/g, ', ').trim();
             }
           },
-          { "data": "tipo" },
+          { data: "tipo" },
           {
-            "data": "fecha_hora",
-            "render": function(data) {
-              // Formatear la fecha para que sea legible
+            data: "fecha_hora",
+            render: function(data) {
               return data ? new Date(data).toLocaleString('es-CO') : 'N/A';
             }
           },
-          { "data": "celda_id" }
+          { data: "celda_id" }
         ],
-        "language": {
-          "url": "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+        language: {
+          url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
         },
         responsive: true,
-        "order": [[ 3, "desc" ]] // Ordenar por fecha de entrada (la 4ta columna) de más reciente a más antiguo
+        order: [[3, "desc"]]
       });
 
-      // Funcionalidad de búsqueda general
-      $('#buscadorGeneral').on('keyup', function(){
+      $('#buscadorGeneral').on('keyup', function() {
         table.search(this.value).draw();
       });
     });

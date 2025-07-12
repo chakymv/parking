@@ -37,6 +37,17 @@ router.get('/:id', async (req, res) => {
   res.json(data);
 });
 
+// Obtener un vehículo por placa
+router.get('/placa/:placa', async (req, res) => {
+  const { data, error } = await supabase
+    .from('vehiculo')
+    .select('*')
+    .eq('placa', req.params.placa)
+    .single();
+  if (error || !data) return res.status(404).json({ error: error ? error.message : 'Vehículo no encontrado' });
+  res.json(data);
+});
+
 // Crear un vehículo
 router.post('/', async (req, res) => {
   const vehiculo = mapVehiculoBody(req.body);

@@ -1,89 +1,129 @@
-const supabase = require('../supabaseClient');
+const supabase = require('./../supabaseClient');
+const { normalizeTexto } = require('./../utils/normalizer');
 
 class Celda {
-  constructor(id_celda = null, tipo = null, estado = 'disponible', zona_id = null) {
-    this.id_celda = id_celda;
-    this.tipo = tipo;
-    this.estado = estado;
-    this.zona_id = zona_id;
-    
-  }
+    constructor(id_celda = null, numero = null, tipo = null, estado = 'disponible', zona_id = null, parqueadero_id = null, parqueadero_nombre = null, zona_nombre = null) {
+        this.id_celda = Number(id_celda);
+        this.numero = numero;
+        this.tipo = normalizeTexto(tipo);
+        this.estado = normalizeTexto(estado);
+        this.zona_id = Number(zona_id);
+        this.parqueadero_id = Number(parqueadero_id);
+        this.parqueadero_nombre = parqueadero_nombre;
+        this.zona_nombre = zona_nombre;
+    }
 
-  toJSON() {
-    return {
-      id_celda: this.id_celda,
-      tipo: this.tipo,
-      estado: this.estado,
-      zona_id: this.zona_id,
-      
-    };
-  }
+    toJSON() {
+        return {
+            id_celda: this.id_celda,
+            numero: this.numero,
+            tipo: this.tipo,
+            estado: this.estado,
+            zona_id: this.zona_id,
+            parqueadero_id: this.parqueadero_id,
+            parqueadero_nombre: this.parqueadero_nombre,
+            zona_nombre: this.zona_nombre
+        };
+    }
 
-  // Mapea datos desde Supabase a una instancia
-  _fromDbRow(row) {
-    this.id_celda = row.id;
-    this.tipo = row.tipo;
-    this.estado = row.estado;
-    this.zona_id = row.zona_id;
-  
-    return this;
-  }
+    _fromDbRow(row) {
+        this.id_celda = row.id;
+        this.numero = row.numero;
+        this.tipo = normalizeTexto(row.tipo);
+        this.estado = normalizeTexto(row.estado);
+        this.zona_id = Number(row.zona_id);
+        this.parqueadero_id = Number(row.parqueadero_id);
+        this.parqueadero_nombre = row.parqueadero?.nombre || null;
+        this.zona_nombre = row.zona?.nombre || null;
+        return this;
+    }
 
-  // 🔍 Consulta con filtros opcionales
-  static async findAll(filters = {}) {
-    let query = supabase.from('celda').select('*');
-    if (filters.estado) query = query.eq('estado', filters.estado);
-    if (filters.tipo) query = query.eq('tipo', filters.tipo);
-    if (filters.zona_id) query = query.eq('zona_id', filters.zona_id);
-    
+    static async findAll(filters = {}) {
+        let query = supabase.from('celda').select('*, parqueadero (nombre), zona (nombre)'); 
+        
+        if (filters.estado) query = query.eq('estado', normalizeTexto(filters.estado));
+        if (filters.tipo) query = query.eq('tipo', normalizeTexto(filters.tipo));
+        if (filters.zona_id) query = query.eq('zona_id', Number(filters.zona_id));
+        if (filters.parqueadero_id) query = query.eq('parqueadero_id', Number(filters.parqueadero_id));
 
-    const { data, error } = await query;
-    if (error) throw new Error(`Error encontrando celdas: ${error.message}`);
-    return data.map(row => new Celda(row.id, row.tipo, row.estado, row.zona_id));
-  }
+        const { data, error } = await query;
+        if (error) throw new Error(`Error encontrando celdas: ${error.message}`);
+        return (data || []).map(row => new Celda()._fromDbRow(row));
+    }
 
-  // 🔍 Busca celda específica por ID
-  static async findById(id) {
-    const { data, error } = await supabase.from('celda').select('*').eq('id', id).single();
-    if (error && error.code !== 'PGRST116') throw new Error(`Error encontrando celda por ID: ${error.message}`);
-    return data ? new Celda(data.id, data.tipo, data.estado, data.zona_id) : null;
-  }
+    static async findById(id) {
+        const idNum = Number(id);
+        if (isNaN(idNum)) throw new Error(`ID inválido proporcionado a findById: ${id}`);
 
-  // 🧠 Guarda (create o update según existencia de ID)
-  async save() {
-    return this.id_celda ? this._update() : this._create();
-  }
+        const { data, error } = await supabase
+            .from('celda')
+            .select('*, parqueadero (nombre), zona (nombre)')
+            .eq('id', idNum)
+            .single();
 
-  // 📥 Inserta nueva celda
-  async _create() {
-    const { data, error } = await supabase
-      .from('celda')
-      .insert({ tipo: this.tipo, estado: this.estado, zona_id: this.zona_id })
-      .select()
-      .single();
-    if (error) throw new Error(`Error creando celda: ${error.message}`);
-    return this._fromDbRow(data);
-  }
+        if (error && error.code !== 'PGRST116') {
+            throw new Error(`Error encontrando celda por ID: ${error.message}`);
+        }
 
-  // ✏️ Actualiza celda existente
-  async _update() {
-    const { data, error } = await supabase
-      .from('celda')
-      .update({ tipo: this.tipo, estado: this.estado, zona_id: this.zona_id })
-      .eq('id', this.id_celda)
-      .select()
-      .single();
-    if (error) throw new Error(`Error actualizando celda: ${error.message}`);
-    return this._fromDbRow(data);
-  }
+        return data ? new Celda()._fromDbRow(data) : null;
+    }
 
-  // ❌ Elimina celda por ID
-  async delete() {
-    if (!this.id_celda) throw new Error('No se puede eliminar una celda sin ID.');
-    const { error } = await supabase.from('celda').delete().eq('id', this.id_celda);
-    if (error) throw new Error(`Error eliminando celda: ${error.message}`);
-    return true;
-  }
+    async save() {
+        return this.id_celda ? this._update() : this._create();
+    }
+
+    async _create() {
+        const { data, error } = await supabase
+            .from('celda')
+            .insert({
+                numero: this.numero,
+                tipo: this.tipo,
+                estado: this.estado,
+                zona_id: this.zona_id,
+                parqueadero_id: this.parqueadero_id
+            })
+            .select('*, parqueadero (nombre), zona (nombre)')
+            .single();
+
+        if (error) throw new Error(`Error creando celda: ${error.message}`);
+        return this._fromDbRow(data);
+    }
+
+    async _update() {
+        if (!this.id_celda || isNaN(this.id_celda)) {
+            throw new Error('ID inválido para actualizar celda');
+        }
+
+        const { data, error } = await supabase
+            .from('celda')
+            .update({
+                numero: this.numero,
+                tipo: this.tipo,
+                estado: this.estado,
+                zona_id: this.zona_id,
+                parqueadero_id: this.parqueadero_id
+            })
+            .eq('id', this.id_celda)
+            .select('*, parqueadero (nombre), zona (nombre)')
+            .single();
+
+        if (error) throw new Error(`Error actualizando celda: ${error.message}`);
+        return this._fromDbRow(data);
+    }
+
+    async delete() {
+        if (!this.id_celda || isNaN(this.id_celda)) {
+            throw new Error('ID inválido para eliminar celda');
+        }
+
+        const { error } = await supabase
+            .from('celda')
+            .delete()
+            .eq('id', this.id_celda);
+
+        if (error) throw new Error(`Error eliminando celda: ${error.message}`);
+        return true;
+    }
 }
 
 module.exports = Celda;

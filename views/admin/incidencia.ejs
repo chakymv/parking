@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title><%= titulo || 'Gestión de Incidencias' %></title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+
+<%- include('header') %>
+
+<main>
+  <div class="contenido-principal">
+    <h1 class="centrar">Gestión de Incidencias</h1>
+    <p class="centrar">Administra los tipos de incidencia y los reportes generados.</p>
+    <hr class="linea-windows">
+
+    <!-- SECCIÓN DE REPORTES -->
+    <div class="seccion-gestion">
+      <h2>Reportes de Incidencia</h2>
+      <div class="filtros">
+        <button id="abrirModalReporte" class="botones btn-agregar">
+          <i class="fa-solid fa-plus"></i> Reportar Incidencia
+        </button>
+      </div>
+      <table id="tabla-reportes" class="display" style="width:100%">
+        <thead>
+          <tr>
+            <th>Placa</th>
+            <th>Tipo de Incidencia</th>
+            <th>Fecha y Hora</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% reportes.forEach(reporte => { %>
+            <tr>
+              <td><%= reporte.placa %></td>
+              <td><%= reporte.incidencia_nombre %></td>
+              <td><%= new Date(reporte.fecha_hora).toLocaleString('es-CO', { hour12: false }) %></td>
+              <td>
+                <button class="botones-min btn-editar" onclick="editarReporte('<%= reporte.vehiculo_id %>', '<%= reporte.incidencia_id %>', '<%= reporte.fecha_hora %>')">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="botones-min btn-eliminar" onclick="eliminarReporte('<%= reporte.vehiculo_id %>', '<%= reporte.incidencia_id %>', '<%= reporte.fecha_hora %>')">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <hr class="linea-windows" style="margin-top: 40px;">
+
+    <!-- SECCIÓN DE TIPOS -->
+    <div class="seccion-gestion">
+      <h2>Tipos de Incidencia</h2>
+      <div class="filtros">
+        <button id="abrirModalTipo" class="botones btn-agregar">
+          <i class="fa-solid fa-plus"></i> Crear Tipo
+        </button>
+      </div>
+      <table id="tabla-tipos" class="display" style="width:100%">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% incidencias.forEach(i => { %>
+            <tr>
+              <td><%= i.id %></td>
+              <td><%= i.nombre %></td>
+              <td>
+                <button class="botones-min btn-editar" onclick="editarTipo('<%= i.id %>', '<%= i.nombre %>')">
+                  <i class="fa-solid fa-pen"></i>
+                </button>
+                <button class="botones-min btn-eliminar" onclick="eliminarTipo('<%= i.id %>')">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL: Crear/Editar Tipo -->
+<div id="modalTipo" class="modal">
+  <div class="contenido-modal">
+    <div class="encabezado-modal">
+      <h2 id="modalTipoTitulo">Crear Tipo de Incidencia</h2>
+      <button class="cerrar" id="cerrarModalTipo">&times;</button>
+    </div>
+    <hr class="linea-windows">
+    <div class="cuerpo-modal">
+      <form id="formTipo" class="formulario">
+        <input type="hidden" id="tipoId" name="id">
+        <label for="tipoNombre">Nombre:</label>
+        <input type="text" id="tipoNombre" name="nombre" placeholder="Ej: Choque, Robo, Daño" required>
+        <button type="submit" class="crear">Guardar</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Reportar Incidencia -->
+<div id="modalReporte" class="modal">
+  <div class="contenido-modal">
+    <div class="encabezado-modal">
+      <h2>Reportar Nueva Incidencia</h2>
+      <button class="cerrar" id="cerrarModalReporte">&times;</button>
+    </div>
+    <hr class="linea-windows">
+    <div class="cuerpo-modal">
+      <form id="formReporte" class="formulario">
+        <label for="reporteVehiculo">Vehículo afectado:</label>
+        <select id="reporteVehiculo" name="vehiculo_id" required>
+          <option value="">Seleccione un vehículo...</option>
+          <% vehiculos.forEach(v => { %>
+            <option value="<%= v.id %>"><%= v.placa %> (<%= v.marca %>)</option>
+          <% }) %>
+        </select>
+
+        <label for="reporteIncidencia">Tipo de incidencia:</label>
+        <select id="reporteIncidencia" name="incidencia_id" required>
+          <option value="">Seleccione un tipo...</option>
+          <% incidencias.forEach(i => { %>
+            <option value="<%= i.id %>"><%= i.nombre %></option>
+          <% }) %>
+        </select>
+
+        <label for="reporteFechaHora">Fecha y Hora:</label>
+        <input type="datetime-local" id="reporteFechaHora" name="fecha_hora" required>
+
+        <button type="submit" class="crear">Crear Reporte</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="/admin/js/incidencia.js"></script>
+
+</body>
+</html>

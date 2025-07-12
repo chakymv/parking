@@ -24,14 +24,7 @@ router.get('/:id', async (req, res) => {
     res.json(data);
 });
 
-router.post('/', async (req, res) => {
-    const { data, error } = await supabase.from('incidencia').insert([req.body]).select().single();
-    if (error) {
-        console.error('Error al crear incidencia:', error);
-        return res.status(400).json({ error: error.message });
-    }
-    res.status(201).json(data);
-});
+
 
 router.put('/:id', async (req, res) => {
     const { data, error } = await supabase.from('incidencia').update(req.body).eq('id', req.params.id).select().single();

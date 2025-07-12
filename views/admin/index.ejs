@@ -55,7 +55,10 @@
       <h1 class="centrar">Dashboard Principal</h1>
       <p class="centrar">Resumen del estado actual del parqueadero.</p>
       <hr class="linea-windows">
-      
+ <a href="/admin/vista_parqueaderos" class="btn btn-outline-primary">
+  Vista Parqueaderos <i class="fa-solid fa-map"></i>
+</a>
+     
       <div id="dashboard-content" class="dashboard-grid">
         <!-- Nueva tarjeta de KPI -->
         <div class="dashboard-card kpi-card">
@@ -73,62 +76,79 @@
       </div>
     </div>
   </main>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      try {
-        const response = await fetch('/api/stats/dashboard');
-        if (!response.ok) {
-          throw new Error('No se pudieron cargar las estadísticas.');
+ <script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const response = await fetch('/api/stats/dashboard');
+      if (!response.ok) throw new Error('No se pudieron cargar las estadísticas.');
+      const stats = await response.json();
+
+      // KPI vehículos activos
+      document.getElementById('vehiculos-activos-kpi').textContent = stats.vehiculosActivos ?? 0;
+
+      // Colores por estado
+      const colorMap = {
+        Libre: 'rgba(40, 167, 69, 0.7)',         // Verde
+        Ocupada: 'rgba(220, 53, 69, 0.7)',       // Rojo
+        Mantenimiento: 'rgba(255, 193, 7, 0.7)'  // Amarillo
+      };
+
+      // Normalizar etiquetas y colores
+      const etiquetasCeldas = stats.celdasPorEstado.map(item => {
+        let estado = item.estado?.toLowerCase();
+        if (estado === 'disponible') estado = 'libre';
+        return estado.charAt(0).toUpperCase() + estado.slice(1);
+      });
+
+      const cantidadesCeldas = stats.celdasPorEstado.map(item => item.cantidad);
+      const coloresCeldas = etiquetasCeldas.map(label => colorMap[label] || 'rgba(108, 117, 125, 0.7)');
+
+      // Gráfico Celdas por Estado
+      const celdasCtx = document.getElementById('celdasChart').getContext('2d');
+      new Chart(celdasCtx, {
+        type: 'doughnut',
+        data: {
+          labels: etiquetasCeldas,
+          datasets: [{
+            label: 'Estado de Celdas',
+            data: cantidadesCeldas,
+            backgroundColor: coloresCeldas,
+            borderColor: '#fff',
+            borderWidth: 2
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      // Gráfico Vehículos por Tipo
+      const vehiculosCtx = document.getElementById('vehiculosChart').getContext('2d');
+      new Chart(vehiculosCtx, {
+        type: 'bar',
+        data: {
+          labels: stats.vehiculosPorTipo.map(item => item.tipo),
+          datasets: [{
+            label: 'Cantidad de Vehículos',
+            data: stats.vehiculosPorTipo.map(item => item.cantidad),
+            backgroundColor: 'rgba(0, 123, 255, 0.7)',
+            borderColor: 'rgba(0, 123, 255, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
         }
-        const stats = await response.json();
+      });
 
-        // Actualizar KPI de vehículos activos
-        document.getElementById('vehiculos-activos-kpi').textContent = stats.vehiculosActivos || 0;
+    } catch (error) {
+      console.error('Error al cargar el dashboard:', error);
+      document.getElementById('dashboard-content').innerHTML =
+        '<p style="color:red; text-align:center;">Error al cargar las estadísticas del dashboard.</p>';
+    }
+  });
+</script>
 
-        // Gráfico de Celdas por Estado (Doughnut Chart)
-        const celdasCtx = document.getElementById('celdasChart').getContext('2d');
-        new Chart(celdasCtx, {
-          type: 'doughnut',
-          data: {
-            labels: stats.celdasPorEstado.map(item => item.estado.charAt(0).toUpperCase() + item.estado.slice(1)),
-            datasets: [{
-              label: 'Estado de Celdas',
-              data: stats.celdasPorEstado.map(item => item.count),
-              backgroundColor: [
-                'rgba(40, 167, 69, 0.7)',
-                'rgba(220, 53, 69, 0.7)',
-                'rgba(255, 193, 7, 0.7)'
-              ],
-              borderColor: '#fff',
-              borderWidth: 2
-            }]
-          },
-          options: { responsive: true, maintainAspectRatio: false }
-        });
-
-        // Gráfico de Vehículos por Tipo (Bar Chart)
-        const vehiculosCtx = document.getElementById('vehiculosChart').getContext('2d');
-        new Chart(vehiculosCtx, {
-          type: 'bar',
-          data: {
-            labels: stats.vehiculosPorTipo.map(item => item.tipo),
-            datasets: [{
-              label: 'Cantidad de Vehículos',
-              data: stats.vehiculosPorTipo.map(item => item.count),
-              backgroundColor: 'rgba(0, 123, 255, 0.7)',
-              borderColor: 'rgba(0, 123, 255, 1)',
-              borderWidth: 1
-            }]
-          },
-          options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-        });
-
-      } catch (error) {
-        console.error('Error al cargar el dashboard:', error);
-        document.getElementById('dashboard-content').innerHTML = '<p style="color:red; text-align:center;">Error al cargar las estadísticas del dashboard.</p>';
-      }
-    });
-  </script>
   <% if (typeof extraBody !== 'undefined') { %>
     <%- extraBody %>
   <% } %>
