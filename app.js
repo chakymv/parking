@@ -65,7 +65,7 @@ app.use('/api/disponibilidad', disponibilidadPublica);
 // Ruta principal con disponibilidad cargada
 app.get('/', async (req, res) => {
   try {
-    const response = await fetch('http://localhost:7000/api/disponibilidad/disponibilidad');
+    const response = await fetch(`${req.protocol}://${req.get('host')}/api/disponibilidad/disponibilidad`);
     const disponibilidad = await response.json();
     res.render('usuario/index', { disponibilidad });
   } catch (err) {
@@ -73,6 +73,7 @@ app.get('/', async (req, res) => {
     res.render('usuario/index', { disponibilidad: {} });
   }
 });
+
 
 
 // Rutas API
