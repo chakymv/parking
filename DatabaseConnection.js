@@ -1,0 +1,1 @@
+// Archivo eliminado: toda la app debe usar supabaseClient.js para la conexión a Supabase
