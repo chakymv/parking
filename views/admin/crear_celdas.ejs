@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title><%= titulo || 'Gestionar Celdas' %></title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Gestionar Celdas de Parqueo</h1>
+      <hr class="linea-windows">
+      <div id="gestion-celdas-content">
+        <button class="btn-agregar" id="btn-abrir-modal-crear">Agregar Celda</button>
+        <table id="celdas-table" class="dataTable" style="width:100%;margin-top:20px;"></table>
+      </div>
+
+      <!-- Modal -->
+      <div class="modal" id="modal-celda">
+        <div class="contenido-modal">
+          <div class="encabezado-modal">
+            <span id="modal-titulo"></span>
+            <button class="cerrar" id="btn-cerrar-modal">&times;</button>
+          </div>
+          <div class="cuerpo-modal">
+            <form id="form-celda" autocomplete="off">
+              <input type="hidden" id="id" name="id">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div>
+                  <label>Tipo de Vehículo</label>
+                  <select id="tipo" name="tipo" required>
+                    <option value="Carro">Carro</option>
+                    <option value="Moto">Moto</option>
+                    <option value="Bicicleta">Bicicleta</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Estado</label>
+                  <select id="estado" name="estado" required>
+                    <option value="libre">Libre</option>
+                    <option value="ocupado">Ocupado</option>
+                    <option value="mantenimiento">Mantenimiento</option>
+                  </select>
+                </div>
+              </div>
+              <div id="modal-msg" style="color:red;margin-top:10px;text-align:center;"></div>
+              <div class="pie-modal" style="margin-top:15px;text-align:right;display:flex;justify-content:flex-end;gap:10px;">
+                <button type="submit" id="btn-guardar-celda" class="btn-guardar">Guardar</button>
+                <button type="button" id="btn-eliminar-celda" class="btn-eliminar" style="display:none;">Eliminar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script src="/public/js/header.js" defer></script>
+  <script src="/admin/js/crear-celdas.js"></script>
+
+</body>
+</html>

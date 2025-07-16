@@ -1,0 +1,44 @@
+<div class="sidebar" id="sidebar">
+    <div class="logo">
+      <img src="/admin/img/logo-grande.png" alt="Logo Grande" class="logo-expandido" />
+      <img src="/admin/img/logo-mini.png" alt="Logo Miniatura" class="logo-compacto" />
+    </div>
+    <ul>
+      <li><a href="/admin/index"><i class="fas fa-home"></i><span class="menu-text">Inicio</span></a></li>
+      <li class="submenu">
+        <a href="#"><i class="fa-solid fa-list-check"></i> <span class="menu-text">Gestionar</span></a>
+        <ul>
+          <li><a href="/admin/usuarios"><i class="fa-solid fa-users-between-lines"></i><span class="menu-text">Usuarios</span></a></li>
+          <li><a href="/admin/vehiculos"><i class="fa-solid fa-car"></i><span class="menu-text">Vehículos</span></a></li>
+          <li><a href="/admin/historico"><i class="fa-solid fa-book-open"></i><span class="menu-text">Histórico</span></a></li>
+          <li><a href="/admin/incidencia"><i class="fa-solid fa-triangle-exclamation"></i><span class="menu-text">Incidencias</span></a></li>
+        </ul>
+      </li>
+      <li class="submenu">
+        <a href="#"><i class="fa-solid fa-user-tie"></i><span class="menu-text">Administrar</span></a>
+        <ul>
+          <li><a href="/admin/crear_usuarios"><i class="fa-solid fa-user-tie"></i><span class="menu-text">Usuarios Sistema</span></a></li>
+          <li><a href="/admin/crear_celdas"><i class="fa-solid fa-square-parking"></i><span class="menu-text">Crear Celdas</span></a></li>
+          <li><a href="/admin/parqueaderos"><i class="fa-solid fa-warehouse"></i><span class="menu-text">Parqueaderos</span></a></li>
+          <li><a href="/admin/vista_parqueaderos"><i class="fa-solid fa-warehouse"></i><span class="menu-text">Vista Parqueaderos</span></a></li>
+
+          
+          <li><a href="/admin/zonas"><i class="fa-solid fa-layer-group"></i><span class="menu-text">Zonas</span></a></li>
+
+        </ul>
+      </li>
+      <li><a href="/admin/operar"><i class="fa-solid fa-building-shield"></i><span class="menu-text">Operar</span></a></li>
+      <li><a href="#"><i class="fa-solid fa-headset"></i><span class="menu-text">Soporte</span></a></li>
+    </ul>
+</div>
+<nav class="navbar">
+  <ul class="navbar-menu">
+    <li><a href="#">Bienvenido, <%= userName || 'Admin' %></a></li>
+    <li>
+      <form action="/admin/logout" method="POST" style="display: inline;">
+        <button type="submit" class="btn-link-logout">Cerrar Sesión</button>
+      </form>
+    </li>
+  </ul>
+</nav>
+<script src="/public/js/header.js" defer></script>

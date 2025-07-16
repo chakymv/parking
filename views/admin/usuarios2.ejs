@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title><%= titulo || 'Usuarios y Vehículos' %></title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <% if (typeof extraHead !== 'undefined') { %>
+    <%- extraHead %>
+  <% } %>
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Gestionar Usuarios y Vehículos</h1>
+      <p class="centrar">El operario podrá actualizar datos de los usuarios y vehículos registrados</p>
+      <hr class="linea-windows">
+      <!-- Aquí iría el contenido de la tabla y formularios, adaptado a EJS si es necesario -->
+      <div id="usuarios-vehiculos-content"></div>
+    </div>
+  </main>
+  <% if (typeof extraBody !== 'undefined') { %>
+    <%- extraBody %>
+  <% } %>
+</body>
+</html>

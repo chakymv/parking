@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Usuarios</title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Gestionar Usuarios</h1>
+      <p class="centrar">Esta tabla permite realizar búsqueda y gestión de usuarios</p>
+      <hr class="linea-windows">
+
+      <div class="filtros-usuarios">
+        <input id="filtro-usuarios" class="input-filtro" placeholder="Buscar usuario..." oninput="filterUsuariosTable()" />
+      </div>
+      <table border="1" id="usuarios-table" class="datatable tabla-usuarios"></table>
+      <!-- Modal para mostrar y editar datos del usuario -->
+      <div class="modal" id="modal-usuario">
+        <div class="contenido-modal">
+          <div class="encabezado-modal">
+            <span>Datos del Usuario</span>
+            <button class="cerrar" onclick="cerrarModalUsuario()">&times;</button>
+          </div>
+          <div class="cuerpo-modal" style="min-width:340px;">
+            <form id="form-usuario-modal" autocomplete="off">
+              <input type="hidden" id="usuario_id" name="id_usuario">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div>
+                  <label>Primer Nombre</label>
+                  <input type="text" id="usuario_primer_nombre" name="primer_nombre" required>
+                </div>
+                <div>
+                  <label>Segundo Nombre</label>
+                  <input type="text" id="usuario_segundo_nombre" name="segundo_nombre">
+                </div>
+                <div>
+                  <label>Primer Apellido</label>
+                  <input type="text" id="usuario_primer_apellido" name="primer_apellido" required>
+                </div>
+                <div>
+                  <label>Segundo Apellido</label>
+                  <input type="text" id="usuario_segundo_apellido" name="segundo_apellido">
+                </div>
+                <div>
+                  <label>Documento</label>
+                  <input type="text" id="usuario_documento" name="numero_documento" required>
+                </div>
+                <div>
+                  <label>Email</label>
+                  <input type="email" id="usuario_email" name="direccion_correo" required>
+                </div>
+                <div>
+                  <label>Teléfono</label>
+                  <input type="text" id="usuario_telefono" name="telefono">
+                </div>
+                <div>
+                  <label>Dirección</label>
+                  <input type="text" id="usuario_direccion" name="direccion">
+                </div>
+                <div>
+                  <label>Rol</label>
+                  <select id="usuario_rol" name="rol" required>
+                    <option value="Administrador">Administrador</option>
+                    <option value="Usuario">Usuario</option>
+                    <option value="Invitado">Invitado</option>
+                  </select>
+                </div>
+              </div>
+              <div id="usuario-modal-actions" style="margin-top:15px;text-align:right;"></div>
+            </form>
+            <div id="usuario-modal-msg" style="color:red;margin-top:5px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script>
+    // --- USUARIOS ---
+    const usuariosColNames = {
+      id_usuario: 'ID',
+      tipo_documento: 'Tipo Doc.',
+      numero_documento: 'Documento',
+      primer_nombre: 'Primer Nombre',
+      segundo_nombre: 'Segundo Nombre',
+      primer_apellido: 'Primer Apellido',
+      segundo_apellido: 'Segundo Apellido',
+      direccion_correo: 'Correo',
+      numero_celular: 'Celular',
+      estado: 'Estado',
+      perfil_usuario_id: 'Perfil'
+    };
+    const usuariosAllColumns = ['id_usuario', 'tipo_documento', 'numero_documento', 'primer_nombre', 'segundo_nombre', 'primer_apellido', 'segundo_apellido', 'direccion_correo', 'numero_celular', 'estado', 'perfil_usuario_id'];
+    let usuariosColumns = ['numero_documento', 'primer_nombre', 'primer_apellido', 'direccion_correo', 'estado', 'perfil_usuario_id'];
+    let usuariosData = [];
+    let usuariosDataTableInstance = null;
+
+    async function fetchUsuarios() {
+      const res = await fetch('/api/usuarios');
+      if (!res.ok) {
+        alert('Error al obtener usuarios');
+        return;
+      }
+      usuariosData = await res.json();
+      if (!Array.isArray(usuariosData)) {
+        alert('La respuesta de usuarios no es un array');
+        usuariosData = [];
+      }
+      renderUsuariosTable();
+    }
+
+    function renderUsuariosTable(filteredData) {
+      const table = document.getElementById('usuarios-table');
+      if (usuariosDataTableInstance) {
+        usuariosDataTableInstance.destroy();
+        usuariosDataTableInstance = null;
+      }
+      table.innerHTML = '';
+      if (usuariosColumns.length === 0) {
+        return;
+      }
+      let header = '<thead><tr>';
+      usuariosColumns.forEach(col => header += `<th>${usuariosColNames[col] || col}</th>`);
+      header += '</tr></thead>';
+      table.innerHTML += header;
+      let rows = '<tbody>';
+      (filteredData || usuariosData).forEach((row, idx) => {
+        let tr = `<tr class='usuario-row' data-id='${row.id_usuario}' style='cursor:pointer;'>`;
+        usuariosColumns.forEach(col => {
+          let cellValue = row[col] ?? '';
+          if (col === 'perfil_usuario_id') {
+            if (cellValue === 1) cellValue = 'Administrador';
+            else if (cellValue === 2) cellValue = 'Operador';
+            else if (cellValue === 3) cellValue = 'Usuario';
+          }
+          tr += `<td>${cellValue}</td>`
+        });
+        tr += '</tr>';
+        rows += tr;
+      });
+      rows += '</tbody>';
+      table.innerHTML += rows;
+      if (usuariosColumns.length > 0) {
+        usuariosDataTableInstance = $('#usuarios-table').DataTable({
+          paging: true,
+          searching: false,
+          info: true,
+          responsive: true,
+          language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+          }
+        });
+      }
+      // Asignar evento click a cada fila de usuario
+      document.querySelectorAll('.usuario-row').forEach(row => {
+        row.onclick = () => verUsuario(row.getAttribute('data-id'));
+      });
+    }
+
+    function filterUsuariosTable() {
+      const filtro = document.getElementById('filtro-usuarios').value.toLowerCase();
+      const filtered = usuariosData.filter(row => usuariosColumns.some(col => (row[col]+'' || '').toLowerCase().includes(filtro)));
+      renderUsuariosTable(filtered);
+    }
+
+    // Modal para mostrar y editar datos del usuario
+    function cerrarModalUsuario() {
+      document.getElementById('modal-usuario').classList.remove('active');
+    }
+
+    async function verUsuario(usuarioId) {
+      if(!usuarioId) return;
+      const modal = document.getElementById('modal-usuario');
+      const form = document.getElementById('form-usuario-modal');
+      const msgDiv = document.getElementById('usuario-modal-msg');
+      const actionsDiv = document.getElementById('usuario-modal-actions');
+      msgDiv.innerText = '';
+      form.reset();
+      modal.classList.add('active');
+      // Simulación: solo admin puede editar/eliminar (ajusta según tu auth real)
+      const esAdmin = true;
+      try {
+        const res = await fetch(`/api/usuarios/${usuarioId}`);
+        if(res.ok) {
+          const u = await res.json();
+          Object.keys(u).forEach(key => {
+            if(form.elements[key]) form.elements[key].value = u[key] || '';
+          });
+          // Seleccionar el rol correcto en el select
+          if(form.elements['rol']) {
+            Array.from(form.elements['rol'].options).forEach(opt => {
+              opt.selected = (opt.value === u.rol);
+            });
+          }
+          // Botones según permisos
+          let btns = '';
+          if(esAdmin) {
+            btns += '<button type="submit" class="btn-guardar">Guardar</button> ';
+            btns += '<button type="button" class="btn-eliminar" id="btn-eliminar-usuario-modal">Eliminar</button>';
+          }
+          actionsDiv.innerHTML = btns;
+          // Eliminar usuario
+          if(esAdmin) {
+            document.getElementById('btn-eliminar-usuario-modal').onclick = async function() {
+              if(!confirm('¿Eliminar usuario?')) return;
+              const delRes = await fetch(`/api/usuarios/${usuarioId}`, { method: 'DELETE' });
+              if(delRes.ok) {
+                cerrarModalUsuario();
+                fetchUsuarios();
+              } else {
+                msgDiv.innerText = 'Error al eliminar usuario';
+              }
+            };
+          }
+        } else {
+          msgDiv.innerText = 'Usuario no encontrado';
+        }
+      } catch (e) {
+        msgDiv.innerText = 'Error de conexión';
+      }
+      // Guardar cambios usuario
+      form.onsubmit = async function(e) {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(form));
+        const putRes = await fetch(`/api/usuarios/${usuarioId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if(putRes.ok) {
+          msgDiv.style.color = 'green';
+          msgDiv.innerText = 'Usuario actualizado';
+          fetchUsuarios();
+          setTimeout(() => { cerrarModalUsuario(); }, 800);
+        } else {
+          msgDiv.style.color = 'red';
+          msgDiv.innerText = 'Error al actualizar usuario';
+        }
+      };
+    }
+
+    // Inicialización
+    window.onload = fetchUsuarios;
+  </script>
+</body>
+</html>

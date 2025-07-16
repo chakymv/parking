@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestionar Parqueaderos</title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Gestionar Parqueaderos</h1>
+      <p class="centrar">Cree, edite y asigne celdas a cada parqueadero.</p>
+      <hr class="linea-windows">
+
+      <div class="acciones-tabla">
+        <button id="btn-nuevo-parqueadero" class="btn-nuevo"><i class="fas fa-plus"></i> Nuevo Parqueadero</button>
+      </div>
+
+      <table id="parqueaderos-table" class="datatable tabla-usuarios" style="width:100%">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Código</th>
+            <th>Tipo</th>
+            <th>Capacidad</th>
+            <th>Creado por</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Modal para Crear/Editar Parqueadero -->
+  <div class="modal" id="modal-parqueadero">
+    <div class="contenido-modal" style="max-width: 800px;">
+      <div class="encabezado-modal">
+        <span id="modal-titulo">Nuevo Parqueadero</span>
+        <button class="cerrar" id="btn-cerrar-modal">&times;</button>
+      </div>
+      <div class="cuerpo-modal">
+        <form id="form-parqueadero" autocomplete="off">
+          <input type="hidden" id="parqueadero-id" name="id">
+          <div class="form-group"><label>Nombre</label><input type="text" id="parqueadero-nombre" name="nombre" required></div>
+          <div class="form-group"><label>Código</label><input type="text" id="parqueadero-codigo" name="codigo" required></div>
+          <div class="form-group"><label>Tipo</label><input type="text" id="parqueadero-tipo" name="tipo"></div>
+          <div class="form-group"><label>Capacidad</label><input type="number" id="parqueadero-capacidad" name="capacidad"></div>
+          <div class="form-group"><label>Creado por</label><input type="text" id="parqueadero-creado" name="creado_por" value="<%= userName || 'Admin' %>" readonly></div>
+
+          <div class="form-group">
+            <label>Zonas y Celdas disponibles</label>
+            <div id="grupo-celdas" style="max-height: 300px; overflow-y: auto;">
+              <% zonas.forEach(zona => { %>
+                <fieldset style="margin-bottom:10px; padding:8px; border:1px solid #ccc;">
+                  <legend><%= zona.nombre %></legend>
+                  <% celdas.filter(c => c.zona_id === zona.id).forEach(celda => { %>
+                    <label style="display:block; margin-left:10px;">
+                      <input type="checkbox" name="celda_ids" value="<%= celda.id %>">
+                      Celda <%= celda.id %> — <%= celda.tipo %>
+                    </label>
+                  <% }) %>
+                </fieldset>
+              <% }) %>
+            </div>
+          </div>
+
+          <div id="modal-msg" class="mensaje-error" style="display:none;"></div>
+          <div class="pie-modal"><button type="submit" class="btn-guardar">Guardar</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function() {
+      let table;
+      const modal = $('#modal-parqueadero');
+      const form = $('#form-parqueadero');
+      const modalTitulo = $('#modal-titulo');
+      const modalMsg = $('#modal-msg');
+      let editId = null;
+
+      function cargarParqueaderos() {
+        if (table) table.destroy();
+        table = $('#parqueaderos-table').DataTable({
+          ajax: { url: "/api/parqueaderos", dataSrc: "" },
+          columns: [
+            { data: "id", visible: false },
+            { data: "nombre" },
+            { data: "codigo" },
+            { data: "tipo" },
+            { data: "capacidad" },
+            { data: "creado_por" },
+            {
+              data: null,
+              orderable: false,
+              render: data => `
+                <button class="btn-accion btn-editar" data-id="${data.id}"><i class="fas fa-edit"></i></button>
+                <button class="btn-accion btn-eliminar" data-id="${data.id}"><i class="fas fa-trash"></i></button>
+              `
+            }
+          ],
+          language: { url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json" }
+        });
+      }
+
+      function abrirModal(id = null, data = {}) {
+        form[0].reset();
+        modalMsg.hide();
+        editId = id;
+        if (id) {
+          modalTitulo.text('Editar Parqueadero');
+          $('#parqueadero-id').val(data.id);
+          $('#parqueadero-nombre').val(data.nombre);
+          $('#parqueadero-codigo').val(data.codigo);
+          $('#parqueadero-tipo').val(data.tipo);
+          $('#parqueadero-capacidad').val(data.capacidad);
+          $('#parqueadero-creado').val(data.creado_por);
+        } else {
+          modalTitulo.text('Nuevo Parqueadero');
+          $('#parqueadero-creado').val('<%= userName || "Admin" %>');
+        }
+        modal.addClass('active');
+      }
+
+      $('#btn-nuevo-parqueadero').on('click', () => abrirModal());
+      $('#btn-cerrar-modal').on('click', () => modal.removeClass('active'));
+      modal.on('click', e => { if (e.target === modal[0]) modal.removeClass('active') });
+
+      $('#parqueaderos-table').on('click', '.btn-editar', async function() {
+        const id = $(this).data('id');
+        try {
+          const res = await fetch(`/api/parqueaderos/${id}`);
+          const data = await res.json();
+          abrirModal(id, data);
+        } catch (err) {
+          alert('No se pudo obtener los datos del parqueadero.');
+        }
+      });
+
+      form.on('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        formData.set("celda_ids", [...formData.getAll("celda_ids")]); // Asegura formato de array
+        const data = Object.fromEntries(formData.entries());
+
+        const url = editId ? `/api/parqueaderos/${editId}` : '/api/parqueaderos';
+        const method = editId ? 'PUT' : 'POST';
+
+        try {
+          const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          if (!res.ok) throw new Error((await res.json()).error || 'Error al guardar el parqueadero.');
+          modal.removeClass('active');
+          cargarParqueaderos();
+        } catch (err) {
+          modalMsg.text(err.message).show();
+        }
+      });
+
+      $('#parqueaderos-table').on('click', '.btn-eliminar', async function() {
+        const id = $(this).data('id');
+        if (confirm('¿Eliminar este parqueadero?')) {
+          await fetch(`/api/parqueaderos/${id}`, { method: 'DELETE' });
+          cargarParqueaderos();
+        }
+      });
+
+      cargarParqueaderos();
+    });
+  </script>
+</body>
+</html>

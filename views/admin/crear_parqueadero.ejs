@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title><%= titulo || 'Crear Parqueadero' %></title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <% if (typeof extraHead !== 'undefined') { %><%- extraHead %><% } %>
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Registrar Nuevo Parqueadero</h1>
+      <hr class="linea-windows">
+      <form id="form-parqueadero" autocomplete="off" style="max-width:600px;margin:0 auto;">
+        <div class="grupo-input">
+          <label for="nombre">Nombre</label>
+          <input type="text" id="nombre" name="nombre" required>
+        </div>
+        <div class="grupo-input">
+          <label for="codigo">Código</label>
+          <input type="text" id="codigo" name="codigo" required>
+        </div>
+        <div class="grupo-input">
+          <label for="tipo">Tipo</label>
+          <select id="tipo" name="tipo" required>
+            <option value="">Seleccione...</option>
+            <option value="Público">Público</option>
+            <option value="Privado">Privado</option>
+          </select>
+        </div>
+        <div class="grupo-input">
+          <label for="capacidad">Capacidad</label>
+          <input type="number" id="capacidad" name="capacidad" min="1" required>
+        </div>
+        <div id="form-msg" class="centrar" style="color:red;margin-top:10px;"></div>
+        <div class="pie-formulario" style="margin-top:20px;text-align:right;">
+          <button type="submit" class="btn-guardar">Registrar</button>
+        </div>
+      </form>
+    </div>
+  </main>
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <% if (typeof extraBody !== 'undefined') { %><%- extraBody %><% } %>
+  <script src="/admin/js/crear-parqueadero.js"></script>
+</body>
+</html>

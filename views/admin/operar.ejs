@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= titulo || 'Operar Parqueadero' %></title>
+  <link rel="stylesheet" href="/admin/css/estilo.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- 👇 Estilos del modal y grid de celdas integrados -->
+  <style>
+  .modal {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.modal.mostrar {
+  display: flex;
+}
+
+.contenido-modal {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  width: 90%;
+  max-width: 600px;
+}
+
+.encabezado-modal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.encabezado-modal span {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.cerrar {
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  cursor: pointer;
+  color: #aaa;
+}
+
+.cerrar:hover {
+  color: #333;
+}
+
+.cuerpo-modal {
+  margin-bottom: 20px;
+}
+
+.pie-modal {
+  text-align: right;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+/* Inputs y selects dentro del modal */
+.contenido-modal label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #555;
+}
+
+.contenido-modal input[type="text"],
+.contenido-modal select {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.contenido-modal input[type="text"][readonly] {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* Botón de guardar */
+.btn-guardar {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-guardar:hover {
+  background-color: #0056b3;
+}
+
+.btn-guardar:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Grilla de celdas */
+.celdas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 15px;
+  padding: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 5px;
+}
+
+#usuario-buscar-doc-operar {
+  margin-bottom: 5px;
+}
+
+  </style>
+</head>
+<body>
+<%- include('header') %>
+<main>
+  <div class="contenido-principal">
+    <div class="caja-oscura">
+      <div class="columnas">
+        <div class="imagen_ingreso imagen_is">
+          <div class="decoracion-input">
+            <input type="text" id="placa-input" class="placas-input" placeholder="Placa: XXX-XXX" maxlength="7" />
+            <hr class="linea-windows" />
+            <p class="centrar-texto">Escribe la placa y haz clic en una acción</p>
+            <div class="centrar">
+              <button id="btn-ingreso" class="botones-grandes btn-entrada">INGRESO <i class="fa-solid fa-arrow-down"></i></button>
+              <button id="btn-salida" class="botones-grandes btn-salida">SALIDA <i class="fa-solid fa-arrow-up"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<% /* Modal para registrar vehículo */ %>
+<div class="modal" id="modal-registrar-vehiculo">
+  <div class="contenido-modal">
+    <div class="encabezado-modal">
+      <span>Registrar Vehículo</span>
+      <button class="cerrar" id="btn-cerrar-modal-registrar">&times;</button>
+    </div>
+    <div class="cuerpo-modal">
+      <form id="form-registrar-vehiculo" autocomplete="off">
+        <p>Vehículo con placa <strong id="placa-registrar-span"></strong> no está registrado.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><label for="placa_registrar">Placa</label><input type="text" id="placa_registrar" required readonly></div>
+          <div><label for="color_registrar">Color</label><input type="text" id="color_registrar" required></div>
+          <div><label for="modelo_registrar">Modelo</label><input type="text" id="modelo_registrar" required></div>
+          <div><label for="marca_registrar">Marca</label><input type="text" id="marca_registrar" required></div>
+          <div>
+            <label for="tipo_registrar">Tipo</label>
+            <select id="tipo_registrar" required>
+              <option value="">Seleccione un tipo</option>
+              <option value="Carro">Carro</option>
+              <option value="Moto">Moto</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:15px;">
+          <label for="usuario_id_usuario_operar">Propietario</label>
+          <input type="text" id="usuario-buscar-doc-operar" placeholder="Buscar por documento o nombre..." />
+          <select id="usuario_id_usuario_operar" required>
+            <option value="">Seleccione propietario</option>
+          </select>
+        </div>
+        <div class="pie-modal" style="text-align:right;">
+          <button type="submit" id="btn-guardar-vehiculo-registrar" class="btn-guardar">Registrar y Continuar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<% /* Modal para asignar celda */ %>
+<div class="modal" id="modal-asignar-celda">
+  <div class="contenido-modal">
+    <div class="encabezado-modal">
+      <span>Asignar Celda</span>
+      <button class="cerrar" id="btn-cerrar-modal-celda">&times;</button>
+    </div>
+    <div class="cuerpo-modal">
+      <p>Seleccione una celda disponible para la placa <strong id="placa-modal-span"></strong>.</p>
+      <div id="celdas-disponibles-grid" class="celdas-grid"></div>
+      <div id="modal-celda-msg" style="color:red;text-align:center;"></div>
+    </div>
+    <div class="pie-modal">
+      <input type="hidden" id="modal-celda-id" />
+      <button id="btn-confirmar-asignacion" class="btn-guardar" disabled>Confirmar Asignación</button>
+    </div>
+  </div>
+</div>
+<% /* Toast de notificación */ %>
+<div id="toast-msg" class="toast align-items-center text-bg-success border-0 position-fixed bottom-0 end-0 m-3" role="alert">
+  <div class="d-flex">
+    <div class="toast-body" id="toast-body"></div>
+    <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="cerrarToast()"></button>
+  </div>
+</div>
+
+<% /* Scripts */ %>
+<script>
+const mostrarToast = (mensaje, tipo = 'success') => {
+  const toastMsg = document.getElementById('toast-msg');
+  const toastBody = document.getElementById('toast-body');
+
+  toastBody.textContent = mensaje;
+  toastMsg.className = 'toast align-items-center text-bg-' + tipo + ' border-0 position-fixed bottom-0 end-0 m-3';
+  toastMsg.style.display = 'block';
+  setTimeout(() => { toastMsg.style.display = 'none'; }, 3500);
+};
+
+const cerrarToast = () => {
+  document.getElementById('toast-msg').style.display = 'none';
+};
+
+document.getElementById('btn-cerrar-modal-registrar').onclick = () => {
+  document.getElementById('modal-registrar-vehiculo').classList.remove('mostrar');
+};
+
+document.getElementById('btn-cerrar-modal-celda').onclick = () => {
+  document.getElementById('modal-asignar-celda').classList.remove('mostrar');
+};
+
+// INGRESO
+document.getElementById('btn-ingreso').addEventListener('click', async () => {
+  const placa = document.getElementById('placa-input').value.trim().toUpperCase();
+  if (!placa) return mostrarToast('⚠️ Escriba la placa antes de continuar', 'danger');
+
+  try {
+    const resExiste = await fetch(`/admin/vehiculo/existe?placa=${encodeURIComponent(placa)}`);
+    const { existe } = await resExiste.json();
+
+if (!existe) {
+  document.getElementById('placa_registrar').value = placa;
+  document.getElementById('placa-registrar-span').textContent = placa;
+  document.getElementById('modal-registrar-vehiculo').classList.add('mostrar');
+  return;
+}
+
+const modal = document.getElementById('modal-registrar-vehiculo');
+if (modal) {
+  modal.classList.add('mostrar');
+} else {
+  mostrarToast('⚠️ No se pudo mostrar el modal de registro', 'danger');
+}
+
+
+
+    const tipo = 'Carro'; // 🚧 se puede ajustar dinámicamente según vehículo
+    const resCeldas = await fetch(`/admin/celdas/disponibles?tipo=${encodeURIComponent(tipo)}`);
+    const { celdas } = await resCeldas.json();
+
+    if (!celdas?.length) return mostrarToast('❌ No hay celdas disponibles para este tipo', 'danger');
+
+    document.getElementById('placa-modal-span').textContent = placa;
+    const grid = document.getElementById('celdas-disponibles-grid');
+    grid.innerHTML = '';
+
+    celdas.forEach(celda => {
+      const div = document.createElement('div');
+      div.className = 'celda-item';
+      div.textContent = `Celda ${celda.id}`;
+      div.dataset.id = celda.id;
+      div.onclick = () => {
+        document.querySelectorAll('.celda-item').forEach(el => el.classList.remove('selected'));
+        div.classList.add('selected');
+        document.getElementById('modal-celda-id').value = celda.id;
+        document.getElementById('btn-confirmar-asignacion').disabled = false;
+      };
+      grid.appendChild(div);
+    });
+
+    document.getElementById('modal-asignar-celda').classList.add('mostrar');
+  } catch (err) {
+    console.error('Error en ingreso:', err);
+    mostrarToast('❌ Error inesperado en ingreso', 'danger');
+  }
+});
+
+// CONFIRMAR ASIGNACIÓN
+document.getElementById('btn-confirmar-asignacion').addEventListener('click', async () => {
+  const celda_id = document.getElementById('modal-celda-id').value;
+  const placa = document.getElementById('placa-input').value.trim().toUpperCase();
+  const documento = prompt('Ingrese número de documento del usuario');
+
+  if (!documento || !celda_id || !placa) {
+    return mostrarToast('❌ Datos incompletos para asignar celda', 'danger');
+  }
+
+  try {
+    const res = await fetch('/admin/asignar-celda', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ celda_id, placa, documento })
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      mostrarToast('✅ Vehículo ingresado correctamente');
+      document.getElementById('modal-asignar-celda').classList.remove('mostrar');
+      document.getElementById('placa-input').value = '';
+    } else {
+      mostrarToast(`⚠️ ${result.error}`, 'danger');
+    }
+  } catch (err) {
+    console.error('Error al asignar celda:', err);
+    mostrarToast('❌ No se pudo asignar celda', 'danger');
+  }
+});
+
+// SALIDA
+document.getElementById('btn-salida').addEventListener('click', async () => {
+  const placa = document.getElementById('placa-input').value.trim().toUpperCase();
+  if (!placa) return mostrarToast('⚠️ Escriba la placa para registrar salida', 'danger');
+
+  try {
+    const res = await fetch(`/admin/salida-vehiculo?placa=${encodeURIComponent(placa)}`);
+    const result = await res.json();
+
+    if (result.success) {
+      mostrarToast('📤 Celda liberada correctamente');
+      document.getElementById('placa-input').value = '';
+    } else {
+      mostrarToast(`⚠️ ${result.error}`, 'danger');
+    }
+  } catch (err) {
+    console.error('Error en salida:', err);
+    mostrarToast('❌ Error inesperado al liberar celda', 'danger');
+  }
+});
+
+// Verificación dinámica al ingresar placa
+document.getElementById('placa-input').addEventListener('input', async (e) => {
+  const placa = e.target.value.trim().toUpperCase();
+  const btnSalida = document.getElementById('btn-salida');
+
+  if (!placa) {
+    btnSalida.disabled = true;
+    return;
+  }
+
+  try {
+    const res = await fetch(`/admin/historial-activo/${encodeURIComponent(placa)}`);
+    btnSalida.disabled = res.status === 404;
+  } catch {
+    btnSalida.disabled = true;
+  }
+});
+
+// Verificación dinámica al ingresar placa
+document.getElementById('placa-input').addEventListener('input', async (e) => {
+  const placa = e.target.value.trim().toUpperCase();
+  const btnSalida = document.getElementById('btn-salida');
+
+  if (!placa) {
+    btnSalida.disabled = true;
+    return;
+  }
+
+  try {
+    const res = await fetch(`/admin/vehiculo/historial-activo/${encodeURIComponent(placa)}`);
+    btnSalida.disabled = res.status === 404;
+  } catch {
+    btnSalida.disabled = true;
+  }
+});
+
+// SALIDA segura y blindada
+document.getElementById('btn-salida').addEventListener('click', async () => {
+  const placa = document.getElementById('placa-input').value.trim().toUpperCase();
+  if (!placa) return mostrarToast('⚠️ Escriba la placa para registrar salida', 'danger');
+
+  try {
+    const verificar = await fetch(`/admin/vehiculo/historial-activo/${encodeURIComponent(placa)}`);
+    if (verificar.status === 404) {
+      return mostrarToast('ℹ️ El vehículo no tiene entrada activa ni celda que liberar', 'warning');
+    }
+
+    const res = await fetch(`/admin/vehiculo/liberar/${encodeURIComponent(placa)}`, {
+      method: 'POST'
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      mostrarToast('📤 Celda liberada exitosamente');
+      document.getElementById('placa-input').value = '';
+    } else {
+      mostrarToast(`⚠️ ${result.mensaje || 'Error al liberar celda'}`, 'danger');
+    }
+  } catch (err) {
+    console.error('Error en salida:', err);
+    mostrarToast('❌ Error inesperado al liberar celda', 'danger');
+  }
+});
+
+
+document.getElementById('usuario-buscar-doc-operar').addEventListener('input', async (e) => {
+  const valor = e.target.value.trim();
+  const select = document.getElementById('usuario_id_usuario_operar');
+
+  if (valor.length < 3) return;
+
+  try {
+    const res = await fetch(`/admin/usuarios/buscar?query=${encodeURIComponent(valor)}`);
+    const { usuarios } = await res.json();
+
+    select.innerHTML = '';
+
+    if (!usuarios.length) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'Sin resultados';
+      select.appendChild(opt);
+      return;
+    }
+
+    usuarios.forEach(usuario => {
+      const opt = document.createElement('option');
+      opt.value = usuario.id_usuario;
+      opt.textContent = `${usuario.primer_nombre} — ${usuario.numero_documento}`;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Error al buscar usuarios:', err);
+  }
+});
+
+
+</script>
+
+
+</body>
+</html>

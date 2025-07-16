@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title><%= titulo || 'Inicio' %></title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    .dashboard-card {
+        background-color: #fff;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .dashboard-card h3 {
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        color: #333;
+        text-align: center;
+    }
+    .dashboard-card canvas {
+        max-height: 300px;
+    }
+    /* Estilos para la nueva tarjeta de KPI */
+    .kpi-card {
+        grid-column: 1 / -1; /* Ocupa todo el ancho */
+        text-align: center;
+    }
+    .kpi-card .kpi-number {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #007bff;
+        margin: 0.5rem 0;
+    }
+    .kpi-card .kpi-label {
+        font-size: 1.2rem;
+        color: #6c757d;
+    }
+  </style>
+  <% if (typeof extraHead !== 'undefined') { %>
+    <%- extraHead %>
+  <% } %>
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Dashboard Principal</h1>
+      <p class="centrar">Resumen del estado actual del parqueadero.</p>
+      <hr class="linea-windows">
+ <a href="/admin/vista_parqueaderos" class="btn btn-outline-primary">
+  Vista Parqueaderos <i class="fa-solid fa-map"></i>
+</a>
+     
+      <div id="dashboard-content" class="dashboard-grid">
+        <!-- Nueva tarjeta de KPI -->
+        <div class="dashboard-card kpi-card">
+            <div class="kpi-label">Vehículos Actualmente en el Parqueadero</div>
+            <div id="vehiculos-activos-kpi" class="kpi-number">Cargando...</div>
+        </div>
+        <div class="dashboard-card">
+            <h3>Estado de Celdas</h3>
+            <canvas id="celdasChart"></canvas>
+        </div>
+        <div class="dashboard-card">
+            <h3>Vehículos Registrados por Tipo</h3>
+            <canvas id="vehiculosChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </main>
+ <script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const response = await fetch('/api/stats/dashboard');
+      if (!response.ok) throw new Error('No se pudieron cargar las estadísticas.');
+      const stats = await response.json();
+
+      // KPI vehículos activos
+      document.getElementById('vehiculos-activos-kpi').textContent = stats.vehiculosActivos ?? 0;
+
+      // Colores por estado
+      const colorMap = {
+        Libre: 'rgba(40, 167, 69, 0.7)',         // Verde
+        Ocupada: 'rgba(220, 53, 69, 0.7)',       // Rojo
+        Mantenimiento: 'rgba(255, 193, 7, 0.7)'  // Amarillo
+      };
+
+      // Normalizar etiquetas y colores
+      const etiquetasCeldas = stats.celdasPorEstado.map(item => {
+        let estado = item.estado?.toLowerCase();
+        if (estado === 'disponible') estado = 'libre';
+        return estado.charAt(0).toUpperCase() + estado.slice(1);
+      });
+
+      const cantidadesCeldas = stats.celdasPorEstado.map(item => item.cantidad);
+      const coloresCeldas = etiquetasCeldas.map(label => colorMap[label] || 'rgba(108, 117, 125, 0.7)');
+
+      // Gráfico Celdas por Estado
+      const celdasCtx = document.getElementById('celdasChart').getContext('2d');
+      new Chart(celdasCtx, {
+        type: 'doughnut',
+        data: {
+          labels: etiquetasCeldas,
+          datasets: [{
+            label: 'Estado de Celdas',
+            data: cantidadesCeldas,
+            backgroundColor: coloresCeldas,
+            borderColor: '#fff',
+            borderWidth: 2
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      // Gráfico Vehículos por Tipo
+      const vehiculosCtx = document.getElementById('vehiculosChart').getContext('2d');
+      new Chart(vehiculosCtx, {
+        type: 'bar',
+        data: {
+          labels: stats.vehiculosPorTipo.map(item => item.tipo),
+          datasets: [{
+            label: 'Cantidad de Vehículos',
+            data: stats.vehiculosPorTipo.map(item => item.cantidad),
+            backgroundColor: 'rgba(0, 123, 255, 0.7)',
+            borderColor: 'rgba(0, 123, 255, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+      });
+
+    } catch (error) {
+      console.error('Error al cargar el dashboard:', error);
+      document.getElementById('dashboard-content').innerHTML =
+        '<p style="color:red; text-align:center;">Error al cargar las estadísticas del dashboard.</p>';
+    }
+  });
+</script>
+
+  <% if (typeof extraBody !== 'undefined') { %>
+    <%- extraBody %>
+  <% } %>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/admin/css/estilo.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <title>Detalles de usuario</title>
+</head>
+<body>
+   <header>
+   <div class="sidebar" id="sidebar">
+  <div class="logo">
+    <img src="/imagenes/logo-grande.png" alt="Logo Grande" class="logo-expandido">
+    <img src="/imagenes/logo-mini.png" alt="Logo Miniatura" class="logo-compacto">
+  </div>
+  <ul>
+    <li><a href="index.html"><i class="fas fa-home"></i><span class="menu-text">Inicio</span></a></li>
+    <li class="submenu">
+      <a href="#"><i class="fa-solid fa-list-check"></i> <span class="menu-text">Gestionar</span></a>
+      <ul>
+       
+        <li><a href="#"><i class="fa-solid fa-headset"></i><span class="menu-text">Turnos</span></a></li>
+        
+      </ul>
+    </li>
+
+    <li class="submenu">
+        <a href="#"><i class="fa-solid fa-user-tie"></i><span class="menu-text">Administrar</span></a>
+        <ul>
+          <li><a href="#"><i class="fa-solid fa-users"></i><span class="menu-text">Usuarios</span></a></li>
+          <li><a href="aparcamientos.html"><i class="fa-solid fa-square-parking"></i><span class="menu-text">Aparcamientos</span></a></li>
+          <li><a href="#"><i class="fa-solid fa-gear"></i><span class="menu-text">Configuracion</span></a></li>
+         </ul>
+      </li>
+
+    <li><a href="#"><i class="fa-solid fa-headset"></i><span class="menu-text">Soporte</span></a></li>
+  </ul>
+</div>
+
+
+<nav class="navbar">
+    <ul class="navbar-menu">
+      
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle">Servicios</a>
+        <ul class="dropdown-menu">
+          <li><a href="#">Diseño Web</a></li>
+        
+        </ul>
+      </li>
+      <li><a href="#">Cerrar Sesion</a></li>
+     
+    </ul>
+  </nav>
+
+
+  <div class="contenido-principal">
+    <h1 class="centrar">Tabla de detalles usuario</h1>
+    <p class="centrar">Esta tabla muestra los detalles del usuario seleccionado</p>
+
+    
+
+        
+        <hr>
+        <table id="tabla-estacionamientos" class="display">
+            <thead>
+                <tr>
+                    <th>N° Estacionamiento</th>
+                    <th>Propietario</th>
+                    <th>Modelo</th>
+                    <th>Marca</th>
+                    <th>Placas</th>
+                    <th>Color</th>
+                    <th>Tipo de Vehículo</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    <td>P1-E1</td>
+                    <td>Carlos Parra</td>
+                    <td>Civic</td>
+                    <td>Honda</td>
+                    <td>ABC-123</td>
+                    <td>Rojo</td>
+                    <td>Carro</td>
+                </tr>
+               
+            </tbody>
+        </table>
+    
+</div>
+
+
+</header> 
+
+<script>
+
+const sidebar = document.getElementById("sidebar");
+
+sidebar.addEventListener("mouseenter", () => {
+  sidebar.classList.add("expanded"); 
+});
+
+sidebar.addEventListener("mouseleave", () => {
+  sidebar.classList.remove("expanded"); 
+});
+
+//Iniciar script del navbar
+const toggle = document.getElementById("navbar-toggle");
+const menu = document.getElementById("navbar-menu");
+
+toggle.addEventListener("click", () => {
+  menu.classList.toggle("active"); 
+});
+
+
+
+        $(document).ready(function() {
+            $('#tabla-estacionamientos').DataTable();
+        });
+
+ </script>
+
+
+
+</body>
+</html>

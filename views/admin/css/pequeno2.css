@@ -1,0 +1,258 @@
+@media (max-width: 768px) {
+    body {
+      font-size: 14px; 
+    }
+  
+    h1 {
+        font-size: 1.8rem;
+      }
+    
+      h2 {
+        font-size: 1.6rem;
+      }
+    
+      h3 {
+        font-size: 1.4rem;
+      }
+    
+      h4 {
+        font-size: 1.2rem;
+      }
+    
+      h5 {
+        font-size: 0.95rem;
+      }
+    
+      h6 {
+        font-size: 0.85rem;
+      }
+    
+      p {
+        font-size: 0.9rem; 
+      }
+    }
+    
+
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.6rem;
+      }
+    
+      h2 {
+        font-size: 1.4rem;
+      }
+    
+      h3 {
+        font-size: 1.2rem;
+      }
+    
+      h4 {
+        font-size: 1rem;
+      }
+    
+      h5 {
+        font-size: 0.9rem;
+      }
+    
+      h6 {
+        font-size: 0.8rem;
+      }
+    
+      p {
+        font-size: 0.85rem;
+      }
+    
+  
+    p, label, input {
+      font-size: 0.9rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    body {
+      font-size: 12px; 
+    }
+  
+    h1 {
+      font-size: 1.5rem;
+    }
+  
+    h2 {
+      font-size: 1.2rem;
+    }
+  
+    p, label, input {
+      font-size: 0.8rem;
+    }
+  }
+
+@media (max-width: 768px) {
+  .contenido-principal {
+    margin-left: 30px;
+    width: 100%;
+  }
+}
+
+
+
+  .sidebar {
+    width: 50px;
+    height: 100%;
+  }
+
+  .sidebar.expanded {
+    width: 200px;
+  }
+
+
+@media (max-width: 768px) {
+  .tarjeta-parking {
+    padding: 15px;
+    margin: 15px 0;
+    max-width: 100%;
+  }
+
+  li.estado {
+    flex: 1 1 100px;
+    font-size: 14px;
+    margin: 3px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .tarjeta-parking {
+    padding: 10px;
+    box-shadow: none;
+  }
+
+  .estado-lista {
+    flex-direction: column;
+  }
+
+  li.estado {
+    flex: 1 1 100%;
+    font-size: 12px;
+    margin: 5px 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .espacio {
+    width: 100%;
+    max-width: none;
+  }
+
+  .n-parking {
+    font-size: 1.2rem;
+  }
+
+  .p-vehiculo {
+    font-size: smaller;
+  }
+}
+
+@media (max-width: 600px) {
+  .modal {
+    width: 85%;
+    height: 100%;
+    padding: 0px;
+    left: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .contenido-modal {
+    font-size: 0.9rem;
+  }
+
+  .encabezado-modal,
+  .pie-modal {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .contenido-modal {
+    font-size: 0.8rem;
+  }
+
+  .encabezado-modal,
+  .pie-modal {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 600px) {
+    .cerrar {
+        width: 14%;
+        background: #d40012;
+        color: white;
+        border: none;
+        cursor: pointer;
+        float: right;
+        margin-left: 5px;
+      }
+      
+      .cerrar:hover {
+        background: #b4000f;
+      }
+      
+  }
+
+  .tarjeta-ancho {
+    width: 800px; 
+    max-width: 100%; 
+    margin: 0 auto; 
+}
+
+@media (max-width: 1024px) {
+    .tarjeta-ancho {
+        width: 600px; 
+    }
+}
+
+
+@media (max-width: 768px) {
+    .tarjeta-ancho {
+        width: 90%; 
+    }
+}
+
+@media (max-width: 576px) {
+    .tarjeta-ancho {
+        width: 100%; 
+        padding: 10px; 
+    }
+}
+
+@media (max-width: 1024px) {
+  .login-imagen {
+      display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .login-imagen {
+    display: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .login-imagen {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .contenedor {
+      grid-template-columns: 1fr;
+  }
+}
+
+/* Media Query para Contenedor Grafico*/
+@media(max-width: 768px){
+  .contenedor-grafico {
+      width: 95%;
+  }
+}

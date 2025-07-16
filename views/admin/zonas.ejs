@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestionar Zonas</title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Gestionar Zonas del Parqueadero</h1>
+      <p class="centrar">Cree, edite y elimine las zonas del parqueadero.</p>
+      <hr class="linea-windows">
+
+      <div class="acciones-tabla">
+        <button id="btn-nueva-zona" class="btn-nuevo"><i class="fas fa-plus"></i> Nueva Zona</button>
+      </div>
+
+      <table id="zonas-table" class="datatable tabla-usuarios" style="width:100%">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+
+      <!-- Modal para Crear/Editar Zona -->
+  <div class="modal" id="modal-zona">
+    <div class="contenido-modal">
+      <div class="encabezado-modal">
+        <span id="modal-titulo">Nueva Zona</span>
+        <button class="cerrar" id="btn-cerrar-modal">&times;</button>
+      </div>
+      <div class="cuerpo-modal">
+        <form id="form-zona" autocomplete="off">
+          <input type="hidden" id="zona-id" name="id">
+          <div class="form-group">
+            <label for="zona-nombre">Nombre de la Zona</label>
+            <input type="text" id="zona-nombre" name="nombre" required>
+          </div>
+          <div class="form-group">
+            <label for="zona-descripcion">Descripción (Opcional)</label>
+            <textarea id="zona-descripcion" name="descripcion" rows="3"></textarea>
+          </div>
+          <div id="modal-msg" class="mensaje-error" style="display:none;"></div>
+          <div class="pie-modal">
+            <button type="submit" class="btn-guardar">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  </main>
+ 
+ 
+   <script>
+    $(document).ready(function() {
+      let table;
+      const modal = $('#modal-zona');
+      const form = $('#form-zona');
+      const modalTitulo = $('#modal-titulo');
+      const modalMsg = $('#modal-msg');
+      let editId = null;
+
+      function cargarZonas() {
+        if (table) table.destroy();
+        table = $('#zonas-table').DataTable({
+          "ajax": {
+            "url": "/api/zonas",
+            "dataSrc": ""
+          },
+          "columns": [
+            { "data": "id" , visible: false },
+            { "data": "nombre" },
+            { "data": "descripcion" },
+            {
+              "data": null,
+              "orderable": false,
+              "render": function(data, type, row) {
+                return `
+                  <button class="btn-accion btn-editar" data-id="${row.id}"><i class="fas fa-edit"></i></button>
+                  <button class="btn-accion btn-eliminar" data-id="${row.id}"><i class="fas fa-trash"></i></button>
+                `;
+              }
+            }
+          ],
+          "language": { "url": "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json" }
+        });
+      }
+
+      function abrirModal(id = null, data = {}) {
+        form[0].reset();
+        modalMsg.hide();
+        editId = id;
+        if (id) {
+          modalTitulo.text('Editar Zona');
+          $('#zona-id').val(data.id);
+          $('#zona-nombre').val(data.nombre);
+          $('#zona-descripcion').val(data.descripcion);
+        } else {
+          modalTitulo.text('Nueva Zona');
+        }
+        modal.addClass('active');
+      }
+
+      function cerrarModal() {
+        modal.removeClass('active');
+      }
+
+      $('#btn-nueva-zona').on('click', () => abrirModal());
+
+      $('#btn-cerrar-modal').on('click', cerrarModal);
+      modal.on('click', function(e) {
+        if (e.target === this) {
+          cerrarModal();
+        }
+      });
+
+      $('#zonas-table').on('click', '.btn-editar', async function() {
+        const id = $(this).data('id');
+        try {
+          const res = await fetch(`/api/zonas/${id}`);
+          if (!res.ok) throw new Error('No se pudo obtener los datos de la zona.');
+          const data = await res.json();
+          abrirModal(id, data);
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      form.on('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        const url = editId ? `/api/zonas/${editId}` : '/api/zonas';
+        const method = editId ? 'PUT' : 'POST';
+
+        try {
+          const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          if (!res.ok) throw new Error((await res.json()).error || 'Error al guardar la zona.');
+          cerrarModal();
+          cargarZonas();
+        } catch (error) {
+          modalMsg.text(error.message).show();
+        }
+      });
+
+      $('#zonas-table').on('click', '.btn-eliminar', async function() {
+        const id = $(this).data('id');
+        if (confirm('¿Estás seguro de que quieres eliminar esta zona?')) {
+          try {
+            const res = await fetch(`/api/zonas/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('No se pudo eliminar la zona.');
+            cargarZonas();
+          } catch (error) {
+            alert(error.message);
+          }
+        }
+      });
+
+      cargarZonas();
+    });
+  </script>
+</body>
+</html>
+

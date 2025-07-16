@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title><%= titulo || 'Gestionar Zonas' %></title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Gestionar Zonas de Parqueo</h1>
+      <hr class="linea-windows">
+      <div id="gestion-zonas-content">
+        <button class="btn-agregar" id="btn-abrir-modal-crear">Agregar Zona</button>
+        <table id="zonas-table" class="dataTable" style="width:100%;margin-top:20px;"></table>
+      </div>
+
+      <!-- Modal para crear/editar zona -->
+      <div class="modal" id="modal-zona">
+        <div class="contenido-modal">
+          <div class="encabezado-modal">
+            <span id="modal-titulo">Crear/Editar Zona</span>
+            <button class="cerrar" id="btn-cerrar-modal">&times;</button>
+          </div>
+          <div class="cuerpo-modal">
+            <form id="form-zona" autocomplete="off">
+              <input type="hidden" id="id_zona" name="id_zona">
+              <div>
+                <label for="nombre_zona">Nombre de la Zona</label>
+                <input type="text" id="nombre_zona" name="nombre_zona" required>
+              </div>
+              <div class="pie-modal" style="margin-top:15px;text-align:right;">
+                <button type="submit" class="btn-guardar">Guardar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('modal-zona');
+      document.getElementById('btn-abrir-modal-crear').addEventListener('click', () => modal.classList.add('active'));
+      document.getElementById('btn-cerrar-modal').addEventListener('click', () => modal.classList.remove('active'));
+      $('#zonas-table').DataTable({ language: { url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json" } });
+    });
+  </script>
+</body>
+</html>

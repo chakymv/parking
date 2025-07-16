@@ -1,0 +1,31 @@
+<!-- views/admin/login-a.js-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  
+</head>
+<body>
+  <div class="contenido-secundario">
+    <div class="tarjeta tarjeta-ancho">
+      <div class="login-imagen"></div>
+      <div class="formulario">
+        <div class="tarjeta-titulo">
+          <h2 class="centrar">Iniciar Sesión</h2>
+          <p class="centrar">Ingresa tus datos de administrador para iniciar sesión</p>
+          <hr class="linea-windows">
+        </div>
+        <form action="/admin/login" method="POST">
+          <label for="admin-us">Ingresa tu correo</label>
+          <input type="email" id="admin-us" name="admin-us" placeholder="ejemplo@email.com" required>
+          <label for="admin-clave">Ingresa tu clave</label>
+          <input type="password" id="admin-clave" name="admin-clave" placeholder="Escribe tu contraseña" required>
+          <input type="submit" value="Iniciar Sesión" class="btn-agregar">
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

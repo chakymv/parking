@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Vehículos registrados</title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Gestionar Vehículos ingresados</h1>
+      <p class="centrar">Esta tabla permite realizar búsqueda de vehículos</p>
+      <hr class="linea-windows">
+      <div id="vehiculos2-content">
+        <button class="btn-agregar" onclick="abrirModalCrear()">Agregar Vehículo</button>
+        <table id="vehiculos-table" class="dataTable" style="width:100%;margin-top:20px;"></table>
+      </div>
+
+      <!-- Modal para mostrar y editar datos del usuario dueño del vehículo -->
+      <div class="modal" id="modal-usuario-vehiculo">
+        <div class="contenido-modal">
+          <div class="encabezado-modal">
+            <span>Datos del Usuario</span>
+            <button class="cerrar" onclick="cerrarModalUsuarioVehiculo()">&times;</button>
+          </div>
+          <div class="cuerpo-modal" style="min-width:340px;">
+            <form id="form-usuario-modal" autocomplete="off">
+              <input type="hidden" id="usuario_id" name="id_usuario">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                <div>
+                  <label>Primer Nombre</label>
+                  <input type="text" id="usuario_primer_nombre" name="primer_nombre" required>
+                </div>
+                <div>
+                  <label>Segundo Nombre</label>
+                  <input type="text" id="usuario_segundo_nombre" name="segundo_nombre">
+                </div>
+                <div>
+                  <label>Primer Apellido</label>
+                  <input type="text" id="usuario_primer_apellido" name="primer_apellido" required>
+                </div>
+                <div>
+                  <label>Segundo Apellido</label>
+                  <input type="text" id="usuario_segundo_apellido" name="segundo_apellido">
+                </div>
+                <div>
+                  <label>Documento</label>
+                  <input type="text" id="usuario_documento" name="numero_documento" required>
+                </div>
+                <div>
+                  <label>Email</label>
+                  <input type="email" id="usuario_email" name="direccion_correo" required>
+                </div>
+                <div>
+                  <label>Teléfono</label>
+                  <input type="text" id="usuario_telefono" name="telefono">
+                </div>
+                <div>
+                  <label>Dirección</label>
+                  <input type="text" id="usuario_direccion" name="direccion">
+                </div>
+                <div>
+                  <label>Rol</label>
+                  <input type="text" id="usuario_rol" name="rol" required>
+                </div>
+              </div>
+              <div id="usuario-modal-actions" style="margin-top:15px;text-align:right;">
+                <!-- Botones se agregan por JS según permisos -->
+              </div>
+            </form>
+            <div id="usuario-modal-msg" style="color:red;margin-top:5px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal para crear/editar vehículo (eliminado, ahora se usará el modal de detalles/edición en la vista principal de vehículos) -->
+    </div>
+  </main>
+  <script>
+    let vehiculos = [];
+    let editando = false;
+
+    // Utilidad: rellenar formulario con datos
+    function rellenarFormulario(form, data) {
+      Object.keys(data).forEach(key => {
+        if(form.elements[key]) form.elements[key].value = data[key] || '';
+      });
+    }
+
+    // Utilidad: leer datos del formulario
+    function leerFormulario(form) {
+      return Object.fromEntries(new FormData(form));
+    }
+
+    // Mostrar info de usuario en el modal de búsqueda
+    function mostrarUsuarioInfo(msg) {
+      document.getElementById('usuario-info').innerText = msg;
+    }
+
+    // Buscar usuario por documento
+    async function buscarUsuarioPorDocumento() {
+      const doc = document.getElementById('busca_doc').value.trim();
+      if(!doc) {
+        mostrarUsuarioInfo('');
+        document.getElementById('usuario_id_usuario').value = '';
+        return;
+      }
+      try {
+        const res = await fetch(`/api/usuarios/documento/${doc}`);
+        if(res.ok) {
+          const usuario = await res.json();
+          document.getElementById('usuario_id_usuario').value = usuario.id_usuario;
+          mostrarUsuarioInfo(`${usuario.primer_nombre} ${usuario.primer_apellido} (${usuario.direccion_correo}) [ID: ${usuario.id_usuario}]`);
+        } else {
+          document.getElementById('usuario_id_usuario').value = '';
+          mostrarUsuarioInfo('Usuario no encontrado');
+        }
+      } catch (e) {
+        document.getElementById('usuario_id_usuario').value = '';
+        mostrarUsuarioInfo('Error de conexión');
+      }
+    }
+
+    // Asignar evento buscar usuario
+    function asignarEventoBuscarUsuario() {
+      const btn = document.getElementById('btn-buscar-usuario');
+      if (btn) btn.onclick = buscarUsuarioPorDocumento;
+    }
+
+    // Modal crear/editar vehículo
+    function abrirModalVehiculo(modo, vehiculo = {}) {
+      editando = (modo === 'editar');
+      document.getElementById('modal-titulo').innerText = editando ? 'Editar Vehículo' : 'Crear Vehículo';
+      const form = document.getElementById('form-vehiculo');
+      form.reset();
+      if(editando) rellenarFormulario(form, vehiculo);
+      document.getElementById('modal-vehiculo').classList.add('active');
+      asignarEventoBuscarUsuario();
+    }
+    function cerrarModal() {
+      document.getElementById('modal-vehiculo').classList.remove('active');
+    }
+
+    // Cargar y renderizar vehículos
+    async function cargarVehiculos() {
+      const res = await fetch('/api/vehiculos');
+      vehiculos = await res.json();
+      renderTabla();
+    }
+
+    // Render tabla y delegación de eventos
+    function renderTabla() {
+      const table = document.getElementById('vehiculos-table');
+      let html = `<thead><tr>
+        <th>ID</th><th>Placa</th><th>Color</th><th>Modelo</th><th>Marca</th><th>Tipo</th><th>Usuario</th><th>Acciones</th>
+      </tr></thead><tbody>`;
+      vehiculos.forEach(v => {
+        html += `<tr data-usuario-id="${v.usuario_id_usuario}" data-vehiculo-id="${v.id}" class="vehiculo-row">
+          <td>${v.id}</td>
+          <td>${v.placa}</td>
+          <td>${v.color}</td>
+          <td>${v.modelo}</td>
+          <td>${v.marca}</td>
+          <td>${v.tipo}</td>
+          <td>${v.usuario_id_usuario}</td>
+          <td>
+            <button class="btn-editar" data-action="editar">Editar</button>
+            <button class="btn-eliminar" data-action="eliminar">Eliminar</button>
+          </td>
+        </tr>`;
+      });
+      html += '</tbody>';
+      table.innerHTML = html;
+      // Delegación de eventos en la tabla
+      table.querySelectorAll('tbody').forEach(tbody => {
+        tbody.onclick = function(e) {
+          const row = e.target.closest('tr.vehiculo-row');
+          if(!row) return;
+          const idx = Array.from(tbody.children).indexOf(row);
+          const vehiculo = vehiculos[idx];
+          if(e.target.dataset.action === 'editar') {
+            abrirModalVehiculo('editar', vehiculo);
+          } else if(e.target.dataset.action === 'eliminar') {
+            eliminarVehiculo(vehiculo.id);
+          } else {
+            verUsuarioVehiculo(vehiculo.usuario_id_usuario);
+          }
+        };
+      });
+    }
+
+    // Modal usuario dueño
+    function cerrarModalUsuarioVehiculo() {
+      document.getElementById('modal-usuario-vehiculo').classList.remove('active');
+    }
+    // Mostrar y permitir editar/eliminar usuario desde el modal
+    async function verUsuarioVehiculo(usuarioId) {
+      if(!usuarioId) return;
+      const modal = document.getElementById('modal-usuario-vehiculo');
+      const form = document.getElementById('form-usuario-modal');
+      const msgDiv = document.getElementById('usuario-modal-msg');
+      const actionsDiv = document.getElementById('usuario-modal-actions');
+      msgDiv.innerText = '';
+      form.reset();
+      modal.classList.add('active');
+      // Simulación: solo admin puede editar/eliminar (ajusta según tu auth real)
+      const esAdmin = true;
+      try {
+        const res = await fetch(`/api/usuarios/${usuarioId}`);
+        if(res.ok) {
+          const u = await res.json();
+          rellenarFormulario(form, {
+            id_usuario: u.id_usuario,
+            primer_nombre: u.primer_nombre,
+            segundo_nombre: u.segundo_nombre,
+            primer_apellido: u.primer_apellido,
+            segundo_apellido: u.segundo_apellido,
+            numero_documento: u.numero_documento,
+            direccion_correo: u.direccion_correo,
+            telefono: u.telefono,
+            direccion: u.direccion,
+            rol: u.rol
+          });
+          // Botones según permisos
+          let btns = '';
+          if(esAdmin) {
+            btns += '<button type="submit" class="btn-guardar">Guardar</button> ';
+            btns += '<button type="button" class="btn-eliminar" id="btn-eliminar-usuario-modal">Eliminar</button>';
+          }
+          actionsDiv.innerHTML = btns;
+          // Eliminar usuario
+          if(esAdmin) {
+            document.getElementById('btn-eliminar-usuario-modal').onclick = async function() {
+              if(!confirm('¿Eliminar usuario?')) return;
+              const delRes = await fetch(`/api/usuarios/${usuarioId}`, { method: 'DELETE' });
+              if(delRes.ok) {
+                cerrarModalUsuarioVehiculo();
+                cargarVehiculos();
+              } else {
+                msgDiv.innerText = 'Error al eliminar usuario';
+              }
+            };
+          }
+        } else {
+          msgDiv.innerText = 'Usuario no encontrado';
+        }
+      } catch (e) {
+        msgDiv.innerText = 'Error de conexión';
+      }
+      // Guardar cambios usuario
+      form.onsubmit = async function(e) {
+        e.preventDefault();
+        const data = leerFormulario(form);
+        const putRes = await fetch(`/api/usuarios/${usuarioId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if(putRes.ok) {
+          msgDiv.style.color = 'green';
+          msgDiv.innerText = 'Usuario actualizado';
+          cargarVehiculos();
+          setTimeout(() => { cerrarModalUsuarioVehiculo(); }, 800);
+        } else {
+          msgDiv.style.color = 'red';
+          msgDiv.innerText = 'Error al actualizar usuario';
+        }
+      };
+    }
+
+    // Guardar (crear/editar) vehículo
+    document.getElementById('form-vehiculo').onsubmit = async function(e) {
+      e.preventDefault();
+      const data = leerFormulario(this);
+      let url = '/api/vehiculos';
+      let method = 'POST';
+      if(editando && data.id) {
+        url += '/' + data.id;
+        method = 'PUT';
+      }
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if(res.ok) {
+        cerrarModal();
+        cargarVehiculos();
+      } else {
+        alert('Error al guardar vehículo');
+      }
+    };
+
+    // Eliminar vehículo
+    async function eliminarVehiculo(id) {
+      if(!confirm('¿Eliminar vehículo?')) return;
+      const res = await fetch('/api/vehiculos/' + id, { method: 'DELETE' });
+      if(res.ok) cargarVehiculos();
+      else alert('Error al eliminar');
+    }
+
+    // Inicializar
+    window.onload = cargarVehiculos;
+  </script>
+</body>
+</html>
