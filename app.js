@@ -23,7 +23,7 @@ const adminRoutes = require('./routes/admin.routes');
 const loginRoutes = require('./routes/usuario/login.routes');
 const registroRoutes = require('./routes/usuario/registro.routes');
 const disponibilidadPublica = require('./routes/public/disponibilidad.routes');
-const Usuarios = require('./model/usuario/Usuarios');
+const usuarioRoutes = require('./routes/usuario.routes');
 
 const PORT = process.env.PORT || 7000;
 
@@ -78,6 +78,7 @@ app.use('/api/reporte_incidencias', reporteIncidenciasRoutes);
 app.use('/api/reporte_incidencias', reporteRoutes);
 app.use('/api/pico_placa', picoPlacaRoutes);
 app.use('/api/perfil_usuario', perfilUsuarioRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/zonas', zonaRoutes);
 app.use('/api/parqueaderos', parqueaderoRoutes);
 app.use('/api/stats', statsRoutes);
