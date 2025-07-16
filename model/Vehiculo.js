@@ -1,4 +1,6 @@
+
 const supabase = require('./../supabaseClient');
+
 const { normalizePlaca } = require('./../utils/normalizer'); // ← se integrará cuando el módulo esté listo
 
 class Vehiculo {
