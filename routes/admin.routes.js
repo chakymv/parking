@@ -5,6 +5,11 @@ const catchAsync = require('../utils/catchAsync');
 
 const supabase = require('../supabaseClient');
 
+//Incidencia
+const TipoIncidencia = require('../model/TipoIncidencia');
+const ReporteIncidencia = require('../model/ReporteIncidencia');
+const Vehiculo = require('../model/Vehiculo');
+
 // Middleware de sesión
 const requireLogin = (req, res, next) => {
   if (!req.session.userId) return res.redirect('/admin/login');
@@ -393,6 +398,24 @@ router.post('/asignar-celda', requireLogin, async (req, res) => {
   } catch (err) {
     console.error('🔥 Error inesperado en asignar-celda:', err.message);
     res.status(500).json({ error: 'Error inesperado al asignar celda' });
+  }
+});
+
+router.get('/incidencias', async (req, res) => {
+  try {
+    const tipos = await TipoIncidencia.findAll(); 
+    const reportes = await ReporteIncidencia.findAllExtendido();
+    const vehiculos = await Vehiculo.findAll();
+
+    res.render('admin/incidencias', {
+      titulo: 'Gestión de Incidencias',
+      tipos,
+      reportes,
+      vehiculos
+    });
+  } catch (err) {
+    console.error('ERROR INESPERADO:', err);
+    res.status(500).send('Ocurrió un error al cargar la vista');
   }
 });
 

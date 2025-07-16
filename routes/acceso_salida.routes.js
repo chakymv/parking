@@ -5,20 +5,20 @@ const HistorialParqueo = require('../model/HistorialParqueo');
 const Celda = require('../model/Celda');
 const catchAsync = require('../utils/catchAsync');
 
-// 🔍 Obtener todos los accesos/salidas
+
 router.get('/', catchAsync(async (req, res) => {
   const accesos = await AccesoSalida.findAll();
   res.json(accesos);
 }));
 
-// 🔍 Obtener un acceso/salida por ID
+
 router.get('/:id', catchAsync(async (req, res) => {
   const acceso = await AccesoSalida.findById(req.params.id);
   if (!acceso) return res.status(404).json({ error: 'Registro no encontrado.' });
   res.json(acceso);
 }));
 
-// 📝 Crear nuevo acceso/salida directo
+
 router.post('/', catchAsync(async (req, res) => {
   const acceso = new AccesoSalida(
     null,
@@ -32,7 +32,7 @@ router.post('/', catchAsync(async (req, res) => {
   res.status(201).json(creado);
 }));
 
-// ✏️ Actualizar acceso/salida
+
 router.put('/:id', catchAsync(async (req, res) => {
   const acceso = await AccesoSalida.findById(req.params.id);
   if (!acceso) return res.status(404).json({ error: 'Acceso no encontrado.' });
@@ -47,7 +47,7 @@ router.put('/:id', catchAsync(async (req, res) => {
   res.json(acceso);
 }));
 
-// ❌ Eliminar acceso/salida
+
 router.delete('/:id', catchAsync(async (req, res) => {
   const acceso = await AccesoSalida.findById(req.params.id);
   if (!acceso) return res.status(404).json({ error: 'Registro no encontrado.' });
