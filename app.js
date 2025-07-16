@@ -57,7 +57,10 @@ app.use('/api/disponibilidad', disponibilidadPublica);
 
 app.get('/', async (req, res) => {
   try {
-    const response = await fetch('/api/disponibilidad/disponibilidad');
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const apiUrl = `${baseUrl}/api/disponibilidad/disponibilidad`;
+    
+    const response = await fetch(apiUrl);
     const disponibilidad = await response.json();
     res.render('usuario/index', { disponibilidad });
   } catch (err) {
