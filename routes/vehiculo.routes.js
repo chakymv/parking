@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Usuarios = require('../model/usuario/Usuarios');
+const Vehiculo = require('../model/Vehiculo');
 
 const catchAsync = require('../utils/catchAsync');
 const {

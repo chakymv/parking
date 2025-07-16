@@ -1,24 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const { Usuario } = require('../model');
-const catchAsync = require('../utils/catchAsync'); // Importar el middleware
+
+const Usuarios = require('../model/usuario/Usuarios');
+const catchAsync = require('../utils/catchAsync'); 
 const {
   normalizeDocumento,
   normalizeCorreo,
 } = require('../utils/normalizer');
 
-// 🔍 Obtener todos los usuarios
 router.get('/', catchAsync(async (req, res) => {
-  const usuarios = await Usuario.findAll();
+  const usuarios = await Usuarios.findAll();
   res.json(usuarios.map(u => u.toJSON()));
 }));
 
-// 🔍 Obtener usuario por número de documento
 router.get('/documento/:numero', catchAsync(async (req, res) => {
   const doc = normalizeDocumento(req.params.numero);
   if (!doc) return res.status(400).json({ error: 'Documento inválido' });
 
-  const encontrado = await Usuario.findByDocument(doc);
+  const encontrado = await Usuarios.findByDocument(doc);
   if (encontrado) {
     res.json(encontrado.toJSON());
   } else {
@@ -26,12 +25,11 @@ router.get('/documento/:numero', catchAsync(async (req, res) => {
   }
 }));
 
-// 🔍 Obtener usuario por ID
 router.get('/:id', catchAsync(async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
 
-  const encontrado = await Usuario.findById(id);
+  const encontrado = await Usuarios.findById(id);
   if (encontrado) {
     res.json(encontrado.toJSON());
   } else {
@@ -39,11 +37,10 @@ router.get('/:id', catchAsync(async (req, res) => {
   }
 }));
 
-// 🆕 Crear nuevo usuario
 router.post('/', catchAsync(async (req, res) => {
   const datos = req.body;
 
-  const usuario = new Usuario(
+  const usuario = new Usuarios(
     null,
     datos.tipo_documento?.trim(),
     normalizeDocumento(datos.numero_documento),
@@ -59,16 +56,15 @@ router.post('/', catchAsync(async (req, res) => {
     Number(datos.perfil_usuario_id)
   );
 
-  await usuario.create();
+  await usuario.crear();
   res.status(201).json(usuario.toJSON());
 }));
 
-// ✏️ Actualizar usuario
 router.put('/:id', catchAsync(async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
 
-  const encontrado = await Usuario.findById(id);
+  const encontrado = await Usuarios.findById(id);
   if (!encontrado) {
     return res.status(404).json({ error: 'Usuario no encontrado' });
   }
@@ -88,21 +84,20 @@ router.put('/:id', catchAsync(async (req, res) => {
     perfil_usuario_id: Number(req.body.perfil_usuario_id)
   });
 
-  await encontrado.update();
+  await encontrado.actualizar();
   res.json(encontrado.toJSON());
 }));
 
-// 🗑️ Eliminar usuario
 router.delete('/:id', catchAsync(async (req, res) => {
   const id = Number(req.params.id);
   if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
 
-  const encontrado = await Usuario.findById(id);
+  const encontrado = await Usuarios.findById(id);
   if (!encontrado) {
     return res.status(404).json({ error: 'Usuario no encontrado' });
   }
 
-  await encontrado.delete();
+  await encontrado.eliminar();
   res.status(200).json({ mensaje: 'Usuario eliminado correctamente' });
 }));
 
