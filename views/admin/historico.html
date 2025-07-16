@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/admin/css/estilo.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    
+    <title>Usuarios y vehiculos</title>
+</head>
+
+<body>
+
+   <header>
+
+    <div class="sidebar" id="sidebar">
+      <div class="logo">
+      <img src="/imagenes/logo-grande.png" alt="Logo Grande" class="logo-expandido" />
+      <img src="/imagenes/logo-mini.png" alt="Logo Miniatura" class="logo-compacto" />
+      </div>
+      
+      <ul>
+      <li>
+      <a href="index.html"><i class="fas fa-home"></i><span class="menu-text">Inicio</span></a>
+      </li>
+      
+      <li class="submenu">
+        <a href="#"><i class="fa-solid fa-users-line"></i>
+        <span class="menu-text"> Gestionar Usuarios</span></a>
+        <ul>
+        <li>
+        <a href="usuarios.html"><i class="fa-solid fa-users"></i><span class="menu-text">Usuarios</span></a>
+        </li>
+        
+        <li>
+        <a href="crear_parqueadero.html"><i class="fa-solid fa-square-parking"></i><span class="menu-text">Crear
+        Parqueadero</span></a>
+         </li>
+        
+      
+        </ul>
+        </li>
+      
+      <li class="submenu">
+      <a href="#"><i class="fa-solid fa-list-check"></i>
+      <span class="menu-text"> Gestionar Parqueaderos</span></a>
+      <ul>
+      <li>
+      <a href="vehiculos.html"><i class="fa-solid fa-car"></i><span class="menu-text">Vehiculos</span></a>
+      </li>
+      
+      <li>
+      <a href="crear_parqueadero.html"><i class="fa-solid fa-square-parking"></i><span class="menu-text">Crear
+      Parqueadero</span></a>
+       </li>
+      
+      <li><a href="crear_zonas.html"><i class="fa-solid fa-expand"></i><span class="menu-text">Crear
+      Zonas</span></a></li>
+      
+      <li><a href="historico.html"><i class="fa-solid fa-book-open"></i><span class="menu-text">Historico</span></a>
+      </li>
+      
+      </ul>
+      </li>
+      
+      
+      <li class="submenu">
+      <a href="#"><i class="fa-solid fa-person-military-pointing"></i>
+      <span class="menu-text">Operadores</span></a>
+      <ul>
+                 
+      <li><a href="#"><i class="fa-solid fa-calendar-days"></i><span class="menu-text">Gestionar Turnos</span></a>
+      </li>
+      </ul>
+      </li>
+      
+      <li class="submenu">
+      <a href="#"><i class="fa-solid fa-user-tie"></i><span class="menu-text">Administrar</span></a>
+      <ul>
+                
+      <li><a href="crear_usuarios.html"><i class="fa-solid fa-user-tie"></i><span class="menu-text">Usuarios del
+      sistema </span></a>
+      </li>
+      <li><a href="#"><i class="fa-solid fa-gear"></i><span class="menu-text">Configuracion</span></a></li>
+      </ul>
+      </li>
+      
+      <li><a href="#"><i class="fa-solid fa-headset"></i><span class="menu-text">Soporte</span></a></li>
+      </ul>
+      </div>
+      
+
+<nav class="navbar">
+    <ul class="navbar-menu">
+      
+      <li class="dropdown">
+        <a href="#" class="dropdown-toggle">Servicios</a>
+        <ul class="dropdown-menu">
+          <li><a href="#">Enlace</a></li>
+        
+        </ul>
+      </li>
+      <li><a href="#">Cerrar Sesion</a></li>
+     
+    </ul>
+  </nav>
+   </header>
+   
+<main>
+
+<div class="contenido-principal">
+<h1 class="centrar">Historico</h1>
+   
+<hr class="linea-windows">
+   
+<div id="modal" class="modal">
+    <div class="contenido-modal">
+      <div class="encabezado-modal">
+        <h2>Actualizacion de datos del  vehiculo</h2>
+  
+      </div>
+      <hr class="linea-windows">
+      <div class="cuerpo-modal">
+
+        <form action="#" method="POST" class="formulario">
+            <fieldset>
+              <legend>Datos Personales</legend>
+              <label for="primer-n">Primer Nombre:</label>
+              <input type="text" name="primer-n" placeholder="Ingresa tu primer nombre" required>
+              
+              <label for="segundo-n">Segundo Nombre:</label>
+              <input type="text" id="segundo-n" name="segundo-n" placeholder="Ingresa tu segundo nombre">
+    
+              <label for="primer-a">Primer Apellido:</label>
+              <input type="text" id="primer-a" name="primer-a" placeholder="Ingresa tu primer apellido" required>
+    
+              <label for="segundo-a">Segundo Apellido:</label>
+              <input type="text" id="segundo-a" name="segundo-a" placeholder="Ingresa tu segundo apellido">
+    
+              <label for="telefono">Número de Teléfono:</label>
+              <input type="tel" id="telefono" name="telefono" placeholder="Ingresa tu teléfono" required>
+    
+              <label for="tipo-documento">Tipo de Documento:</label>
+              <select id="tipo-documento" name="tipo-documento" required>
+                <option value="">-- Seleccione una opción --</option>
+                <option value="cedula">Cédula</option>
+                <option value="extranjera">Cédula Extranjera</option>
+                <option value="pasaporte">Pasaporte</option>
+              </select>
+    
+              <label for="documento">Número de Documento:</label>
+              <input type="text" id="documento" name="documento" placeholder="Ingresa tu documento" required>
+
+            
+
+            </fieldset>
+            
+      
+            <button type="button" id="agregarvehiculo">Agregar Vehiculo</button>
+            
+            <fieldset id="vehiculoFields">
+                <legend>Información de los Vehículos</legend>
+               
+            </fieldset>
+          
+            <button type="submit" class="boton"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
+            
+            
+          </form>
+    
+
+</div>
+<div class="pie-modal">
+  <button class="cerrar" id="cerrarModal"><i class="fa-solid fa-xmark"></i></button>
+  
+</div>
+</div>
+</div><!-- Termina el modal -->
+
+
+
+<div class="filtros">
+   
+    <input type="text" id="buscadorplaca" placeholder="Buscar por placa...">
+    <input type="date" id="filtroFecha">
+ 
+  </div>
+
+
+  <table class="tabla-usuarios">
+    <thead>
+      <tr>
+        
+        <th>Placa</th>
+        <th>Marca,Modelo,Color</th>
+        <th>Tipo de vehiculo</th>
+        <th>Entrada</th>
+        <th>Salida</th>
+        <th>Tiempo total</th>
+        <th>Parqueadero</th>
+        <th>Zona</th>
+   
+      </tr>
+    </thead>
+    <tbody id="tablaCuerpo">
+      <tr>
+        <td>DMZ-123</td>
+        <td>MAZDA,CX-50,ROJO</td>
+        <td>Carro</td>
+        <td>2025-05-10 10:04:19</td>
+        <td>2025-05-10 11:00:04</td>
+        <td>56 Minutos</td>
+        <th>P1</th>
+        <th>E1</th>
+  
+        
+      
+      </tr>
+      <tr>
+        <td>DMZ-123</td>
+        <td>MAZDA,CX-50,ROJO</td>
+        <td>Carro</td>
+        <td>2025-05-10 10:04:19</td>
+        <td>2025-05-10 11:00:04</td>
+        <td>56 Minutos</td>
+        <th>P1</th>
+        <th>E1</th>
+   
+      </tr>
+
+      <tr>
+        <td>DMZ-123</td>
+        <td>MAZDA,CX-50,ROJO</td>
+        <td>Carro</td>
+        <td>2025-05-10 9:00:19</td>
+        <td></td>
+        <td></td>
+        <th>P1</th>
+        <th>E1</th>
+
+      </tr>
+     
+    </tbody>
+  </table>
+
+</div>    
+</div><!-- Fin del contenido principal -->
+
+
+
+</main>
+
+
+
+
+  
+
+<script>
+
+document.addEventListener('DOMContentLoaded', () => {
+  
+  
+    const botonAgregarVehiculo = document.getElementById('agregarvehiculo');
+    const contenedorVehiculos = document.getElementById('vehiculoFields');
+    let contadorVehiculos = 0;
+    const maximoVehiculos = 2;
+
+
+    botonAgregarVehiculo.addEventListener('click', () => {
+        if (contadorVehiculos < maximoVehiculos) {
+            contadorVehiculos++; 
+           const contenedorFormulario = document.createElement('div');
+            contenedorFormulario.innerHTML = `
+                <h3>Vehículo ${contadorVehiculos}</h3>
+                <hr class="linea-windows">
+                <label for="placa${contadorVehiculos}">Placa del Vehiculo:</label>
+                <input type="text" id="placa${contadorVehiculos}" name="placa${contadorVehiculos}" placeholder="Ingresa la placa" required>
+                
+                <label for="marcaModeloColor${contadorVehiculos}">Marca, Modelo y Color:</label>
+                <input type="text" id="marcaModeloColor${contadorVehiculos}" name="marcaModeloColor${contadorVehiculos}" placeholder="Ej: Toyota Corolla Rojo">
+                
+                <label for="tipoVehiculo${contadorVehiculos}">Tipo de Vehiculo:</label>
+                <select id="tipoVehiculo${contadorVehiculos}" name="tipoVehiculo${contadorVehiculos}" required>
+                    <option value="">Seleccione una opcion</option>
+                    <option value="moto">Moto</option>
+                    <option value="carro">Carro</option>
+                    <option value="camioneta">Camioneta</option>
+                </select>
+                <hr class="linea-windows">
+                <button type="button" class="eliminarVehiculo btn-eliminar"><i class="fa-solid fa-eraser"></i></button>
+            `;
+            const botonEliminar = contenedorFormulario.querySelector('.eliminarVehiculo');
+            botonEliminar.addEventListener('click', () => {
+                contenedorVehiculos.removeChild(contenedorFormulario);
+                contadorVehiculos--;
+            });
+           
+            contenedorVehiculos.appendChild(contenedorFormulario);
+        } else {
+            
+            alert(`Solo puedes agregar un maximo de ${maximoVehiculos} vehiculos.`);
+        }
+    });
+});
+
+</script>
+
+<script>
+  const sidebar = document.getElementById("sidebar");
+ const contenidoPrincipal = document.querySelector(".contenido-principal");
+ 
+ sidebar.addEventListener("mouseenter", () => {
+     sidebar.classList.add("expanded");
+     contenidoPrincipal.style.marginLeft = "250px"; 
+ });
+ 
+ sidebar.addEventListener("mouseleave", () => {
+     sidebar.classList.remove("expanded");
+     contenidoPrincipal.style.marginLeft = "50px"; 
+ });
+    
+ </script>
+
+<footer>
+</footer>
+</body>
+</html>

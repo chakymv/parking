@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../../supabaseClient'); // ajusta la ruta si está en otra carpeta
+const supabase = require('../../supabaseClient'); // Ajustá la ruta si cambia
 
-// 🔎 Validar existencia por número de documento y correo
+// 🔎 Validar duplicados de documento y correo
 router.get('/validar', async (req, res) => {
-  const { numero_documento, direccion_correo } = req.query;
+  const { numero_documento, direccion_correo, id_usuario } = req.query;
 
   if (!numero_documento && !direccion_correo) {
     return res.status(400).json({ error: 'Faltan parámetros de validación' });
@@ -16,6 +16,7 @@ router.get('/validar', async (req, res) => {
           .from('usuario')
           .select('id_usuario')
           .eq('numero_documento', numero_documento)
+          .neq('id_usuario', Number(id_usuario)) // excluye al mismo usuario si estamos editando
           .maybeSingle()
       : Promise.resolve({ data: null }),
 
@@ -24,6 +25,7 @@ router.get('/validar', async (req, res) => {
           .from('usuario')
           .select('id_usuario')
           .eq('direccion_correo', direccion_correo)
+          .neq('id_usuario', Number(id_usuario))
           .maybeSingle()
       : Promise.resolve({ data: null })
   ]);

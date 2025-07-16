@@ -1,72 +1,58 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <title>Sistema de Parqueo Inteligente - Refugio Parking</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Consulta en tiempo real la disponibilidad de espacios en el Sistema de Parqueo Inteligente Refugio Parking." />
-    <meta name="keywords" content="parqueo inteligente, disponibilidad, parking, tiempo real, Refugio Parking, estacionamiento" />
+    <title>Iniciar Sesión - Refugio Parking</title>
+    <meta name="description" content="Inicia sesión en tu cuenta de Refugio Parking." />
     <meta name="color-scheme" content="light dark">
 
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+   
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
-
-    <link rel="stylesheet" href="/css/usuario/usuarios.css" />
-    
+    <link rel="stylesheet" href="/css/usuario/estilo-us.css" />
 </head>
 <body>
-    <header class="encabezado">
-        
+    <header class="encabezado-login">
         <nav class="acciones">
-            <a href="/usuario/iniciar-sesion"><i class="fas fa-user"></i> Iniciar Sesión</a>
-            <a href="/admin/login"><i class="fas fa-user-shield"></i> Administrador</a>
+            <!-- Botón de modo oscuro -->
             <button id="darkModeToggle" class="btn-dark-mode" aria-label="Alternar modo oscuro">
-                <i class="fas fa-moon"></i> </button>
-            </nav>
+                <i class="fas fa-moon"></i>
+            </button>
+        </nav>
     </header>
- 
-    <main>
 
-   <div class="contenido">
- <h1><i class="fas fa-parking"></i> Sistema de Parqueo Inteligente</h1>
-        <p>Consulta en tiempo real la disponibilidad por parqueadero</p>
+    <main class="login-main">
+        <div class="login-container">
+            <h1><i class="fas fa-lock"></i> Iniciar Sesión</h1>
+            <form action="/usuario/login" method="POST">
+                <div class="form-group">
+                    <label for="correo">Correo electrónico</label>
+                    <input type="email" id="correo" name="correo" required autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="contrasena">Contraseña</label>
+                    <input type="password" id="contrasena" name="contrasena" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn-submit">Ingresar</button>
+            </form>
+            <% if (typeof error !== 'undefined' && error) { %>
+                <p class="error-message"><i class="fas fa-exclamation-circle"></i> <%= error %></p>
+            <% } %>
+            <p class="registro-link">¿No tienes cuenta? <a href="/usuario/registro">Regístrate aquí</a></p>
         </div>
-
-        <section class="disponibilidad">
-            <h2><i class="fas fa-chart-pie"></i> Estado por Parqueadero</h2>
-
-            <div id="contenedor-parqueaderos">
-                <% if (typeof disponibilidad === 'undefined' || Object.keys(disponibilidad).length === 0) { %>
-                    <p style="text-align: center; color: grey;">Cargando disponibilidad o no hay datos para mostrar...</p>
-                <% } else { %>
-                    <% Object.entries(disponibilidad).forEach(([nombreParqueadero, zonas]) => { %>
-                        <div class="bloque-parqueadero"> <h3><%= nombreParqueadero %></h3>
-
-                            <% Object.entries(zonas).forEach(([nombreZona, celdas]) => { %>
-                                <div class="bloque-zona"> <h4><%= nombreZona %></h4>
-                                    <div class="grid-celdas"> <% celdas.forEach(celda => { %>
-                                                <div class="celda <%= celda.estado %>"> Celda <%= celda.numero || celda.id_celda %> — <%= celda.estado %>
-                                                </div>
-                                            <% }) %>
-                                    </div>
-                                </div>
-                            <% }) %>
-                        </div>
-                    <% }) %>
-                <% } %>
-            </div>
-        </section>
     </main>
 
-    <footer>
+    <footer class="footer-login">
         <p>&copy; <%= new Date().getFullYear() %> Todos los derechos reservados.</p>
     </footer>
 
-    <script src="/js/index.js"></script>
-
+    <!-- Script para el modo oscuro (similar al de index.ejs) -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const darkModeToggle = document.getElementById('darkModeToggle');
@@ -80,19 +66,16 @@
                 body.classList.add('dark-mode');
             }
 
-            // El event listener se añade solo si el elemento existe
             if (darkModeToggle) {
                 darkModeToggle.addEventListener('click', () => {
                     body.classList.toggle('dark-mode');
                     if (body.classList.contains('dark-mode')) {
                         localStorage.setItem('theme', 'dark');
-                        // Opcional: Cambiar el ícono a sol si está en modo oscuro
                         darkModeToggle.querySelector('i').classList.remove('fa-moon');
                         darkModeToggle.querySelector('i').classList.add('fa-sun');
                         darkModeToggle.setAttribute('aria-label', 'Alternar modo claro');
                     } else {
                         localStorage.setItem('theme', 'light');
-                        // Opcional: Cambiar el ícono a luna si está en modo claro
                         darkModeToggle.querySelector('i').classList.remove('fa-sun');
                         darkModeToggle.querySelector('i').classList.add('fa-moon');
                         darkModeToggle.setAttribute('aria-label', 'Alternar modo oscuro');
@@ -112,5 +95,7 @@
             }
         });
     </script>
+   
+  <script src="/js/iniciar-sesion.js"></script> 
 </body>
 </html>

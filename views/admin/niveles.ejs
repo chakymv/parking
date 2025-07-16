@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestionar Niveles</title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Gestionar Niveles del Parqueadero</h1>
+      <p class="centrar">Cree, edite y elimine los niveles del parqueadero.</p>
+      <hr class="linea-windows">
+
+      <div class="acciones-tabla">
+        <button id="btn-nuevo-nivel" class="btn-nuevo"><i class="fas fa-plus"></i> Nuevo Nivel</button>
+      </div>
+
+      <table id="niveles-table" class="datatable tabla-usuarios" style="width:100%">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Modal para Crear/Editar Nivel -->
+  <div class="modal" id="modal-nivel">
+    <div class="contenido-modal">
+      <div class="encabezado-modal">
+        <span id="modal-titulo">Nuevo Nivel</span>
+        <button class="cerrar" id="btn-cerrar-modal">&times;</button>
+      </div>
+      <div class="cuerpo-modal">
+        <form id="form-nivel" autocomplete="off">
+          <input type="hidden" id="nivel-id" name="id">
+          <div class="form-group">
+            <label for="nivel-nombre">Nombre del Nivel</label>
+            <input type="text" id="nivel-nombre" name="nombre" required>
+          </div>
+          <div class="form-group">
+            <label for="nivel-descripcion">Descripción (Opcional)</label>
+            <textarea id="nivel-descripcion" name="descripcion" rows="3"></textarea>
+          </div>
+          <div id="modal-msg" class="mensaje-error" style="display:none;"></div>
+          <div class="pie-modal">
+            <button type="submit" class="btn-guardar">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(document).ready(function() {
+      let table;
+      const modal = $('#modal-nivel');
+      const form = $('#form-nivel');
+      const modalTitulo = $('#modal-titulo');
+      const modalMsg = $('#modal-msg');
+      let editId = null;
+
+      function cargarNiveles() {
+        if (table) table.destroy();
+        table = $('#niveles-table').DataTable({
+          "ajax": {
+            "url": "/api/niveles",
+            "dataSrc": ""
+          },
+          "columns": [
+            { "data": "id" },
+            { "data": "nombre" },
+            { "data": "descripcion" },
+            {
+              "data": null,
+              "orderable": false,
+              "render": function(data, type, row) {
+                return `
+                  <button class="btn-accion btn-editar" data-id="${row.id}"><i class="fas fa-edit"></i></button>
+                  <button class="btn-accion btn-eliminar" data-id="${row.id}"><i class="fas fa-trash"></i></button>
+                `;
+              }
+            }
+          ],
+          "language": { "url": "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json" }
+        });
+      }
+
+      function abrirModal(id = null, data = {}) {
+        form[0].reset();
+        modalMsg.hide();
+        editId = id;
+        if (id) {
+          modalTitulo.text('Editar Nivel');
+          $('#nivel-id').val(data.id);
+          $('#nivel-nombre').val(data.nombre);
+          $('#nivel-descripcion').val(data.descripcion);
+        } else {
+          modalTitulo.text('Nuevo Nivel');
+        }
+        modal.addClass('active');
+      }
+
+      function cerrarModal() {
+        modal.removeClass('active');
+      }
+
+      $('#btn-nuevo-nivel').on('click', () => abrirModal());
+
+      $('#btn-cerrar-modal').on('click', cerrarModal);
+      modal.on('click', function(e) {
+        if (e.target === this) {
+          cerrarModal();
+        }
+      });
+
+      $('#niveles-table').on('click', '.btn-editar', async function() {
+        const id = $(this).data('id');
+        try {
+          const res = await fetch(`/api/niveles/${id}`);
+          if (!res.ok) throw new Error('No se pudo obtener los datos del nivel.');
+          const data = await res.json();
+          abrirModal(id, data);
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      form.on('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+        const url = editId ? `/api/niveles/${editId}` : '/api/niveles';
+        const method = editId ? 'PUT' : 'POST';
+
+        try {
+          const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          if (!res.ok) throw new Error((await res.json()).error || 'Error al guardar el nivel.');
+          cerrarModal();
+          cargarNiveles();
+        } catch (error) {
+          modalMsg.text(error.message).show();
+        }
+      });
+
+      $('#niveles-table').on('click', '.btn-eliminar', async function() {
+        const id = $(this).data('id');
+        if (confirm('¿Estás seguro de que quieres eliminar este nivel?')) {
+          try {
+            const res = await fetch(`/api/niveles/${id}`, { method: 'DELETE' });
+            if (!res.ok) throw new Error('No se pudo eliminar el nivel.');
+            cargarNiveles();
+          } catch (error) {
+            alert(error.message);
+          }
+        }
+      });
+
+      cargarNiveles();
+    });
+  </script>
+</body>
+</html>

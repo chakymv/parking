@@ -1,0 +1,183 @@
+/* Tablas generales */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 600px;
+  margin-top: 20px;
+  background: #fff;
+  box-shadow: 0 2px 12px #0002;
+  border-radius: 8px;
+  overflow-x: auto;
+  display: block;
+  max-width: 100%;
+}
+@media (max-width: 900px) {
+  table {
+    min-width: 400px;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+}
+@media (max-width: 600px) {
+  table {
+    min-width: unset;
+    font-size: 12px;
+    border-radius: 0;
+  }
+  th, td {
+    padding: 8px 4px;
+    font-size: 12px;
+  }
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    font-size: 12px !important;
+    padding: 2px 6px !important;
+  }
+}
+/* Scroll horizontal para tablas en pantallas pequeñas */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #fff;
+  margin: 0;
+  padding: 24px;
+}
+
+/* Dropdown checklist para selector de columnas */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+.dropdown-btn {
+  background: linear-gradient(90deg, #43a047 60%, #66bb6a 100%);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px #0001;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.dropdown-btn:hover {
+  background: linear-gradient(90deg, #388e3c 60%, #43a047 100%);
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background: #fff;
+  min-width: 220px;
+  box-shadow: 0 4px 16px #0002;
+  border-radius: 8px;
+  z-index: 10;
+  padding: 12px 10px 10px 10px;
+  top: 110%;
+  left: 0;
+}
+.dropdown.show .dropdown-content {
+  display: block;
+}
+.dropdown-content label {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  color: #388e3c;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.dropdown-content input[type='checkbox'] {
+  accent-color: #43a047;
+  margin-right: 8px;
+}
+
+/* Inputs y filtros */
+input[type="text"], input[type="number"], .input-filtro {
+  padding: 10px;
+  border: 1px solid #bbb;
+  border-radius: 6px;
+  margin-bottom: 18px;
+  margin-right: 8px;
+  font-size: 16px;
+  width: 260px;
+  box-sizing: border-box;
+  background: #f7faff;
+  color: #1976d2;
+}
+
+/* Botones generales */
+button, .btn-col {
+  background: linear-gradient(90deg, #43a047 60%, #66bb6a 100%);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px #0001;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+button:hover, .btn-col:hover {
+  background: linear-gradient(90deg, #388e3c 60%, #43a047 100%);
+  box-shadow: 0 4px 16px #43a04733;
+}
+
+h1 {
+  color: #43a047;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  margin-bottom: 18px;
+  font-size: 2.2rem;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 8px #0001;
+}
+
+/* Selector de columnas (legacy, para compatibilidad) */
+#column-selector {
+  margin-bottom: 18px;
+  padding: 10px 0 6px 0;
+  background: #f7faff;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px #0001;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+#column-selector label {
+  font-size: 15px;
+  color: #43a047;
+  margin-right: 10px;
+  cursor: pointer;
+}
+#column-selector input[type='checkbox'] {
+  accent-color: #43a047;
+  margin-right: 4px;
+}
+
+/* DataTables español y detalles visuales */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  background: #43a047 !important;
+  color: #fff !important;
+  border-radius: 3px;
+  margin: 0 2px;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background: #388e3c !important;
+}
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+  border-radius: 4px;
+  border: 1px solid #bbb;
+  padding: 4px 8px;
+}
+.dataTables_wrapper .dataTables_info {
+  margin-top: 8px;
+  color: #43a047;
+}

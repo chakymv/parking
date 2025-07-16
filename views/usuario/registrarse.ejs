@@ -1,68 +1,183 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
-  <title>Registro de Usuario</title>
-  <link rel="stylesheet" href="/estilo-us.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro de Usuario - Parking</title>
+  <meta name="description" content="Regístrate para crear una cuenta en  Parking." />
+  <meta name="color-scheme" content="light dark">
+
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    crossorigin="anonymous" />
+
+
+  <link rel="stylesheet" href="/css/usuario/estilo-us.css" />
+
 </head>
+
 <body>
-  <div class="columna">
-    <div class="contenedor-formulario">
-      <div class="logo-sistema animate__animated animate__fadeInLeft">
-        <img class="logo-imagen" src="/img/logo.png" alt="Logo del sistema" />
-      </div>
+  <header class="encabezado-login">
+    <nav class="acciones">
 
-      <div class="t_descripcion animate__animated animate__fadeInLeft">
-        <h3>Crear cuenta</h3>
-        <p>Regístrate como Usuario o Visitante</p>
-      </div>
+      <button id="darkModeToggle" class="btn-dark-mode" aria-label="Alternar modo oscuro">
+        <i class="fas fa-moon"></i>
+      </button>
+    </nav>
+  </header>
 
-      <form id="registroForm" class="formulario-login animate__animated animate__fadeInLeft">
-        <label for="tipo_documento">Tipo de documento:</label>
-        <select id="tipo_documento" name="tipo_documento" required>
-          <option value="">Seleccione...</option>
-          <option value="CC">Cédula de ciudadanía</option>
-          <option value="TI">Tarjeta de identidad</option>
-          <option value="CE">Cédula de extranjería</option>
-        </select>
+  <main class="login-main">
+    <div class="contenedor-registro">
+      <form id="registroForm">
 
-        <input type="text" id="numero_documento" name="numero_documento" placeholder="Número de documento" required />
 
-        <input type="text" id="primer_nombre" name="primer_nombre" placeholder="Primer nombre" required />
-        <input type="text" id="segundo_nombre" name="segundo_nombre" placeholder="Segundo nombre (opcional)" />
+        <div class="t_descripcion animate__animated animate__fadeInLeft">
+          <h3><i class="fas fa-user-plus"></i> Crear cuenta</h3>
+          <p>Regístrate como Usuario o Visitante</p>
+        </div>
 
-        <input type="text" id="primer_apellido" name="primer_apellido" placeholder="Primer apellido" required />
-        <input type="text" id="segundo_apellido" name="segundo_apellido" placeholder="Segundo apellido (opcional)" />
+        <% if (typeof error !=='undefined' && error) { %>
+          <p class="error-message animate__animated animate__shakeX"><i class="fas fa-exclamation-circle"></i>
+            <%= error %>
+          </p>
+          <% } %>
 
-        <input type="email" id="direccion_correo" name="direccion_correo" placeholder="Correo electrónico" required autocomplete="email" />
-        <input type="text" id="numero_celular" name="numero_celular" placeholder="Celular" required />
+            <div class="grid-dos-columnas">
 
-        <label for="perfil_usuario_id">Perfil:</label>
-        <select id="perfil_usuario_id" name="perfil_usuario_id" required>
-          <option value="">Seleccione perfil...</option>
-          <% perfiles.forEach(p => {
-            if (p.perfil === 'usuario' || p.perfil === 'visitante') { %>
-              <option value="<%= p.id %>"><%= p.perfil.charAt(0).toUpperCase() + p.perfil.slice(1) %></option>
-          <% } }) %>
-        </select>
+              <div class="columna-form">
+                <label for="tipo_documento">Tipo de documento:</label>
+                <select id="tipo_documento" name="tipo_documento" required>
+                  <option value="">Seleccione...</option>
+                  <option value="CC">Cédula de ciudadanía</option>
+                  <option value="TI">Tarjeta de identidad</option>
+                  <option value="CE">Cédula de extranjería</option>
+                </select>
+              </div>
+              <div class="columna-form">
+                <label for="numero_documento">Número de documento:</label>
+                <input type="text" id="numero_documento" name="numero_documento" placeholder="Número de documento"
+                  required />
+              </div>
 
-        <input type="password" id="clave" name="clave" placeholder="Contraseña" required autocomplete="new-password" />
 
-        <button class="btn-ingreso" type="submit">Registrarse</button>
+              <div class="columna-form">
+                <label for="primer_nombre">Primer nombre:</label>
+                <input type="text" id="primer_nombre" name="primer_nombre" placeholder="Primer nombre" required />
+              </div>
+              <div class="columna-form">
+                <label for="segundo_nombre">Segundo nombre (opcional):</label>
+                <input type="text" id="segundo_nombre" name="segundo_nombre" placeholder="Segundo nombre (opcional)" />
+              </div>
+
+
+              <div class="columna-form">
+                <label for="primer_apellido">Primer apellido:</label>
+                <input type="text" id="primer_apellido" name="primer_apellido" placeholder="Primer apellido" required />
+              </div>
+              <div class="columna-form">
+                <label for="segundo_apellido">Segundo apellido (opcional):</label>
+                <input type="text" id="segundo_apellido" name="segundo_apellido"
+                  placeholder="Segundo apellido (opcional)" />
+              </div>
+
+              <!-- Fila 4 -->
+              <div class="columna-form">
+                <label for="direccion_correo">Correo electrónico:</label>
+                <input type="email" id="direccion_correo" name="direccion_correo" placeholder="Correo electrónico"
+                  required autocomplete="email" />
+              </div>
+              <div class="columna-form">
+                <label for="numero_celular">Celular:</label>
+                <input type="text" id="numero_celular" name="numero_celular" placeholder="Celular" required />
+              </div>
+
+
+              <div class="columna-form">
+                <label for="perfil_usuario_id">Perfil:</label>
+                <select id="perfil_usuario_id" name="perfil_usuario_id" required>
+                  <option value="">Seleccione perfil...</option>
+                  <% if (typeof perfiles !=='undefined' && perfiles.length> 0) { %>
+                    <% perfiles.forEach(p=> {
+                      // Solo mostrar 'usuario' y 'visitante' para el registro público
+                      if (p.perfil === 'usuario' || p.perfil === 'visitante') { %>
+                      <option value="<%= p.id %>">
+                        <%= p.perfil.charAt(0).toUpperCase() + p.perfil.slice(1) %>
+                      </option>
+                      <% } }); %>
+                        <% } else { %>
+                          <option value="3">Usuario</option>
+                          <option value="4">Visitante</option>
+                          <% } %>
+                </select>
+              </div>
+              <div class="columna-form">
+                <label for="clave">Contraseña:</label>
+                <input type="password" id="clave" name="clave" placeholder="Contraseña" required
+                  autocomplete="new-password" />
+              </div>
+            </div>
+
+            <button class="btn-submit" type="submit">Registrarse</button>
       </form>
 
-      <div class="form-footer">
-        <p>¿Ya tienes cuenta? <a href="/iniciar-sesion">Inicia sesión</a></p>
-      </div>
+
     </div>
-  </div>
+  </main>
 
-  <div class="columna imagen-login">
-    <h1 class="titulo-imagen">Bienvenido</h1>
-  </div>
+  <footer class="footer-login">
+    <p>&copy; <%= new Date().getFullYear() %> Refugio Parking. Todos los derechos reservados.</p>
+  </footer>
 
- 
-     <script src="js/registrarse.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const darkModeToggle = document.getElementById('darkModeToggle');
+      const body = document.body;
+
+
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        body.classList.toggle('dark-mode', savedTheme === 'dark');
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        body.classList.add('dark-mode');
+      }
+
+      if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', () => {
+          body.classList.toggle('dark-mode');
+          if (body.classList.contains('dark-mode')) {
+            localStorage.setItem('theme', 'dark');
+            darkModeToggle.querySelector('i').classList.remove('fa-moon');
+            darkModeToggle.querySelector('i').classList.add('fa-sun');
+            darkModeToggle.setAttribute('aria-label', 'Alternar modo claro');
+          } else {
+            localStorage.setItem('theme', 'light');
+            darkModeToggle.querySelector('i').classList.remove('fa-sun');
+            darkModeToggle.querySelector('i').classList.add('fa-moon');
+            darkModeToggle.setAttribute('aria-label', 'Alternar modo oscuro');
+          }
+        });
+
+
+        if (body.classList.contains('dark-mode')) {
+          darkModeToggle.querySelector('i').classList.remove('fa-moon');
+          darkModeToggle.querySelector('i').classList.add('fa-sun');
+          darkModeToggle.setAttribute('aria-label', 'Alternar modo claro');
+        } else {
+          darkModeToggle.querySelector('i').classList.remove('fa-sun');
+          darkModeToggle.querySelector('i').classList.add('fa-moon');
+          darkModeToggle.setAttribute('aria-label', 'Alternar modo oscuro');
+        }
+      }
+    });
+  </script>
+
+  <script src="/js/registro.js"></script>
 </body>
+
 </html>

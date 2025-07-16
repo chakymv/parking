@@ -1,9 +1,12 @@
 const express = require('express');
 const path = require('path');
 const bodyParser = require('body-parser');
-require('dotenv').config();
 const session = require('express-session');
+require('dotenv').config();
 
+const app = express();
+
+// Rutas
 const usuarioRoutes = require('./routes/usuario.routes');
 const vehiculoRoutes = require('./routes/vehiculo.routes');
 const celdaRoutes = require('./routes/celda.routes');
@@ -19,52 +22,27 @@ const parqueaderoRoutes = require('./routes/parqueadero.routes');
 const statsRoutes = require('./routes/stats.routes');
 const tipoIncidenciaRoutes = require('./routes/tipo_incidencia.routes');
 const adminRoutes = require('./routes/admin.routes');
-
-
-//Usuario
 const loginRoutes = require('./routes/usuario/login.routes');
-
 const registroRoutes = require('./routes/usuario/registro.routes');
 const disponibilidadPublica = require('./routes/public/disponibilidad.routes');
-
 const Usuarios = require('./model/usuario/Usuarios');
 
-
-
-
-
-
-
-
-const app = express();
 const PORT = process.env.PORT || 7000;
 
-//Permitir JS
+// Archivos estáticos
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/admin/css', express.static(path.join(__dirname, 'views/admin/css')));
+app.use('/admin/img', express.static(path.join(__dirname, 'views/admin/img')));
 
 // Configuración de EJS
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Archivos estáticos
-app.use('/public', express.static(path.join(__dirname, 'public')));
-app.use('/admin/css', express.static(path.join(__dirname, 'views/admin/css')));
-app.use('/admin/img', express.static(path.join(__dirname, 'views/admin/img')));
-
 // Parsers
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
-
-app.use('/admin/vehiculo', vehiculoRoutes);
-
-//Usuarios routes
-app.use('/usuario', loginRoutes);
-app.use('routes/public/register', registroRoutes);
-//publica
-app.use('routes/public/disponibilidad', disponibilidadPublica);
 
 // Configuración de sesión
 const sessionConfig = {
@@ -78,6 +56,25 @@ const sessionConfig = {
   }
 };
 app.use(session(sessionConfig));
+
+// Rutas públicas
+app.use('/usuario', loginRoutes);
+app.use('/usuario', registroRoutes);
+ 
+app.use('/api/disponibilidad', disponibilidadPublica);
+
+// Ruta principal con disponibilidad cargada
+app.get('/', async (req, res) => {
+  try {
+    const response = await fetch('http://localhost:7000/api/disponibilidad/disponibilidad');
+    const disponibilidad = await response.json();
+    res.render('usuario/index', { disponibilidad });
+  } catch (err) {
+    console.error('Error al obtener disponibilidad:', err);
+    res.render('usuario/index', { disponibilidad: {} });
+  }
+});
+
 
 // Rutas API
 app.use('/api/usuarios', usuarioRoutes);
@@ -95,15 +92,12 @@ app.use('/api/parqueaderos', parqueaderoRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/tipos', tipoIncidenciaRoutes);
 
-
-
 // Rutas de administración
+app.use('/admin', adminRoutes);
+app.use('/admin/vehiculo', vehiculoRoutes);
 
-app.use('/admin', require('./routes/admin.routes'));
-
-
-// Ruta raíz
-app.get('/', (req, res) => {
+// Entrada al panel de administrador
+app.get('/admin', (req, res) => {
   if (req.session.userId) {
     res.redirect('/admin/index');
   } else {
@@ -116,10 +110,10 @@ app.use((req, res) => {
   res.status(404).send('Ruta no encontrada');
 });
 
-// Manejo de errores global
+// Manejo global de errores
 app.use((err, req, res, next) => {
   console.error('ERROR INESPERADO:', err.stack || err.message);
-  res.status(500).send('¡Algo salió mal en el servidor!');
+  res.status(500).send('¡Problemas con el servidor');
 });
 
 // Inicio del servidor

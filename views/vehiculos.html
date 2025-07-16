@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Vehículos</title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script>
+    const allColumns = ['id', 'placa', 'color', 'modelo', 'marca', 'tipo', 'usuario_id_usuario'];
+    let columns = [...allColumns];
+    let data = [];
+    let dataTableInstance = null;
+
+    async function fetchVehiculos() {
+      try {
+        const res = await fetch('/api/vehiculos');
+        if (!res.ok) {
+          showError('Error al obtener vehículos');
+          data = [];
+          renderTable();
+          renderColumnSelector();
+          return;
+        }
+        data = await res.json();
+        if (!Array.isArray(data)) {
+          showError('La respuesta de vehículos no es un array');
+          data = [];
+        }
+        renderTable();
+        renderColumnSelector();
+      } catch (err) {
+        showError('Error de conexión');
+        data = [];
+        renderTable();
+        renderColumnSelector();
+      }
+    }
+
+    function renderTable(filteredData) {
+      const table = document.getElementById('vehiculos-table');
+      if (dataTableInstance) {
+        dataTableInstance.destroy();
+        dataTableInstance = null;
+      }
+      table.innerHTML = '';
+      if (columns.length === 0) {
+        return;
+      }
+      let header = '<thead><tr>';
+      columns.forEach(col => header += `<th>${col}</th>`);
+      header += '</tr></thead>';
+      table.innerHTML += header;
+      let rows = '<tbody>';
+      const source = filteredData || data;
+      if (!source.length) {
+        rows += `<tr><td colspan="${columns.length}" style="text-align:center;color:#888;">No hay datos para mostrar</td></tr>`;
+      } else {
+        source.forEach(row => {
+          let tr = '<tr>';
+          columns.forEach(col => tr += `<td>${row[col] ?? ''}</td>`);
+          tr += '</tr>';
+          rows += tr;
+        });
+      }
+      rows += '</tbody>';
+      table.innerHTML += rows;
+      dataTableInstance = $('#vehiculos-table').DataTable({
+        paging: true,
+        searching: false,
+        info: true,
+        responsive: true,
+        language: {
+          url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json"
+        }
+      });
+    }
+    function showError(msg) {
+      let errorDiv = document.getElementById('vehiculos-error');
+      if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.id = 'vehiculos-error';
+        errorDiv.style.color = 'red';
+        errorDiv.style.margin = '10px 0';
+        document.body.insertBefore(errorDiv, document.body.firstChild);
+      }
+      errorDiv.textContent = msg;
+    }
+
+    function renderColumnSelector() {
+      const selector = document.getElementById('column-selector');
+      selector.innerHTML = `<button class='dropdown-btn' onclick='toggleDropdown(event)' style='padding:6px 14px;border-radius:6px;background:#4682f0;color:white;border:none;cursor:pointer;'>Seleccionar columnas ▼</button><div class='dropdown-content' style='display:none;position:absolute;background:white;border:1px solid #ccc;padding:10px 16px;z-index:1000;box-shadow:0 2px 8px #0002;'>`;
+      allColumns.forEach(col => {
+        const checked = columns.includes(col) ? 'checked' : '';
+        selector.innerHTML += `<label style='display:block;margin-bottom:6px;'><input type='checkbox' value='${col}' ${checked} onchange='toggleCol(this)'> ${col}</label>`;
+      });
+      selector.innerHTML += '</div>';
+    }
+
+    function toggleDropdown(e) {
+      e.stopPropagation();
+      const selector = document.getElementById('column-selector');
+      const dropdown = selector.querySelector('.dropdown-content');
+      dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+      if (dropdown.style.display === 'block') {
+        document.addEventListener('click', closeDropdown);
+      }
+    }
+    function closeDropdown(e) {
+      const selector = document.getElementById('column-selector');
+      const dropdown = selector.querySelector('.dropdown-content');
+      if (!selector.contains(e.target)) {
+        dropdown.style.display = 'none';
+        document.removeEventListener('click', closeDropdown);
+      }
+    }
+
+    function toggleCol(checkbox) {
+      const col = checkbox.value;
+      if (checkbox.checked) {
+        if (!columns.includes(col)) columns.push(col);
+      } else {
+        columns = columns.filter(c => c !== col);
+      }
+      // Mantener el orden de las columnas según allColumns
+      columns = allColumns.filter(c => columns.includes(c));
+      renderTable();
+    }
+
+    function filterTable() {
+      const filtro = document.getElementById('filtro').value.toLowerCase();
+      const filtered = data.filter(row => columns.some(col => (row[col]+'' || '').toLowerCase().includes(filtro)));
+      renderTable(filtered);
+    }
+
+    window.onload = fetchVehiculos;
+  </script>
+</head>
+<body style="background:#f7f7f7;">
+  <div class="contenido-principal" style="max-width:900px;margin:40px auto 0 auto;padding:30px 30px 50px 30px;background:white;border-radius:12px;box-shadow:0 2px 12px #0001;">
+    <h1 class="centrar" style="text-align:center;color:#4682f0;">Gestionar Vehículos ingresados</h1>
+    <p class="centrar" style="text-align:center;color:#888;">Esta tabla permite realizar búsqueda de vehículos</p>
+    <hr style="margin:20px 0 30px 0;">
+    <div class="filtros-vehiculos" style="display:flex;gap:20px;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div id="column-selector" class="dropdown"></div>
+      <input id="filtro" class="input-filtro" placeholder="Buscar..." oninput="filterTable()" style="flex:1;max-width:250px;" />
+    </div>
+    <table border="1" id="vehiculos-table" class="datatable tabla-vehiculos" style="width:100%;background:white;"></table>
+  </div>
+</body>
+</html>
