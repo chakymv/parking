@@ -28,9 +28,9 @@
     .dashboard-card canvas {
         max-height: 300px;
     }
-    /* Estilos para la nueva tarjeta de KPI */
+
     .kpi-card {
-        grid-column: 1 / -1; /* Ocupa todo el ancho */
+        grid-column: 1 / -1; 
         text-align: center;
     }
     .kpi-card .kpi-number {
@@ -56,11 +56,15 @@
       <p class="centrar">Resumen del estado actual del parqueadero.</p>
       <hr class="linea-windows">
  <a href="/admin/vista_parqueaderos" class="btn btn-outline-primary">
-  Vista Parqueaderos <i class="fa-solid fa-map"></i>
+  Vista Parqueaderos <i class="fa-solid fa-building-shield"></i>
+</a>
+
+ <a href="/admin/operar" class="btn btn-outline-primary">
+ Operar <i class="fa-solid fa-map"></i>
 </a>
      
       <div id="dashboard-content" class="dashboard-grid">
-        <!-- Nueva tarjeta de KPI -->
+        
         <div class="dashboard-card kpi-card">
             <div class="kpi-label">Vehículos Actualmente en el Parqueadero</div>
             <div id="vehiculos-activos-kpi" class="kpi-number">Cargando...</div>
