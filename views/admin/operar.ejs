@@ -267,7 +267,7 @@ if (modal) {
 
 
 
-    const tipo = 'Carro'; // 🚧 se puede ajustar dinámicamente según vehículo
+    const tipo = 'Carro';
     const resCeldas = await fetch(`/admin/celdas/disponibles?tipo=${encodeURIComponent(tipo)}`);
     const { celdas } = await resCeldas.json();
 
