@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Técnico - Sistema de Gestión de Parqueadero</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+            margin: 0;
+            display: flex;
+        }
+        #sidebar {
+            width: 250px;
+           background: linear-gradient(to bottom,
+      rgba(4, 0, 255, 1) 0%,
+      rgba(0, 15, 74, 1) 100%);
+            color: #fff;
+            padding: 20px;
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+        }
+        #sidebar h2 {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #sidebar ul {
+            list-style: none;
+            padding: 0;
+        }
+        #sidebar ul li a {
+            color: #adb5bd;
+            text-decoration: none;
+            display: block;
+            padding: 10px 15px;
+            border-radius: 4px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        #sidebar ul li a:hover {
+            background-color: #0c00b6;
+            color: #fff;
+        }
+        main {
+            margin-left: 270px;
+            padding: 20px;
+            width: calc(100% - 270px);
+        }
+        header {
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        header h1 {
+            color: #3AA1F5;
+        }
+        section {
+            margin-bottom: 40px;
+        }
+        h2 {
+            color: #343a40;
+            border-bottom: 2px solid #7556F5;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        h3 {
+            color: #7556F5;
+        }
+        code {
+            background-color: #f4f2ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.9em;
+            border: 1px solid #e0d9ff;
+        }
+        pre {
+            background-color: #212529;
+            color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        /* Anula el estilo de 'code' cuando está dentro de 'pre' para evitar fondos claros en bloques de código oscuros */
+        pre code {
+            background-color: transparent;
+            border: none;
+            padding: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #eaf5ff;
+            font-weight: 600;
+        }
+        .badge {
+            padding: 5px 10px;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .badge.get { background-color: #4BD800; }
+        .badge.post { background-color: #3AA1F5; }
+        .badge.put { background-color: #ff9900; color: #212529; }
+        .badge.delete { background-color: #ff0000; }
+    </style>
+</head>
+<body>
+
+<nav id="sidebar">
+    <h2>Manual Técnico</h2>
+    <ul>
+        <li><a href="#introduccion">1. Introducción</a></li>
+        <li><a href="#tecnologias">2. Tecnologías Utilizadas</a></li>
+        <li><a href="#estructura">3. Estructura del Proyecto</a></li>
+        <li><a href="#backend">4. Backend (API)</a>
+            <ul>
+                <li><a href="#api-parqueaderos">4.1 API Parqueaderos</a></li>
+                <li><a href="#api-usuarios">4.2 API Usuarios</a></li>
+                <li><a href="#api-vehiculos">4.3 API Vehículos</a></li>
+                <li><a href="#api-middleware">4.4 Middlewares</a></li>
+            </ul>
+        </li>
+        <li><a href="#frontend">5. Frontend (Vistas y Lógica)</a>
+            <ul>
+                <li><a href="#frontend-vistas">5.1 Vistas Principales</a></li>
+                <li><a href="#frontend-scripts">5.2 Scripts de Cliente</a></li>
+            </ul>
+        </li>
+        <li><a href="#database">6. Base de Datos</a></li>
+    </ul>
+</nav>
+
+<main>
+    <header>
+        <h1>Manual Técnico: Sistema de Gestión de Parqueadero</h1>
+        <p>Documentación técnica sobre la arquitectura, componentes y funcionamiento del sistema.</p>
+    </header>
+
+    <section id="introduccion">
+        <h2>1. Introducción</h2>
+        <p>
+            Este documento describe la arquitectura técnica y los componentes del Sistema de Gestión de Parqueadero. El sistema está diseñado como una aplicación web con una arquitectura cliente-servidor, utilizando un backend basado en Node.js/Express para la API REST y un frontend de administración con HTML, CSS y JavaScript para la interacción del usuario.
+        </p>
+        <p>
+            El objetivo principal es proporcionar una plataforma robusta para administrar parqueaderos, zonas, usuarios del sistema (administradores, operadores), usuarios finales (propietarios de vehículos) y sus vehículos.
+        </p>
+    </section>
+
+    <section id="tecnologias">
+        <h2>2. Tecnologías y Dependencias</h2>
+        <p>El proyecto se basa en el ecosistema de Node.js y utiliza las siguientes tecnologías y librerías clave, gestionadas a través de npm.</p>
+        
+        <h3>Backend</h3>
+        <ul>
+            <li><strong>Node.js:</strong> Entorno de ejecución para JavaScript en el servidor.</li>
+            <li><strong>Express.js:</strong> Framework principal para construir la API REST y servir las vistas.</li>
+            <li><strong>EJS (Embedded JavaScript):</strong> Motor de plantillas para renderizar vistas HTML dinámicas en el servidor.</li>
+            <li><strong>Body-Parser:</strong> Middleware para procesar el cuerpo de las solicitudes HTTP (<code>req.body</code>).</li>
+            <li><strong>Express-Session:</strong> Middleware para la gestión de sesiones de usuario.</li>
+            <li><strong>bcryptjs:</strong> Librería para el hasheo seguro de contraseñas.</li>
+            <li><strong>Express-validator:</strong> Middleware para la validación de datos de entrada en la API.</li>
+            <li><strong>Dotenv:</strong> Para cargar variables de entorno desde un archivo <code>.env</code>.</li>
+            <li><strong>Connect-flash:</strong> Middleware para mostrar mensajes flash (notificaciones temporales).</li>
+        </ul>
+
+        <h3>Frontend</h3>
+        <ul>
+            <li><strong>EJS:</strong> Motor de plantillas para renderizar vistas dinámicas desde el servidor.</li>
+            <li><strong>jQuery:</strong> Utilizado principalmente para la integración con la librería DataTables y manipulación del DOM.</li>
+            <li><strong>DataTables:</strong> Librería para crear tablas interactivas con paginación, búsqueda y ordenamiento.</li>
+            <li><strong>Chart.js:</strong> Para la visualización de datos en gráficos en el dashboard.</li>
+            <li><strong>Font Awesome:</strong> Para la iconografía en la interfaz de usuario.</li>
+        </ul>
+
+        <h3>Base de Datos</h3>
+        <ul>
+            <li><strong>Supabase:</strong> Plataforma de Base de Datos como Servicio (DBaaS) que utiliza <strong>PostgreSQL</strong>.</li>
+            <li><strong>@supabase/supabase-js:</strong> Cliente oficial de Supabase para interactuar con sus servicios desde Node.js.</li>
+            <li><strong>postgres (pg):</strong> Cliente de PostgreSQL para Node.js, usado para la conexión directa con la base de datos.</li>
+            <li><strong>mysql2:</strong> Cliente de MySQL. Presente en las dependencias, posiblemente para una integración legada o secundaria.</li>
+        </ul>
+
+        <h3>Despliegue</h3>
+        <ul>
+            <li><strong>Render:</strong> Plataforma principal para el despliegue de la aplicación en producción.</li>
+            <li><strong>serverless-http:</strong> Dependencia para adaptar la aplicación Express a entornos serverless, como Vercel o AWS Lambda.</li>
+        </ul>
+
+        <h3>Desarrollo y Pruebas</h3>
+        <ul>
+            <li><strong>Supertest:</strong> Librería para realizar pruebas de integración a los endpoints de la API HTTP.</li>
+        </ul>
+    </section>
+
+    <section id="estructura">
+        <h2>3. Estructura del Proyecto (Inferida)</h2>
+        <p>La estructura de carpetas y archivos clave del proyecto es la siguiente:</p>
+        <pre><code>/
+├── api/
+│   └── parqueadero.routes.js   # Rutas para la gestión de parqueaderos
+│   └── (otras rutas como usuarios.routes.js, vehiculos.routes.js)
+├── middlewares/
+│   └── validation.middleware.js  # Reglas de validación para la API
+├── model/
+│   └── Parqueadero.js            # Modelo de datos para Parqueadero
+│   └── (otros modelos como Usuario.js, Vehiculo.js)
+├── public/
+│   ├── admin/
+│   │   ├── css/
+│   │   └── js/
+│   │       └── crear-usuarios.js # Lógica para la página de gestión de usuarios
+│   ├── js/
+│   │   └── gestion-vehiculos.js  # Lógica para la página de gestión de vehículos
+│   └── imagenes/
+├── utils/
+│   ├── catchAsync.js             # Wrapper para manejar errores en rutas asíncronas
+│   └── normalizer.js             # Funciones para normalizar datos
+├── views/
+│   └── admin/
+│       ├── index.ejs            # Dashboard principal
+│       ├── crear_usuarios.ejs   # Vista para gestionar usuarios del sistema
+│       ├── crear_zonas.ejs      # Vista para gestionar zonas
+│       ├── vehiculos.ejs        # Vista para gestionar vehículos
+│       └── ... (otras vistas)
+└── app.js                     # Archivo principal del servidor Express
+</code></pre>
+    </section>
+
+    <section id="backend">
+        <h2>4. Backend (API)</h2>
+        <p>El backend está construido con Express.js y expone una API REST para que el frontend pueda consumir y manipular los datos.</p>
+
+        <div id="api-parqueaderos">
+            <h3>4.1 API Parqueaderos - <code>/api/parqueaderos</code></h3>
+            <p>Gestiona las operaciones CRUD para las entidades de parqueadero.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Método</th>
+                        <th>Ruta</th>
+                        <th>Descripción</th>
+                        <th>Cuerpo (Request Body)</th>
+                        <th>Respuesta Exitosa (2xx)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge get">GET</span></td>
+                        <td><code>/</code></td>
+                        <td>Obtiene una lista de todos los parqueaderos.</td>
+                        <td>N/A</td>
+                        <td><code>200 OK</code> - Array de objetos de parqueadero.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge get">GET</span></td>
+                        <td><code>/:id</code></td>
+                        <td>Obtiene un parqueadero por su ID.</td>
+                        <td>N/A</td>
+                        <td><code>200 OK</code> - Objeto del parqueadero.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge post">POST</span></td>
+                        <td><code>/</code></td>
+                        <td>Crea un nuevo parqueadero.</td>
+                        <td><code>{ nombre, codigo, tipo, capacidad, creado_por }</code></td>
+                        <td><code>201 Created</code> - Objeto del nuevo parqueadero.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge put">PUT</span></td>
+                        <td><code>/:id</code></td>
+                        <td>Actualiza un parqueadero existente.</td>
+                        <td><code>{ nombre?, codigo?, tipo?, capacidad?, creado_por? }</code> (campos opcionales)</td>
+                        <td><code>200 OK</code> - Objeto del parqueadero actualizado.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge delete">DELETE</span></td>
+                        <td><code>/:id</code></td>
+                        <td>Elimina un parqueadero.</td>
+                        <td>N/A</td>
+                        <td><code>200 OK</code> - Mensaje de confirmación.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="api-usuarios">
+            <h3>4.2 API Usuarios - <code>/api/usuarios</code> (Inferida)</h3>
+            <p>Gestiona los usuarios del sistema y propietarios de vehículos.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Método</th>
+                        <th>Ruta</th>
+                        <th>Descripción</th>
+                        <th>Respuesta Exitosa (2xx)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge get">GET</span></td>
+                        <td><code>/</code></td>
+                        <td>Obtiene una lista de todos los usuarios.</td>
+                        <td><code>200 OK</code> - Array de objetos de usuario.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge get">GET</span></td>
+                        <td><code>/:id</code></td>
+                        <td>Obtiene un usuario por su ID.</td>
+                        <td><code>200 OK</code> - Objeto del usuario.</td>
+                    </tr>
+                     <tr>
+                        <td><span class="badge get">GET</span></td>
+                        <td><code>/documento/:doc</code></td>
+                        <td>Busca un usuario por su número de documento.</td>
+                        <td><code>200 OK</code> - Objeto del usuario.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge post">POST</span></td>
+                        <td><code>/</code></td>
+                        <td>Crea un nuevo usuario.</td>
+                        <td><code>201 Created</code> - Objeto del nuevo usuario.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge put">PUT</span></td>
+                        <td><code>/:id</code></td>
+                        <td>Actualiza un usuario existente.</td>
+                        <td><code>200 OK</code> - Objeto del usuario actualizado.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge delete">DELETE</span></td>
+                        <td><code>/:id</code></td>
+                        <td>Elimina un usuario.</td>
+                        <td><code>200 OK</code> - Mensaje de confirmación.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="api-vehiculos">
+            <h3>4.3 API Vehículos - <code>/api/vehiculos</code> (Inferida)</h3>
+            <p>Gestiona los vehículos asociados a los usuarios.</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Método</th>
+                        <th>Ruta</th>
+                        <th>Descripción</th>
+                        <th>Respuesta Exitosa (2xx)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge get">GET</span></td>
+                        <td><code>/</code></td>
+                        <td>Obtiene una lista de todos los vehículos.</td>
+                        <td><code>200 OK</code> - Array de objetos de vehículo.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge post">POST</span></td>
+                        <td><code>/</code></td>
+                        <td>Crea un nuevo vehículo.</td>
+                        <td><code>201 Created</code> - Objeto del nuevo vehículo.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge put">PUT</span></td>
+                        <td><code>/:id</code></td>
+                        <td>Actualiza un vehículo existente.</td>
+                        <td><code>200 OK</code> - Objeto del vehículo actualizado.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge delete">DELETE</span></td>
+                        <td><code>/:id</code></td>
+                        <td>Elimina un vehículo.</td>
+                        <td><code>200 OK</code> - Mensaje de confirmación.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="api-middleware">
+            <h3>4.4 Middlewares</h3>
+            <h4><code>catchAsync</code></h4>
+            <p>Es una función de utilidad (wrapper) que envuelve los controladores de ruta asíncronos. Su propósito es capturar cualquier error que ocurra dentro de una promesa (<code>async/await</code>) y pasarlo al manejador de errores de Express (<code>next(error)</code>), evitando que el servidor se caiga por una excepción no controlada.</p>
+
+            <h4><code>validation.middleware.js</code></h4>
+            <p>Este archivo utiliza <code>express-validator</code> para definir y aplicar reglas de validación a los datos que llegan en las solicitudes a la API. Esto asegura la integridad de los datos antes de que lleguen a la lógica de negocio o a la base de datos.</p>
+            <ul>
+                <li><strong><code>handleValidationErrors</code></strong>: Middleware que comprueba si hubo errores de validación. Si los hay, responde con un estado <code>400 Bad Request</code> y una lista de los errores. Si no, pasa el control al siguiente middleware.</li>
+                <li><strong><code>validateCreateUser</code></strong>: Reglas para crear un usuario. Campos como <code>tipo_documento</code>, <code>primer_nombre</code>, <code>email</code>, <code>clave</code> son obligatorios y tienen formatos específicos.</li>
+                <li><strong><code>validateUpdateUser</code></strong>: Reglas más flexibles para actualizar un usuario, ya que los campos son opcionales.</li>
+                <li><strong><code>validateCreateVehiculo</code> / <code>validateUpdateVehiculo</code></strong>: Reglas para la creación y actualización de vehículos, validando campos como <code>placa</code> y <code>tipo</code>.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="frontend">
+        <h2>5. Frontend (Vistas y Lógica)</h2>
+        <p>El frontend es un panel de administración renderizado dinámicamente por el servidor Express usando el motor de plantillas <strong>EJS</strong>. Esto permite que los datos del backend se inyecten directamente en las páginas (archivos <code>.ejs</code>) antes de ser enviadas al navegador. La lógica del cliente (JavaScript) consume la API para las interacciones asíncronas.</p>
+
+        <div id="frontend-vistas">
+            <h3>5.1 Vistas Principales</h3>
+            <ul>
+                <li><strong><code>index.ejs</code></strong>: El dashboard principal. Muestra estadísticas generales usando Chart.js (vehículos ingresados/salidos, incidencias, total por tipo) y un resumen del estado de los parqueaderos y sus zonas.</li>
+                <li><strong><code>crear_usuarios.ejs</code></strong>: Interfaz para administrar los usuarios del sistema (roles de Administrador y Operador). Incluye una tabla (potencialmente con DataTables) y un modal para crear y editar usuarios.</li>
+                <li><strong><code>usuarios.ejs</code></strong>: Vista para consultar todos los usuarios del sistema, con funcionalidades avanzadas de filtrado y selección de columnas gracias a DataTables.</li>
+                <li><strong><code>vehiculos.ejs</code> (Inferido)</strong>: Interfaz para la gestión de vehículos. Contiene una tabla DataTables y un modal para operaciones CRUD sobre los vehículos.</li>
+                <li><strong><code>crear_zonas.ejs</code> / <code>crear_celdas.ejs</code></strong>: Vistas para la configuración de la estructura física de los parqueaderos.</li>
+                <li><strong><code>historico.ejs</code></strong>: Muestra un registro histórico de las entradas y salidas de vehículos.</li>
+            </ul>
+        </div>
+
+        <div id="frontend-scripts">
+            <h3>5.2 Scripts de Cliente</h3>
+            <h4><code>public/js/gestion-vehiculos.js</code></h4>
+            <p>Este script gestiona toda la lógica de la página de vehículos.</p>
+            <ul>
+                <li><strong>Estado:</strong> Mantiene el estado en variables locales (<code>vehiculos</code>, <code>vehiculoSeleccionadoId</code>).</li>
+                <li><strong>Interacción con API:</strong> Utiliza <code>fetch</code> para comunicarse con <code>/api/vehiculos</code> para cargar, guardar (crear/actualizar) y eliminar vehículos.</li>
+                <li><strong>Gestión del Modal:</strong> Controla la apertura y cierre del modal para crear o editar un vehículo, rellenando el formulario con los datos correspondientes en modo edición.</li>
+                <li><strong>Búsqueda de Usuario:</strong> Implementa una búsqueda en tiempo real de propietarios por documento al crear/editar un vehículo, consultando el endpoint <code>/api/usuarios/documento/:doc</code>.</li>
+                <li><strong>DataTables:</strong> Inicializa y actualiza la tabla de vehículos con los datos obtenidos de la API.</li>
+            </ul>
+
+            <h4><code>admin/js/crear-usuarios.js</code></h4>
+            <p>Script dedicado a la página de administración de usuarios del sistema.</p>
+            <ul>
+                <li><strong>Interacción con API:</strong> Se comunica con <code>/api/usuarios</code> para las operaciones CRUD.</li>
+                <li><strong>Gestión del Modal:</strong> Similar a la gestión de vehículos, controla un modal para la creación y edición de usuarios.</li>
+                <li><strong>Validación Frontend:</strong> Antes de enviar los datos para crear un nuevo usuario, realiza una llamada a <code>/api/usuarios/validar</code> para comprobar si el documento o el correo ya existen, proporcionando feedback inmediato al usuario.</li>
+                <li><strong>Renderizado y Filtros:</strong> Renderiza la tabla de usuarios y aplica filtros por estado o perfil de forma dinámica sin recargar la página.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="database">
+        <h2>6. Base de Datos</h2>
+        <p>
+            El sistema utiliza una base de datos <strong>PostgreSQL</strong>, alojada en la plataforma <strong>Supabase</strong>, para la persistencia de datos. El siguiente esquema ha sido definido a partir del script de inicialización y refleja la estructura actual de las tablas, relaciones y lógica de negocio implementada a nivel de base de datos.
+        </p>
+
+        <h3>6.1 Diagrama de Entidad-Relación (Texto)</h3>
+        <p>Las principales relaciones entre las entidades son:</p>
+        <ul>
+            <li>Un <strong>Parqueadero</strong> puede tener muchas <strong>Celdas</strong>.</li>
+            <li>Una <strong>Zona</strong> puede agrupar muchas <strong>Celdas</strong>.</li>
+            <li>Un <strong>Usuario</strong> puede tener muchos <strong>Vehículos</strong>.</li>
+            <li>Un <strong>Vehículo</strong> puede tener muchos registros de <strong>Acceso/Salida</strong>, <strong>Reportes de Incidencia</strong> e <strong>Historiales de Parqueo</strong>.</li>
+            <li>Una <strong>Celda</strong> puede tener muchos registros de <strong>Historial de Parqueo</strong>.</li>
+            <li>Un <strong>Usuario</strong> tiene un único <strong>Perfil de Usuario</strong> (Rol).</li>
+        </ul>
+
+        <h3>6.2 Esquema de Tablas</h3>
+
+        <h4>Tabla: <code>parqueadero</code></h4>
+        <p>Almacena la información de los diferentes parqueaderos gestionados por el sistema.</p>
+        <table>
+            <thead><tr><th>Columna</th><th>Tipo</th><th>Notas</th></tr></thead>
+            <tbody>
+                <tr><td><code>id</code></td><td>BIGSERIAL</td><td>Llave Primaria. Autoincremental.</td></tr>
+                <tr><td><code>nombre</code></td><td>VARCHAR(100)</td><td>Nombre del parqueadero. No nulo.</td></tr>
+                <tr><td><code>codigo</code></td><td>VARCHAR(20)</td><td>Código único para el parqueadero. Restricción UNIQUE.</td></tr>
+                <tr><td><code>tipo</code></td><td>VARCHAR(50)</td><td>Ej: 'Mixto', 'Carro'.</td></tr>
+                <tr><td><code>capacidad</code></td><td>INT</td><td>Capacidad total de vehículos.</td></tr>
+                <tr><td><code>creado_por</code></td><td>VARCHAR(100)</td><td>Identificador del usuario que creó el registro.</td></tr>
+                <tr><td><code>fecha_creacion</code></td><td>TIMESTAMP</td><td>Fecha de creación del registro (Default: CURRENT_TIMESTAMP).</td></tr>
+            </tbody>
+        </table>
+
+        <h4>Tabla: <code>zona</code></h4>
+        <p>Define las diferentes zonas dentro de los parqueaderos (ej. "Zona A - Carros").</p>
+        <table>
+            <thead><tr><th>Columna</th><th>Tipo</th><th>Notas</th></tr></thead>
+            <tbody>
+                <tr><td><code>id</code></td><td>BIGSERIAL</td><td>Llave Primaria.</td></tr>
+                <tr><td><code>nombre</code></td><td>VARCHAR(50)</td><td>Nombre único de la zona. Restricción UNIQUE.</td></tr>
+                <tr><td><code>descripcion</code></td><td>TEXT</td><td>Descripción detallada de la zona.</td></tr>
+                <tr><td><code>created_at</code></td><td>TIMESTAMPTZ</td><td>Fecha de creación del registro (Default: NOW()).</td></tr>
+            </tbody>
+        </table>
+
+        <h4>Tabla: <code>celda</code></h4>
+        <p>Representa cada espacio de estacionamiento individual.</p>
+        <table>
+            <thead><tr><th>Columna</th><th>Tipo</th><th>Notas</th></tr></thead>
+            <tbody>
+                <tr><td><code>id</code></td><td>BIGSERIAL</td><td>Llave Primaria.</td></tr>
+                <tr><td><code>tipo</code></td><td>VARCHAR(10)</td><td>Tipo de vehículo permitido (Ej: 'Carro', 'Moto').</td></tr>
+                <tr><td><code>estado</code></td><td>VARCHAR(45)</td><td>Estado actual: 'libre', 'ocupada', 'mantenimiento'.</td></tr>
+                <tr><td><code>numero</code></td><td>VARCHAR(50)</td><td>Identificador de la celda (Ej: 'A01').</td></tr>
+                <tr><td><code>nivel</code></td><td>VARCHAR(50)</td><td>Piso o nivel donde se encuentra la celda.</td></tr>
+                <tr><td><code>parqueadero_id</code></td><td>BIGINT</td><td>FK a <code>parqueadero.id</code>.</td></tr>
+                <tr><td><code>zona_id</code></td><td>BIGINT</td><td>FK a <code>zona.id</code>.</td></tr>
+            </tbody>
+        </table>
+
+        <h4>Tabla: <code>Usuario</code> (Basada en script de sistema)</h4>
+        <p>Almacena los datos de todos los usuarios, incluyendo administradores, operadores y clientes.</p>
+        <table>
+            <thead><tr><th>Columna</th><th>Tipo</th><th>Notas</th></tr></thead>
+            <tbody>
+                <tr><td><code>id_usuario</code></td><td>SERIAL</td><td>Llave Primaria.</td></tr>
+                <tr><td><code>tipo_documento</code></td><td>VARCHAR(45)</td><td>Ej: 'CC', 'Pasaporte'.</td></tr>
+                <tr><td><code>numero_documento</code></td><td>VARCHAR(45)</td><td>Restricción UNIQUE.</td></tr>
+                <tr><td><code>primer_nombre</code></td><td>VARCHAR(255)</td><td></td></tr>
+                <tr><td><code>segundo_nombre</code></td><td>VARCHAR(225)</td><td>Opcional.</td></tr>
+                <tr><td><code>primer_apellido</code></td><td>VARCHAR(255)</td><td></td></tr>
+                <tr><td><code>segundo_apellido</code></td><td>VARCHAR(45)</td><td>Opcional.</td></tr>
+                <tr><td><code>direccion_correo</code></td><td>VARCHAR(255)</td><td>Restricción UNIQUE.</td></tr>
+                <tr><td><code>numero_celular</code></td><td>VARCHAR(45)</td><td></td></tr>
+                <tr><td><code>foto_perfil</code></td><td>VARCHAR(255)</td><td>URL o path a la imagen.</td></tr>
+                <tr><td><code>estado</code></td><td>VARCHAR(45)</td><td>Ej: 'activo', 'inactivo'.</td></tr>
+                <tr><td><code>clave</code></td><td>VARCHAR(255)</td><td>Contraseña hasheada.</td></tr>
+                <tr><td><code>PerfilUsuario_id</code></td><td>BIGINT</td><td>FK a <code>PerfilUsuario.id</code>.</td></tr>
+            </tbody>
+        </table>
+
+        <h4>Tabla: <code>PerfilUsuario</code></h4>
+        <p>Define los roles o perfiles de los usuarios en el sistema.</p>
+        <table>
+            <thead><tr><th>Columna</th><th>Tipo</th><th>Notas</th></tr></thead>
+            <tbody>
+                <tr><td><code>id</code></td><td>BIGSERIAL</td><td>Llave Primaria.</td></tr>
+                <tr><td><code>perfil</code></td><td>VARCHAR(100)</td><td>Nombre del rol (Ej: 'administrador', 'operador', 'usuario').</td></tr>
+            </tbody>
+        </table>
+
+        <h4>Tabla: <code>vehiculo</code></h4>
+        <p>Contiene la información de los vehículos registrados.</p>
+        <table>
+            <thead><tr><th>Columna</th><th>Tipo</th><th>Notas</th></tr></thead>
+            <tbody>
+                <tr><td><code>id</code></td><td>SERIAL</td><td>Llave Primaria.</td></tr>
+                <tr><td><code>placa</code></td><td>VARCHAR(45)</td><td>Placa del vehículo. Debería tener una restricción UNIQUE.</td></tr>
+                <tr><td><code>color</code></td><td>VARCHAR(45)</td><td></td></tr>
+                <tr><td><code>modelo</code></td><td>VARCHAR(45)</td><td>Año del modelo.</td></tr>
+                <tr><td><code>marca</code></td><td>VARCHAR(45)</td><td></td></tr>
+                <tr><td><code>tipo</code></td><td>VARCHAR(45)</td><td>Ej: 'Carro', 'Moto'.</td></tr>
+                <tr><td><code>usuario_id_usuario</code></td><td>BIGINT</td><td>FK a <code>usuario.id_usuario</code>. Propietario del vehículo.</td></tr>
+            </tbody>
+        </table>
+
+        <h4>Tabla: <code>historial_parqueo</code></h4>
+        <p>Registra cada vez que un vehículo ocupa una celda.</p>
+        <table>
+            <thead><tr><th>Columna</th><th>Tipo</th><th>Notas</th></tr></thead>
+            <tbody>
+                <tr><td><code>id</code></td><td>BIGSERIAL</td><td>Llave Primaria.</td></tr>
+                <tr><td><code>celda_id</code></td><td>BIGINT</td><td>FK a <code>celda.id</code>.</td></tr>
+                <tr><td><code>vehiculo_id</code></td><td>INT</td><td>FK a <code>vehiculo.id</code>.</td></tr>
+                <tr><td><code>fecha_hora</code></td><td>TIMESTAMP</td><td>Timestamp de ingreso (Default: CURRENT_TIMESTAMP).</td></tr>
+                <tr><td><code>estado</code></td><td>VARCHAR(20)</td><td>'activo' o 'finalizado'.</td></tr>
+                <tr><td><code>fecha_salida</code></td><td>TIMESTAMP</td><td>Timestamp de salida del vehículo.</td></tr>
+            </tbody>
+        </table>
+
+        <h4>Otras Tablas</h4>
+        <ul>
+            <li><strong><code>pico_placa</code></strong>: Almacena las reglas de pico y placa por tipo de vehículo, número y día.</li>
+            <li><strong><code>incidencia</code></strong>: Catálogo de los tipos de incidencias que pueden ser reportadas (ej. 'Robo de accesorios').</li>
+            <li><strong><code>acceso_salida</code></strong>: Log de entradas y salidas de vehículos por las puertas, con tiempo de estadía.</li>
+            <li><strong><code>reporte_incidencia</code></strong>: Tabla de unión que asocia un vehículo con una incidencia en una fecha y hora específicas.</li>
+        </ul>
+
+        <h3>6.3 Restricciones y Lógica de Negocio en BD</h3>
+        <ul>
+            <li><strong><code>celda.estado</code></strong>: Un constraint <code>CHECK</code> asegura que el valor solo puede ser 'libre', 'ocupada', 'mantenimiento', o 'disponible'.</li>
+            <li><strong><code>acceso_salida.movimiento</code></strong>: Un constraint <code>CHECK</code> asegura que el valor solo puede ser 'entrada' o 'salida'.</li>
+        </ul>
+
+        <h3>6.4 Funciones de Base de Datos</h3>
+        <p>El sistema utiliza funciones de PostgreSQL para encapsular lógica y optimizar consultas comunes.</p>
+        <table>
+            <thead><tr><th>Función</th><th>Descripción</th></tr></thead>
+            <tbody>
+                <tr><td><code>get_celdas_por_estado()</code></td><td>Retorna una tabla con el conteo de celdas agrupadas por su estado ('libre', 'ocupada', 'mantenimiento').</td></tr>
+                <tr><td><code>get_vehiculos_por_tipo()</code></td><td>Retorna el conteo de vehículos agrupados por su tipo ('Carro', 'Moto', etc.).</td></tr>
+                <tr><td><code>get_vehiculos_activos_count()</code></td><td>Devuelve el número total de vehículos que se encuentran actualmente dentro del parqueadero (con un historial de parqueo 'activo').</td></tr>
+                <tr><td><code>get_historial_activo_por_placa(p_placa)</code></td><td>Busca el registro de parqueo activo para una placa específica. Útil para procesar la salida de un vehículo.</td></tr>
+                <tr><td><code>reporte_incidencias_extendidas()</code></td><td>Genera un reporte completo de incidencias, uniendo la información de los reportes con los datos del vehículo (placa) y el nombre de la incidencia.</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+</main>
+
+</body>
+</html>
