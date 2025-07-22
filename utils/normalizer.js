@@ -1,3 +1,5 @@
+// utils/normalizer.js
+
 const normalizePlaca = (str) => {
     str = str?.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') || '';
     return str.length === 6 ? str.slice(0, 3) + '-' + str.slice(3) : str;
