@@ -1,8 +1,5 @@
-let allUsers = [];
-let selectedCellId = null;
-let dropdownSugerencias = null;
-
 document.addEventListener('DOMContentLoaded', () => {
+    // Objeto para almacenar todos los elementos de la UI para un acceso más fácil
     const UIElements = {
         placaInput: document.getElementById('placa-input'),
         btnIngreso: document.getElementById('btn-ingreso'),
@@ -25,8 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
         resCorreo: document.getElementById('res-correo'),
         resCelular: document.getElementById('res-celular'),
         colorRegistrar: document.getElementById('color_registrar'),
+        modeloRegistrar: document.getElementById('modelo_registrar'),
+        marcaRegistrar: document.getElementById('marca_registrar'),
         tipoRegistrar: document.getElementById('tipo_registrar'),
         btnGuardarVehiculoRegistrar: document.getElementById('btn-guardar-vehiculo-registrar'),
+        placaRegistrarSpanVehiculo: document.getElementById('placa-registrar-span-vehiculo'),
 
         modalAsignar: document.getElementById('modal-asignar-celda'),
         btnCerrarModalAsignar: document.getElementById('btn-cerrar-modal-celda'),
@@ -51,79 +51,165 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmOkBtn: document.getElementById('confirm-ok-btn'),
         confirmCancelBtn: document.getElementById('confirm-cancel-btn'),
 
-        // Nuevo modal para confirmación de salida
         modalSalidaConfirmacion: document.getElementById('modal-salida-confirmacion'),
         placaSalidaConfirmacion: document.getElementById('placa-salida-confirmacion'),
         celdaSalidaConfirmacion: document.getElementById('celda-salida-confirmacion'),
         zonaSalidaConfirmacion: document.getElementById('zona-salida-confirmacion'),
         parqueaderoSalidaConfirmacion: document.getElementById('parqueadero-salida-confirmacion'),
-        btnCerrarModalSalidaConfirmacion: document.getElementById('btn-cerrar-modal-salida-confirmacion')
+        btnCerrarModalSalidaConfirmacion: document.getElementById('btn-cerrar-modal-salida-confirmacion'),
+
+        resumenCeldas: document.getElementById('resumen-celdas'),
+        resumenZonas: document.getElementById('resumen-zonas'),
+
+        // Elemento para las sugerencias de propietario (puede que no exista en el HTML original, lo crearemos si es necesario)
+        sugerenciasPropietario: document.getElementById('sugerencias-propietario')
     };
 
+    // Instancias de modales de Bootstrap
+    let modalRegistroInstance = null;
+    let modalAsignarInstance = null;
+    let confirmModalInstance = null;
+    let modalSalidaConfirmacionInstance = null;
+    let toastInstance = null;
+
+    if (UIElements.modalRegistro) modalRegistroInstance = new bootstrap.Modal(UIElements.modalRegistro);
+    if (UIElements.modalAsignar) modalAsignarInstance = new bootstrap.Modal(UIElements.modalAsignar);
+    if (UIElements.confirmModal) confirmModalInstance = new bootstrap.Modal(UIElements.confirmModal);
+    if (UIElements.modalSalidaConfirmacion) modalSalidaConfirmacionInstance = new bootstrap.Modal(UIElements.modalSalidaConfirmacion);
+    if (UIElements.toastMsg) {
+        toastInstance = new bootstrap.Toast(UIElements.toastMsg, {
+            autohide: true,
+            delay: 3500
+        });
+    }
+
+    // Variables de estado globales
     let parqueaderosCache = [];
     let confirmCallback = null;
+    let currentVehicle = null;
+    let currentParkingHistory = null;
+    let selectedCellId = null;
+    let allUsers = []; // Cache para usuarios
 
+    // Elemento para las sugerencias del input de búsqueda de propietario
+    let dropdownSugerencias = UIElements.sugerenciasPropietario;
+    if (!dropdownSugerencias && UIElements.inputBuscarPropietario) {
+        dropdownSugerencias = document.createElement('div');
+        dropdownSugerencias.className = 'dropdown-menu'; // No 'show' inicialmente
+        dropdownSugerencias.style.position = 'absolute';
+        dropdownSugerencias.style.width = UIElements.inputBuscarPropietario.offsetWidth + 'px';
+        dropdownSugerencias.style.zIndex = '1050'; // Asegurar que esté por encima de otros elementos
+        UIElements.inputBuscarPropietario.parentNode.insertBefore(dropdownSugerencias, UIElements.inputBuscarPropietario.nextSibling);
+        UIElements.sugerenciasPropietario = dropdownSugerencias; // Actualizar la referencia en UIElements
+    }
+
+
+    // --- Funciones de Utilidad ---
+
+    // Normalización de datos de entrada
+    const normalizePlaca = (placa) => placa ? placa.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+    const normalizeDocumento = (text) => text ? text.trim().replace(/[^0-9]/g, '') : '';
+    const normalizeTexto = (text) => text ? text.trim().replace(/\s+/g, ' ').toLowerCase().replace(/\b\w/g, s => s.toUpperCase()) : '';
+    const normalizeCorreo = (email) => email ? email.trim().toLowerCase() : '';
+
+    // Función para mostrar mensajes Toast
     const mostrarToast = (mensaje, tipo = 'success') => {
-        UIElements.toastBody.textContent = mensaje;
-        UIElements.toastMsg.className = `toast align-items-center text-bg-${tipo} border-0 position-fixed bottom-0 end-0 m-3`;
-        UIElements.toastMsg.style.display = 'block';
-        setTimeout(() => {
-            UIElements.toastMsg.style.display = 'none';
-        }, 3500);
-    };
-
-    const cerrarToast = () => {
-        UIElements.toastMsg.style.display = 'none';
-    };
-
-    const showConfirmModal = (message, onConfirm) => {
-        UIElements.confirmMessage.textContent = message;
-        confirmCallback = onConfirm;
-        UIElements.confirmModal.classList.add('mostrar');
-    };
-
-    const initAcordeon = () => {
-        const toggle = (btn, panel, otherPanel, otherBtn) => {
-            const isShowing = panel.classList.contains('show');
-            if (isShowing) {
-                panel.style.height = '0px';
-                panel.classList.remove('show');
-                btn.setAttribute('aria-expanded', 'false');
-            } else {
-                panel.classList.add('show');
-                panel.style.height = panel.scrollHeight + 'px';
-                btn.setAttribute('aria-expanded', 'true');
-
-                if (otherPanel.classList.contains('show')) {
-                    otherPanel.style.height = '0px';
-                    otherPanel.classList.remove('show');
-                    otherBtn.setAttribute('aria-expanded', 'false');
-                }
-            }
-        };
-
-        if (UIElements.btnAcordeonUsuario && UIElements.collapseUsuario && UIElements.btnAcordeonVehiculo && UIElements.collapseVehiculo) {
-            UIElements.btnAcordeonUsuario.onclick = () => {
-                toggle(UIElements.btnAcordeonUsuario, UIElements.collapseUsuario, UIElements.collapseVehiculo, UIElements.btnAcordeonVehiculo);
-            };
-            UIElements.btnAcordeonVehiculo.onclick = () => {
-                toggle(UIElements.btnAcordeonVehiculo, UIElements.collapseVehiculo, UIElements.collapseUsuario, UIElements.btnAcordeonUsuario);
-            };
-
-            if (UIElements.collapseVehiculo.classList.contains('show')) {
-                UIElements.collapseVehiculo.style.height = UIElements.collapseVehiculo.scrollHeight + 'px';
-            }
+        if (UIElements.toastBody) {
+            UIElements.toastBody.textContent = mensaje;
+        }
+        if (UIElements.toastMsg) {
+            UIElements.toastMsg.classList.remove('bg-success', 'bg-warning', 'bg-danger', 'bg-info', 'border-0');
+            UIElements.toastMsg.classList.add(`bg-${tipo}`, 'border-0');
+        }
+        if (toastInstance) {
+            toastInstance.show();
         }
     };
 
+    // Función para mostrar el modal de confirmación genérico
+    const showConfirmModal = (message, onConfirm) => {
+        if (UIElements.confirmMessage) {
+            UIElements.confirmMessage.textContent = message;
+        }
+        confirmCallback = onConfirm;
+        if (confirmModalInstance) {
+            confirmModalInstance.show();
+        }
+    };
+
+    // Función para actualizar el resumen del propietario en el modal de registro
     function updateUserSummary(user) {
-        UIElements.resNombre.textContent = `${user.primer_nombre} ${user.segundo_nombre || ''} ${user.primer_apellido} ${user.segundo_apellido || ''}`.trim();
-        UIElements.resDocumento.textContent = user.numero_documento;
-        UIElements.resCorreo.textContent = user.direccion_correo;
-        UIElements.resCelular.textContent = user.numero_celular;
-        UIElements.resumenPropietario.style.display = 'block';
+        if (UIElements.resNombre) UIElements.resNombre.textContent = `${user.primer_nombre} ${user.segundo_nombre || ''} ${user.primer_apellido} ${user.segundo_apellido || ''}`.trim();
+        if (UIElements.resDocumento) UIElements.resDocumento.textContent = user.numero_documento;
+        if (UIElements.resCorreo) UIElements.resCorreo.textContent = user.direccion_correo;
+        if (UIElements.resCelular) UIElements.resCelular.textContent = user.numero_celular;
+        if (UIElements.resumenPropietario) UIElements.resumenPropietario.style.display = 'block';
     }
 
+    // Función para restablecer la UI a su estado inicial
+    const resetUI = async () => {
+        if (UIElements.placaInput) UIElements.placaInput.value = '';
+        if (UIElements.btnIngreso) UIElements.btnIngreso.disabled = false;
+        if (UIElements.btnSalida) UIElements.btnSalida.disabled = true;
+        currentVehicle = null;
+        currentParkingHistory = null;
+        selectedCellId = null;
+
+        if (modalRegistroInstance) modalRegistroInstance.hide();
+        if (UIElements.placaRegistrarSpan) UIElements.placaRegistrarSpan.textContent = '';
+        if (UIElements.placaRegistrarInput) UIElements.placaRegistrarInput.value = '';
+        if (UIElements.placaRegistrarSpanVehiculo) UIElements.placaRegistrarSpanVehiculo.textContent = '';
+        if (UIElements.formRegistroUsuario) UIElements.formRegistroUsuario.reset();
+        if (UIElements.formRegistroVehiculo) UIElements.formRegistroVehiculo.reset();
+        if (UIElements.selectParqueaderoRegistro) UIElements.selectParqueaderoRegistro.innerHTML = '<option value="">Seleccione parqueadero</option>';
+        if (UIElements.gridCeldasModal) UIElements.gridCeldasModal.innerHTML = '<p class="text-center text-muted">Seleccione un parqueadero.</p>';
+        if (UIElements.parqInfoModal) UIElements.parqInfoModal.textContent = '';
+        if (UIElements.inputBuscarPropietario) UIElements.inputBuscarPropietario.value = '';
+        if (UIElements.selectPropietario) UIElements.selectPropietario.innerHTML = '<option value="">Seleccione propietario</option>';
+        if (UIElements.resumenPropietario) UIElements.resumenPropietario.style.display = 'none';
+        if (UIElements.colorRegistrar) UIElements.colorRegistrar.value = '';
+        if (UIElements.modeloRegistrar) UIElements.modeloRegistrar.value = '';
+        if (UIElements.marcaRegistrar) UIElements.marcaRegistrar.value = '';
+        if (UIElements.tipoRegistrar) UIElements.tipoRegistrar.value = '';
+        if (UIElements.btnGuardarVehiculoRegistrar) UIElements.btnGuardarVehiculoRegistrar.disabled = true;
+
+        if (modalAsignarInstance) modalAsignarInstance.hide();
+        if (UIElements.placaModalSpan) UIElements.placaModalSpan.textContent = '';
+        if (UIElements.selectParqueaderoAsignar) UIElements.selectParqueaderoAsignar.innerHTML = '<option value="">Seleccione Parqueadero</option>';
+        if (UIElements.selectZonaAsignar) UIElements.selectZonaAsignar.innerHTML = '<option value="">Seleccione Zona</option>';
+        if (UIElements.gridCeldasDisponibles) UIElements.gridCeldasDisponibles.innerHTML = '<div style="text-align:center;color:#888;grid-column:1/-1;">Seleccione parqueadero y zona.</div>';
+        if (UIElements.modalCeldaId) UIElements.modalCeldaId.value = '';
+        if (UIElements.modalCeldaMsg) UIElements.modalCeldaMsg.textContent = '';
+        if (UIElements.btnConfirmarAsignacion) UIElements.btnConfirmarAsignacion.disabled = true;
+
+        if (modalSalidaConfirmacionInstance) modalSalidaConfirmacionInstance.hide();
+        if (UIElements.placaSalidaConfirmacion) UIElements.placaSalidaConfirmacion.textContent = '';
+        if (UIElements.celdaSalidaConfirmacion) UIElements.celdaSalidaConfirmacion.textContent = '';
+        if (UIElements.zonaSalidaConfirmacion) UIElements.zonaSalidaConfirmacion.textContent = '';
+        if (UIElements.parqueaderoSalidaConfirmacion) UIElements.parqueaderoSalidaConfirmacion.textContent = '';
+
+        if (dropdownSugerencias) {
+            dropdownSugerencias.innerHTML = '';
+            dropdownSugerencias.style.display = 'none';
+        }
+
+        // Colapsar acordeones si existen
+        if (UIElements.collapseUsuario) {
+            const collapseUsuarioInstance = bootstrap.Collapse.getInstance(UIElements.collapseUsuario) || new bootstrap.Collapse(UIElements.collapseUsuario, { toggle: false });
+            collapseUsuarioInstance.hide();
+        }
+        if (UIElements.collapseVehiculo) {
+            const collapseVehiculoInstance = bootstrap.Collapse.getInstance(UIElements.collapseVehiculo) || new bootstrap.Collapse(UIElements.collapseVehiculo, { toggle: false });
+            collapseVehiculoInstance.hide();
+        }
+
+        // Recargar datos iniciales de la UI
+        await cargarResumenCeldas();
+        await cargarResumenZonas();
+        await cargarUsuariosParaSeleccion(); // Recargar usuarios para el select
+    };
+
+    // Función para cargar parqueaderos y almacenarlos en caché
     async function cargarParqueaderosCache() {
         if (parqueaderosCache.length > 0) return parqueaderosCache;
         let res;
@@ -146,23 +232,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new SyntaxError(`Failed to parse JSON for parking lots. Response may not be JSON: ${jsonError.message}`);
             }
         } catch (err) {
-            console.error('Error al cargar parqueaderos:', err);
             mostrarToast(`❌ Error al cargar parqueaderos: ${err.message}`, 'danger');
             return [];
         }
     }
 
+    // Función para mostrar celdas en una cuadrícula (usado en modal de registro)
     async function mostrarCeldasEnGrid(grid, parqId, parqueaderos) {
         const parqSel = parqueaderos.find(p => String(p.id) === String(parqId));
         if (!parqId || !parqSel) {
-            grid.innerHTML = '<p class="text-center text-muted">Seleccione un parqueadero.</p>';
-            UIElements.parqInfoModal.textContent = '';
+            if (grid) grid.innerHTML = '<p class="text-center text-muted">Seleccione un parqueadero.</p>';
+            if (UIElements.parqInfoModal) UIElements.parqInfoModal.textContent = '';
             return;
         }
-        grid.innerHTML = '<div class="text-center"><span class="spinner-border spinner-border-sm"></span> Cargando...</div>';
-        UIElements.parqInfoModal.textContent = '';
+        if (grid) grid.innerHTML = '<div class="text-center"><span class="spinner-border spinner-border-sm"></span> Cargando...</div>';
+        if (UIElements.parqInfoModal) UIElements.parqInfoModal.textContent = '';
         let resCeldas;
         try {
+            // Se asume que /admin/celdas/disponibles puede filtrar por parqueadero y mostrar todas las celdas (ocupadas y libres)
             resCeldas = await fetch(`${window.location.origin}/admin/celdas/disponibles?parqueadero_id=${parqId}&all=1`);
             if (!resCeldas.ok) {
                 const errorText = await resCeldas.text();
@@ -181,17 +268,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const celdas = celdasData.celdas || [];
 
-            const libres = celdas.filter(c => c.estado === 'libre').length;
-            UIElements.parqInfoModal.innerHTML = `<i class='fa-solid fa-warehouse me-1'></i> <b>${parqSel.nombre}</b> &mdash; Capacidad: <span class='text-primary'>${parqSel.capacidad}</span> &mdash; <span class='text-success fw-bold'>${libres} libres</span>`;
-
-            grid.innerHTML = '';
+            if (grid) grid.innerHTML = '';
             if (!celdas.length) {
-                grid.innerHTML = '<p class="text-center text-danger">No hay celdas en este parqueadero.</p>';
+                if (grid) grid.innerHTML = '<p class="text-center text-danger">No hay celdas en este parqueadero.</p>';
                 return;
             }
 
             const celdasPorZona = celdas.reduce((acc, celda) => {
-                const zona = celda.zona_nombre || `Zona ID ${celda.zona_id}`;
+                const zona = celda.zona && celda.zona.nombre ? celda.zona.nombre : `Zona ID ${celda.zona_id}`;
                 if (!acc[zona]) acc[zona] = [];
                 acc[zona].push(celda);
                 return acc;
@@ -201,22 +285,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 const zonaHeader = document.createElement('div');
                 zonaHeader.className = 'w-100 fw-bold my-2';
                 zonaHeader.innerHTML = `<i class='fa-solid fa-layer-group me-1'></i>Zona: ${zona}`;
-                grid.appendChild(zonaHeader);
+                if (grid) grid.appendChild(zonaHeader);
                 celdasPorZona[zona].forEach(celda => {
                     const card = document.createElement('div');
                     card.className = 'celda-card-modal';
                     if (celda.estado === 'libre' || celda.estado === 'disponible') {
-                        card.style.background = '#28a745';
+                        card.style.background = '#28a745'; // Verde para disponible
                         card.style.color = '#fff';
                     } else if (celda.estado === 'ocupada') {
-                        card.style.background = '#dc3545';
+                        card.style.background = '#dc3545'; // Rojo para ocupada
                         card.style.color = '#fff';
                     } else {
-                        card.style.background = '#f5f5f5';
+                        card.style.background = '#f5f5f5'; // Gris claro para otros estados
                         card.style.color = '#444';
                     }
 
-                    let icono = '<i class="fa-solid fa-car-side"></i>';
+                    let icono = '<i class="fa-solid fa-car-side"></i>'; // Icono por defecto
                     if (celda.tipo && /moto/i.test(celda.tipo)) icono = '<i class="fa-solid fa-motorcycle"></i>';
                     if (celda.tipo && /bici/i.test(celda.tipo)) icono = '<i class="fa-solid fa-bicycle"></i>';
 
@@ -229,6 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${celda.estado === 'ocupada' && usuarioDoc ? `<span style='font-size:0.95em;'>${usuarioDoc}</span><br>` : ''}`;
 
                     if (celda.estado === 'ocupada') {
+                        // Si la celda está ocupada, añadir un menú de opciones para "Dar Salida"
                         const dropdownHtml = `
                             <div class="dropdown" style="position: absolute; top: 5px; right: 5px;">
                                 <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownMenuButton-${celda.id}" data-bs-toggle="dropdown" aria-expanded="false" style="background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 30px; height: 30px; padding: 0; display: flex; align-items: center; justify-content: center; color: white;">
@@ -243,9 +328,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         card.querySelector(`[data-action="liberar"][data-placa="${placa}"]`).addEventListener('click', async (e) => {
                             e.preventDefault();
-                            e.stopPropagation();
+                            e.stopPropagation(); // Evitar que el click en el dropdown afecte la tarjeta
                             const placaToLiberate = e.target.dataset.placa;
-                            const celdaIdToRefresh = e.target.dataset.celdaId;
                             showConfirmModal(`¿Dar salida al vehículo con placa ${placaToLiberate}?`, async (confirmed) => {
                                 if (confirmed) {
                                     let res;
@@ -268,13 +352,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                         }
 
                                         if (res.ok) {
+                                            mostrarToast(`✅ Salida de ${placaToLiberate} registrada con éxito.`, 'success');
                                             mostrarModalSalidaExitosa(result.placa, result.celdaNumero, result.zonaNombre, result.parqueaderoNombre);
-                                            await mostrarCeldasEnGrid(grid, parqId, parqueaderos);
+                                            await mostrarCeldasEnGrid(grid, parqId, parqueaderos); // Recargar las celdas para actualizar el estado
                                         } else {
                                             mostrarToast(`⚠️ ${result.mensaje || 'Error al liberar celda'}`, 'danger');
                                         }
                                     } catch (err) {
-                                        console.error('Error al liberar celda:', err);
                                         if (err instanceof SyntaxError) {
                                             mostrarToast(`❌ Error de formato de datos del servidor al liberar celda. Se esperaba JSON. (${err.message.substring(0, 100)}...)`, 'danger');
                                         } else {
@@ -285,32 +369,33 @@ document.addEventListener('DOMContentLoaded', () => {
                             });
                         });
                     } else {
+                        // Si la celda está libre/disponible, permitir seleccionarla
                         card.style.cursor = 'pointer';
                         card.onclick = () => {
                             document.querySelectorAll('#grid-celdas-modal .celda-card-modal.selected').forEach(btn => {
                                 btn.classList.remove('selected');
-                                btn.style.border = '1px solid #ddd';
+                                btn.style.border = '1px solid #ddd'; // Restablecer borde
                             });
                             card.classList.add('selected');
-                            card.style.border = '3px solid #0056b3';
+                            card.style.border = '3px solid #0056b3'; // Borde azul para selección
                             selectedCellId = celda.id;
-                            UIElements.btnGuardarVehiculoRegistrar.disabled = false;
+                            if (UIElements.btnGuardarVehiculoRegistrar) UIElements.btnGuardarVehiculoRegistrar.disabled = false;
                         };
                     }
-                    grid.appendChild(card);
+                    if (grid) grid.appendChild(card);
                 });
             }
-        } catch (err) {
-            console.error('Error al cargar celdas:', err);
-            grid.innerHTML = '<p class="text-center text-danger">Error al cargar celdas.</p>';
-            if (err instanceof SyntaxError) {
-                mostrarToast(`❌ Error de formato de datos del servidor para celdas. Se esperaba JSON. (${err.message.substring(0, 100)}...)`, 'danger');
+        }
+        catch (error) {
+            if (error instanceof SyntaxError) {
+                mostrarToast(`❌ Error de formato de datos del servidor para celdas. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
             } else {
-                mostrarToast(`❌ Error al cargar celdas: ${err.message}`, 'danger');
+                mostrarToast(`❌ Error al cargar celdas: ${error.message}`, 'danger');
             }
         }
     }
 
+    // Función para cargar parqueaderos, zonas y celdas disponibles en el modal de asignación
     async function cargarParqueaderosZonasYCeldasDisponibles(placa, vehiculoId) {
         const selectParq = UIElements.selectParqueaderoAsignar;
         const selectZona = UIElements.selectZonaAsignar;
@@ -318,20 +403,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const modalCeldaMsg = UIElements.modalCeldaMsg;
         const btnConfirmarAsignacion = UIElements.btnConfirmarAsignacion;
 
-        selectParq.innerHTML = '<option value="">Cargando parqueaderos...</option>';
-        selectZona.innerHTML = '<option value="">Seleccione parqueadero primero</option>';
-        celdasGrid.innerHTML = '<div style="text-align:center;color:#888;grid-column:1/-1;"><span class="spinner-border spinner-border-sm"></span> Buscando celdas...</div>';
-        modalCeldaMsg.textContent = '';
-        btnConfirmarAsignacion.disabled = true;
+        if (selectParq) selectParq.innerHTML = '<option value="">Cargando parqueaderos...</option>';
+        if (selectZona) selectZona.innerHTML = '<option value="">Seleccione parqueadero primero</option>';
+        if (celdasGrid) celdasGrid.innerHTML = '<div style="text-align:center;color:#888;grid-column:1/-1;"><span class="spinner-border spinner-border-sm"></span> Buscando celdas...</div>';
+        if (modalCeldaMsg) modalCeldaMsg.textContent = '';
+        if (btnConfirmarAsignacion) btnConfirmarAsignacion.disabled = true;
         selectedCellId = null;
 
         let allParqueaderos = [];
         let allZonas = [];
 
-        let resParq;
-        let resZonas;
         try {
-            resParq = await fetch(`${window.location.origin}/admin/parqueaderos?json=1`);
+            // Cargar parqueaderos
+            const resParq = await fetch(`${window.location.origin}/admin/parqueaderos?json=1`);
             let dataParq;
             if (!resParq.ok) {
                 const errorText = await resParq.text();
@@ -349,20 +433,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             allParqueaderos = Array.isArray(dataParq) ? dataParq : (dataParq.parqueaderos || []);
 
-            selectParq.innerHTML = '<option value="">Seleccione Parqueadero</option>';
+            if (selectParq) selectParq.innerHTML = '<option value="">Seleccione Parqueadero</option>';
             if (allParqueaderos.length === 0) {
-                selectParq.innerHTML = '<option value="">No hay parqueaderos</option>';
-                celdasGrid.innerHTML = '<div style="text-align:center;color:#b94a48;grid-column:1/-1;">No hay parqueaderos registrados.</div>';
+                if (selectParq) selectParq.innerHTML = '<option value="">No hay parqueaderos</option>';
+                if (celdasGrid) celdasGrid.innerHTML = '<div style="text-align:center;color:#b94a48;grid-column:1/-1;">No hay parqueaderos registrados.</div>';
                 return;
             }
             allParqueaderos.forEach(p => {
                 const opt = document.createElement('option');
                 opt.value = p.id;
                 opt.textContent = p.nombre;
-                selectParq.appendChild(opt);
+                if (selectParq) selectParq.appendChild(opt);
             });
 
-            resZonas = await fetch(`${window.location.origin}/admin/zonas?json=1`);
+            // Cargar zonas
+            const resZonas = await fetch(`${window.location.origin}/admin/zonas?json=1`);
             let dataZonas;
             if (!resZonas.ok) {
                 const errorText = await resZonas.text();
@@ -378,33 +463,31 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (jsonError) {
                 throw new SyntaxError(`Failed to parse JSON for zones. Response may not be JSON: ${jsonError.message}`);
             }
-            allZonas = Array.isArray(dataZonas) ? dataZonas : (dataZonas.zonas || []);
+            allZonas = Array.isArray(dataZonas) ? dataZonas.zonas : (dataZonas.zonas || []);
 
-            selectZona.innerHTML = '<option value="">Seleccione Zona</option>';
+            if (selectZona) selectZona.innerHTML = '<option value="">Seleccione Zona</option>';
             if (allZonas.length === 0) {
-                selectZona.innerHTML = '<option value="">No hay zonas</option>';
+                if (selectZona) selectZona.innerHTML = '<option value="">No hay zonas</option>';
             } else {
                 allZonas.forEach(z => {
                     const opt = document.createElement('option');
                     opt.value = z.id;
                     opt.textContent = z.nombre;
-                    selectZona.appendChild(opt);
+                    if (selectZona) selectZona.appendChild(opt);
                 });
             }
 
-            selectParq.onchange = () => cargarCeldasDisponibles(placa, vehiculoId);
-            selectZona.onchange = () => cargarCeldasDisponibles(placa, vehiculoId);
+            // Asignar event listeners para cambios en los selects
+            if (selectParq) selectParq.onchange = () => cargarCeldasDisponibles(placa, vehiculoId);
+            if (selectZona) selectZona.onchange = () => cargarCeldasDisponibles(placa, vehiculoId);
 
-            if (selectParq.options.length > 1) {
-                selectParq.selectedIndex = 1;
-                await cargarCeldasDisponibles(placa, vehiculoId);
+            // Cargar celdas inicialmente si ya hay un parqueadero seleccionado (ej. si se precarga)
+            if (selectParq && selectParq.options.length > 1) {
+                // selectParq.selectedIndex = 1; // Podría precargar el primero, pero lo dejamos a elección del usuario
+                // await cargarCeldasDisponibles(placa, vehiculoId);
             }
 
         } catch (error) {
-            console.error('Error loading parking lots or zones:', error);
-            selectParq.innerHTML = '<option value="">Error al cargar</option>';
-            selectZona.innerHTML = '<option value="">Error al cargar</option>';
-            celdasGrid.innerHTML = '<div style="text-align:center;color:#b94a48;grid-column:1/-1;">Error al cargar datos iniciales.</div>';
             if (error instanceof SyntaxError) {
                 mostrarToast(`❌ Error de formato de datos del servidor para parqueaderos/zonas. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
             } else {
@@ -413,28 +496,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Función para cargar celdas disponibles para asignación (en modal de asignación)
     async function cargarCeldasDisponibles(placa, vehiculoId) {
-        const parqueaderoId = UIElements.selectParqueaderoAsignar.value;
-        const zonaId = UIElements.selectZonaAsignar.value;
+        const parqueaderoId = UIElements.selectParqueaderoAsignar?.value;
+        const zonaId = UIElements.selectZonaAsignar?.value;
         const celdasGrid = UIElements.gridCeldasDisponibles;
         const modalCeldaMsg = UIElements.modalCeldaMsg;
         const btnConfirmarAsignacion = UIElements.btnConfirmarAsignacion;
 
-        celdasGrid.innerHTML = '';
-        modalCeldaMsg.textContent = '';
-        btnConfirmarAsignacion.disabled = true;
+        if (celdasGrid) celdasGrid.innerHTML = '';
+        if (modalCeldaMsg) modalCeldaMsg.textContent = '';
+        if (btnConfirmarAsignacion) btnConfirmarAsignacion.disabled = true;
         selectedCellId = null;
 
         if (!parqueaderoId || !zonaId) {
-            celdasGrid.innerHTML = '<div style="text-align:center;color:#888;grid-column:1/-1;">Seleccione parqueadero y zona.</div>';
+            if (celdasGrid) celdasGrid.innerHTML = '<div style="text-align:center;color:#888;grid-column:1/-1;">Seleccione parqueadero y zona.</div>';
             return;
         }
 
-        celdasGrid.innerHTML = '<div style="text-align:center;color:#888;grid-column:1/-1;"><span class="spinner-border spinner-border-sm"></span> Buscando celdas...</div>';
+        if (celdasGrid) celdasGrid.innerHTML = '<div style="text-align:center;color:#888;grid-column:1/-1;"><span class="spinner-border spinner-border-sm"></span> Buscando celdas...</div>';
 
         let res;
         try {
-            res = await fetch(`${window.location.origin}/admin/celdas/disponibles?parqueadero_id=${parqueaderoId}&zona_id=${zonaId}&tipo=${UIElements.tipoRegistrar.value || 'Carro'}`);
+            // Se asume que el endpoint filtra por parqueadero, zona y tipo de vehículo
+            res = await fetch(`${window.location.origin}/admin/celdas/disponibles?parqueadero_id=${parqueaderoId}&zona_id=${zonaId}&tipo=${UIElements.tipoRegistrar?.value || 'Carro'}`);
             let celdas;
             if (!res.ok) {
                 const errorText = await res.text();
@@ -452,17 +537,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             celdas = Array.isArray(celdas) ? celdas : (celdas.celdas || []);
 
-            celdasGrid.innerHTML = '';
+            if (celdasGrid) celdasGrid.innerHTML = '';
             if (celdas.length === 0) {
-                celdasGrid.innerHTML = '<div style="text-align:center;color:#b94a48;grid-column:1/-1;">No hay celdas disponibles para este tipo en la zona/parqueadero seleccionado.</div>';
+                if (celdasGrid) celdasGrid.innerHTML = '<div style="text-align:center;color:#b94a48;grid-column:1/-1;">No hay celdas disponibles para este tipo en la zona/parqueadero seleccionado.</div>';
                 return;
             }
-
             celdas.forEach((celda, index) => {
                 const card = document.createElement('button');
                 card.type = 'button';
                 card.className = 'celda-card-modal';
-                card.style.background = '#28a745';
+                card.style.background = '#28a745'; // Verde para disponible
                 card.style.color = '#fff';
                 card.style.minHeight = '80px';
                 card.style.fontSize = '1em';
@@ -476,11 +560,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     card.classList.add('selected');
                     card.style.border = '3px solid #0056b3';
                     selectedCellId = celda.id;
-                    btnConfirmarAsignacion.disabled = false;
-                    modalCeldaMsg.textContent = '';
+                    if (btnConfirmarAsignacion) btnConfirmarAsignacion.disabled = false;
+                    if (modalCeldaMsg) modalCeldaMsg.textContent = '';
                 };
-                celdasGrid.appendChild(card);
+                if (celdasGrid) celdasGrid.appendChild(card);
 
+                // Enfocar la primera celda disponible para accesibilidad
                 if (index === 0) {
                     setTimeout(() => {
                         card.focus();
@@ -489,8 +574,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         catch (error) {
-            console.error('Error al cargar celdas disponibles:', error);
-            celdasGrid.innerHTML = '<div style="text-align:center;color:#b94a48;grid-column:1/-1;">Error al cargar celdas.</div>';
             if (error instanceof SyntaxError) {
                 mostrarToast(`❌ Error de formato de datos del servidor para celdas disponibles. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
             } else {
@@ -499,9 +582,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Función para cargar usuarios para el select de propietario en el modal de registro
     async function cargarUsuariosParaSeleccion() {
         let res;
         try {
+            // Se asume que este endpoint devuelve todos los usuarios o una lista grande
             res = await fetch(`${window.location.origin}/admin/usuarios/buscar?query=`);
             let data;
             if (!res.ok) {
@@ -518,19 +603,16 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (jsonError) {
                 throw new SyntaxError(`Failed to parse JSON for user selection. Response may not be JSON: ${jsonError.message}`);
             }
-            allUsers = data.usuarios || [];
+            allUsers = data.usuarios || []; // Almacenar en caché
 
-            UIElements.selectPropietario.innerHTML = '<option value="">Seleccione propietario</option>';
+            if (UIElements.selectPropietario) UIElements.selectPropietario.innerHTML = '<option value="">Seleccione propietario</option>';
             allUsers.forEach(usuario => {
                 const opt = document.createElement('option');
                 opt.value = usuario.id_usuario;
                 opt.textContent = `${usuario.primer_nombre} ${usuario.primer_apellido || ''} — ${usuario.numero_documento}`;
-                UIElements.selectPropietario.appendChild(opt);
+                if (UIElements.selectPropietario) UIElements.selectPropietario.appendChild(opt);
             });
         } catch (error) {
-            console.error('Error loading users for selection:', error);
-            UIElements.selectPropietario.innerHTML = '<option value="">Error al cargar propietarios</option>';
-            if (dropdownSugerencias) dropdownSugerencias.style.display = 'none';
             if (error instanceof SyntaxError) {
                 mostrarToast(`❌ Error de formato de datos del servidor al cargar propietarios. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
             } else {
@@ -539,12 +621,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Función para cargar el resumen de celdas por estado
     async function cargarResumenCeldas() {
-        const cont = document.getElementById('resumen-celdas');
+        const cont = UIElements.resumenCeldas;
         if (!cont) return;
         let res;
         try {
-            res = await fetch(`${window.location.origin}/rpc/get_celdas_por_estado`);
+            res = await fetch(`${window.location.origin}/api/stats/dashboard`);
             let data;
             if (!res.ok) {
                 const errorText = await res.text();
@@ -556,7 +639,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new SyntaxError(`Expected JSON response for cell summary, but received ${contentType || 'no content type'}. Response: ${errorText.substring(0, 200)}...`);
             }
             try {
-                data = await res.json();
+                const stats = await res.json();
+                data = stats.celdasPorEstado;
             } catch (jsonError) {
                 throw new SyntaxError(`Failed to parse JSON for cell summary. Response may not be JSON: ${jsonError.message}`);
             }
@@ -567,8 +651,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             cont.innerHTML = data.map(row => `<div><b>${row.estado}:</b> ${row.cantidad}</div>`).join('');
         } catch (error) {
-            console.error('Error al cargar resumen de celdas:', error);
-            cont.innerHTML = '<div class="text-center text-danger">Error al cargar resumen de celdas</div>';
             if (error instanceof SyntaxError) {
                 mostrarToast(`❌ Error de formato de datos del servidor para resumen de celdas. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
             } else {
@@ -577,8 +659,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Función para cargar el resumen de zonas
     async function cargarResumenZonas() {
-        const cont = document.getElementById('resumen-zonas');
+        const cont = UIElements.resumenZonas;
         if (!cont) return;
         let res;
         try {
@@ -599,7 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new SyntaxError(`Failed to parse JSON for zone summary. Response may not be JSON: ${jsonError.message}`);
             }
 
-            const zonas = Array.isArray(data) ? data : (data.zonas || []);
+            const zonas = Array.isArray(data) ? data.zonas : (data.zonas || []);
 
             if (!zonas.length) {
                 cont.innerHTML = '<div class="text-center text-muted">Sin datos de zonas</div>';
@@ -607,8 +690,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             cont.innerHTML = zonas.map(zona => `<div><b>${zona.nombre}:</b> ${zona.descripcion || 'N/A'}</div>`).join('');
         } catch (error) {
-            console.error('Error al cargar resumen de zonas:', error);
-            cont.innerHTML = '<div class="text-center text-danger">Error al cargar resumen de zonas</div>';
             if (error instanceof SyntaxError) {
                 mostrarToast(`❌ Error de formato de datos del servidor para resumen de zonas. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
             } else {
@@ -617,18 +698,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Nueva función para mostrar el modal de confirmación de salida
+    // Función para mostrar el modal de confirmación de salida exitosa
     const mostrarModalSalidaExitosa = (placa, celdaNumero, zonaNombre, parqueaderoNombre) => {
-        UIElements.placaSalidaConfirmacion.textContent = placa;
-        UIElements.celdaSalidaConfirmacion.textContent = celdaNumero;
-        UIElements.zonaSalidaConfirmacion.textContent = zonaNombre;
-        UIElements.parqueaderoSalidaConfirmacion.textContent = parqueaderoNombre;
-        UIElements.modalSalidaConfirmacion.classList.add('mostrar');
+        if (UIElements.placaSalidaConfirmacion) UIElements.placaSalidaConfirmacion.textContent = placa;
+        if (UIElements.celdaSalidaConfirmacion) UIElements.celdaSalidaConfirmacion.textContent = celdaNumero;
+        if (UIElements.zonaSalidaConfirmacion) UIElements.zonaSalidaConfirmacion.textContent = zonaNombre;
+        if (UIElements.parqueaderoSalidaConfirmacion) UIElements.parqueaderoSalidaConfirmacion.textContent = parqueaderoNombre;
+        if (modalSalidaConfirmacionInstance) {
+            modalSalidaConfirmacionInstance.show();
+        }
     };
 
+    // Función para manejar el proceso de ingreso de un vehículo
     async function handleIngreso() {
-        const placa = UIElements.placaInput.value.trim().toUpperCase();
-        console.log(`DEBUG: Placa ingresada por el usuario: ${placa}`);
+        const placa = normalizePlaca(UIElements.placaInput?.value);
         if (!placa) {
             mostrarToast('Por favor, ingrese una placa.', 'warning');
             return;
@@ -636,6 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let vehData;
         try {
+            // Verificar si el vehículo ya existe
             const resVeh = await fetch(`${window.location.origin}/admin/vehiculo/existe?placa=${encodeURIComponent(placa)}`);
             if (!resVeh.ok) {
                 const errorText = await resVeh.text();
@@ -653,58 +737,56 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (vehData.existe) {
-                let isParked = false;
-                try {
-                    const resHist = await fetch(`${window.location.origin}/admin/vehiculo/historial-activo/${encodeURIComponent(placa)}`);
-                    if (resHist.ok) {
-                        isParked = true;
-                        console.log(`DEBUG: Vehículo ${placa} encontrado con historial activo (200 OK).`);
-                    } else if (resHist.status === 404) {
-                        isParked = false;
-                        console.log(`DEBUG: Vehículo ${placa} no tiene historial activo (404 Not Found, esperado).`);
-                    } else {
-                        const errorText = await resHist.text();
-                        throw new Error(`Server responded with status ${resHist.status} for historial-activo: ${errorText}`);
-                    }
-                } catch (histError) {
-                    console.error('Error de red o inesperado al verificar historial activo:', histError);
-                    mostrarToast(`❌ Error de red al verificar historial: ${histError.message}`, 'danger');
-                    return;
-                }
+                currentVehicle = vehData.vehiculo;
+                currentParkingHistory = vehData.historialActivo;
 
-                if (isParked) {
-                    mostrarToast('⚠️ Este vehículo ya se encuentra parqueado. Por favor, déle salida primero.', 'warning');
+                if (currentParkingHistory) {
+                    // Si el vehículo ya está parqueado
+                    mostrarToast(`⚠️ Este vehículo ya se encuentra parqueado en la celda ${currentParkingHistory.celda_numero}. Por favor, déle salida primero.`, 'warning');
+                    if (UIElements.btnSalida) UIElements.btnSalida.disabled = false;
                     return;
                 } else {
-                    UIElements.placaModalSpan.textContent = placa;
-                    UIElements.modalAsignar.classList.add('mostrar');
-                    await cargarParqueaderosZonasYCeldasDisponibles(placa, vehData.vehiculo.id);
+                    // Vehículo existe pero no está parqueado, mostrar modal de asignar celda
+                    mostrarToast(`✅ Vehículo ${placa} encontrado. Asigne una celda.`, 'success');
+                    if (UIElements.placaModalSpan) UIElements.placaModalSpan.textContent = placa;
+                    if (modalAsignarInstance) modalAsignarInstance.show();
+                    await cargarParqueaderosZonasYCeldasDisponibles(placa, currentVehicle.id);
                 }
             } else {
+                // Vehículo no encontrado, mostrar modal de registro
                 mostrarToast(`⚠️ El vehículo con placa ${placa} no está registrado. Por favor, regístrelo.`, 'warning');
-                UIElements.placaRegistrarInput.value = placa;
-                UIElements.placaRegistrarSpan.textContent = placa;
-                UIElements.modalRegistro.classList.add('mostrar');
-                UIElements.btnGuardarVehiculoRegistrar.disabled = true;
+                if (UIElements.placaRegistrarInput) UIElements.placaRegistrarInput.value = placa;
+                if (UIElements.placaRegistrarSpan) UIElements.placaRegistrarSpan.textContent = placa;
+                if (UIElements.placaRegistrarSpanVehiculo) UIElements.placaRegistrarSpanVehiculo.textContent = placa;
+                if (modalRegistroInstance) modalRegistroInstance.show();
+
+                if (UIElements.btnGuardarVehiculoRegistrar) UIElements.btnGuardarVehiculoRegistrar.disabled = true;
                 selectedCellId = null;
 
                 const parqueaderos = await cargarParqueaderosCache();
-                UIElements.selectParqueaderoRegistro.innerHTML = '<option value="">Seleccione parqueadero</option>' + parqueaderos.map(p => `<option value="${p.id}">${p.nombre} (Capacidad: ${p.capacidad})</option>`).join('');
-                if (UIElements.selectParqueaderoRegistro.options.length > 1) {
-                    UIElements.selectParqueaderoRegistro.selectedIndex = 1;
-                    await mostrarCeldasEnGrid(UIElements.gridCeldasModal, UIElements.selectParqueaderoRegistro.value, parqueaderos);
+                if (UIElements.selectParqueaderoRegistro) {
+                    UIElements.selectParqueaderoRegistro.innerHTML = '<option value="">Seleccione parqueadero</option>' + parqueaderos.map(p => `<option value="${p.id}">${p.nombre} (Capacidad: ${p.capacidad})</option>`).join('');
+                    if (UIElements.selectParqueaderoRegistro.options.length > 1) {
+                        // Opcional: seleccionar el primer parqueadero por defecto y cargar sus celdas
+                        // UIElements.selectParqueaderoRegistro.selectedIndex = 1;
+                        // await mostrarCeldasEnGrid(UIElements.gridCeldasModal, UIElements.selectParqueaderoRegistro.value, parqueaderos);
+                    }
+                    UIElements.selectParqueaderoRegistro.addEventListener('change', async () => {
+                        await mostrarCeldasEnGrid(UIElements.gridCeldasModal, UIElements.selectParqueaderoRegistro.value, parqueaderos);
+                    });
                 }
-                UIElements.selectParqueaderoRegistro.addEventListener('change', async () => {
-                    await mostrarCeldasEnGrid(UIElements.gridCeldasModal, UIElements.selectParqueaderoRegistro.value, parqueaderos);
-                });
 
-                UIElements.collapseUsuario.classList.add('show');
-                UIElements.btnAcordeonUsuario.setAttribute('aria-expanded', 'true');
-                UIElements.collapseVehiculo.classList.remove('show');
-                UIElements.btnAcordeonVehiculo.setAttribute('aria-expanded', 'false');
+                // Expandir acordeón de usuario y colapsar el de vehículo
+                if (UIElements.collapseUsuario) {
+                    const collapseUsuarioInstance = bootstrap.Collapse.getInstance(UIElements.collapseUsuario) || new bootstrap.Collapse(UIElements.collapseUsuario, { toggle: false });
+                    collapseUsuarioInstance.show();
+                }
+                if (UIElements.collapseVehiculo) {
+                    const collapseVehiculoInstance = bootstrap.Collapse.getInstance(UIElements.collapseVehiculo) || new bootstrap.Collapse(UIElements.collapseVehiculo, { toggle: false });
+                    collapseVehiculoInstance.hide();
+                }
             }
         } catch (error) {
-            console.error('Error al verificar vehículo o en la lógica de ingreso:', error);
             if (error instanceof SyntaxError) {
                 mostrarToast(`❌ Error de formato de datos del servidor al verificar vehículo. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
             } else {
@@ -713,70 +795,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Función para manejar el proceso de salida de un vehículo
     async function handleSalida() {
-        const placa = UIElements.placaInput.value.trim().toUpperCase();
+        const placa = normalizePlaca(UIElements.placaInput?.value);
         if (!placa) {
             mostrarToast('Por favor, ingrese una placa.', 'warning');
             return;
         }
 
-        showConfirmModal(`¿Dar salida al vehículo con placa ${placa}?`, async (confirmed) => {
-            if (confirmed) {
-                let res;
-                try {
-                    res = await fetch(`${window.location.origin}/admin/vehiculo/liberar/${encodeURIComponent(placa)}`, { method: 'POST' });
-                    let result;
-                    if (!res.ok) {
-                        const errorText = await res.text();
-                        throw new Error(`Server responded with status ${res.status}: ${errorText}`);
-                    }
-                    const contentType = res.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        const errorText = await res.text();
-                        throw new SyntaxError(`Expected JSON response, but received ${contentType || 'no content type'}. Response: ${errorText.substring(0, 200)}...`);
-                    }
-                    try {
-                        result = await res.json();
-                    } catch (jsonError) {
-                        throw new SyntaxError(`Failed to parse JSON for vehicle liberation. Response may not be JSON: ${jsonError.message}`);
-                    }
-
-                    if (res.ok) {
-                        mostrarModalSalidaExitosa(result.placa, result.celdaNumero, result.zonaNombre, result.parqueaderoNombre);
-                        UIElements.placaInput.value = '';
-                        UIElements.btnSalida.disabled = true;
-                        // Refresh the cells grid in the registration modal if it's open
-                        if (UIElements.modalRegistro.classList.contains('mostrar')) {
-                            const parqueaderos = await cargarParqueaderosCache();
-                            await mostrarCeldasEnGrid(UIElements.gridCeldasModal, UIElements.selectParqueaderoRegistro.value, parqueaderos);
-                        }
-                    } else {
-                        mostrarToast(`⚠️ ${result.mensaje || 'Error al liberar celda'}`, 'danger');
-                    }
-                } catch (err) {
-                    console.error('Error al liberar celda:', err);
-                    if (err instanceof SyntaxError) {
-                        mostrarToast(`❌ Error de formato de datos del servidor al liberar celda. Se esperaba JSON. (${err.message.substring(0, 100)}...)`, 'danger');
-                    } else {
-                        mostrarToast(`❌ Error inesperado al liberar celda: ${err.message}`, 'danger');
-                    }
-                }
-            }
-        });
-    }
-
-    async function handleConfirmarAsignacion() {
-        if (!selectedCellId) {
-            mostrarToast('Por favor, seleccione una celda.', 'warning');
-            return;
-        }
-
-        const placa = UIElements.placaModalSpan.textContent;
-        let vehiculoId = null;
-        let resVeh;
         try {
-            resVeh = await fetch(`${window.location.origin}/admin/vehiculo/existe?placa=${encodeURIComponent(placa)}`);
-            let vehData;
+            // Verificar si el vehículo existe y está parqueado
+            const resVeh = await fetch(`${window.location.origin}/admin/vehiculo/existe?placa=${encodeURIComponent(placa)}`);
             if (!resVeh.ok) {
                 const errorText = await resVeh.text();
                 throw new Error(`Server responded with status ${resVeh.status}: ${errorText}`);
@@ -786,20 +815,106 @@ document.addEventListener('DOMContentLoaded', () => {
                 const errorText = await resVeh.text();
                 throw new SyntaxError(`Expected JSON response for vehicle existence, but received ${contentTypeVeh || 'no content type'}. Response: ${errorText.substring(0, 200)}...`);
             }
-            try {
-                vehData = await resVeh.json();
-            } catch (jsonError) {
-                throw new SyntaxError(`Failed to parse JSON for vehicle existence. Response may not be JSON: ${jsonError.message}`);
-            }
+            const vehData = await resVeh.json();
 
-            if (vehData.existe && vehData.vehiculo) {
-                vehiculoId = vehData.vehiculo.id;
-            } else {
-                mostrarToast('Error: Vehículo no encontrado para la asignación.', 'danger');
+            if (!vehData.existe) {
+                mostrarToast(`⚠️ El vehículo con placa ${placa} no está registrado.`, 'warning');
                 return;
             }
+
+            if (!vehData.historialActivo) {
+                mostrarToast(`⚠️ El vehículo con placa ${placa} no se encuentra parqueado actualmente.`, 'warning');
+                return;
+            }
+
+            // Mostrar confirmación antes de la salida
+            showConfirmModal(`¿Dar salida al vehículo con placa ${placa} de la celda ${vehData.historialActivo.celda_numero}?`, async (confirmed) => {
+                if (confirmed) {
+                    let res;
+                    try {
+                        res = await fetch(`${window.location.origin}/admin/vehiculo/liberar/${encodeURIComponent(placa)}`, { method: 'POST' });
+                        let result;
+                        if (!res.ok) {
+                            const errorText = await res.text();
+                            throw new Error(`Server responded with status ${res.status}: ${errorText}`);
+                        }
+                        const contentType = res.headers.get('content-type');
+                        if (!contentType || !contentType.includes('application/json')) {
+                            const errorText = await res.text();
+                            throw new SyntaxError(`Expected JSON response, but received ${contentType || 'no content type'}. Response: ${errorText.substring(0, 200)}...`);
+                        }
+                        try {
+                            result = await res.json();
+                        } catch (jsonError) {
+                            throw new SyntaxError(`Failed to parse JSON for vehicle liberation. Response may not be JSON: ${jsonError.message}`);
+                        }
+
+                        if (res.ok) {
+                            mostrarToast(`✅ Salida de ${placa} registrada con éxito.`, 'success');
+                            mostrarModalSalidaExitosa(result.placa, result.celdaNumero, result.zonaNombre, result.parqueaderoNombre);
+                            // Limpiar UI y recargar resúmenes
+                            resetUI();
+                        } else {
+                            mostrarToast(`⚠️ ${result.mensaje || 'Error al liberar celda'}`, 'danger');
+                        }
+                    } catch (err) {
+                        if (err instanceof SyntaxError) {
+                            mostrarToast(`❌ Error de formato de datos del servidor al liberar celda. Se esperaba JSON. (${err.message.substring(0, 100)}...)`, 'danger');
+                        } else {
+                            mostrarToast(`❌ Error inesperado al liberar celda: ${err.message}`, 'danger');
+                        }
+                    }
+                }
+            });
         } catch (error) {
-            console.error('Error fetching vehicle ID:', error);
+            if (error instanceof SyntaxError) {
+                mostrarToast(`❌ Error de formato de datos del servidor al verificar vehículo para salida. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
+            } else {
+                mostrarToast(`❌ Error al verificar la placa para salida: ${error.message}. Intente de nuevo.`, 'danger');
+            }
+        }
+    }
+
+    // Función para manejar la confirmación de asignación de celda
+    async function handleConfirmarAsignacion() {
+        if (!selectedCellId) {
+            mostrarToast('Por favor, seleccione una celda.', 'warning');
+            return;
+        }
+
+        const placa = UIElements.placaModalSpan?.textContent;
+        let vehiculoId = null;
+        try {
+            // Obtener el ID del vehículo (ya sea del estado actual o buscándolo)
+            if (currentVehicle && currentVehicle.id) {
+                vehiculoId = currentVehicle.id;
+            } else {
+                const resVeh = await fetch(`${window.location.origin}/admin/vehiculo/existe?placa=${encodeURIComponent(placa)}`);
+                let vehData;
+                if (!resVeh.ok) {
+                    const errorText = await resVeh.text();
+                    throw new Error(`Server responded with status ${resVeh.status}: ${errorText}`);
+                }
+                const contentTypeVeh = resVeh.headers.get('content-type');
+                if (!contentTypeVeh || !contentTypeVeh.includes('application/json')) {
+                    const errorText = await resVeh.text();
+                    throw new SyntaxError(`Expected JSON response for vehicle existence, but received ${contentTypeVeh || 'no content type'}. Response: ${errorText.substring(0, 200)}...`);
+                }
+                try {
+                    vehData = await resVeh.json();
+                } catch (jsonError) {
+                    throw new SyntaxError(`Failed to parse JSON for vehicle existence. Response may not be JSON: ${jsonError.message}`);
+                }
+
+                if (vehData.existe && vehData.vehiculo) {
+                    vehiculoId = vehData.vehiculo.id;
+                    currentVehicle = vehData.vehiculo; // Actualizar currentVehicle
+                } else {
+                    mostrarToast('Error: Vehículo no encontrado para la asignación.', 'danger');
+                    return;
+                }
+            }
+        } catch (error) {
             if (error instanceof SyntaxError) {
                 mostrarToast(`❌ Error de formato de datos del servidor al verificar vehículo. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
             } else {
@@ -808,15 +923,22 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Realizar la asignación de la celda
         let res;
         try {
-            res = await fetch(`${window.location.origin}/admin/parquear`, {
+            res = await fetch(`${window.location.origin}/admin/asignar-celda`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     vehiculo_id: vehiculoId,
                     celda_id: selectedCellId,
-                    placa: placa
+                    placa: placa,
+                    // Estos campos pueden ser necesarios si el backend los usa para actualizar el vehículo al asignar
+                    color: UIElements.colorRegistrar?.value,
+                    modelo: UIElements.modeloRegistrar?.value,
+                    marca: UIElements.marcaRegistrar?.value,
+                    tipo: UIElements.tipoRegistrar?.value,
+                    usuario_id_usuario: UIElements.selectPropietario?.value || (currentVehicle ? currentVehicle.usuario_id_usuario : null)
                 })
             });
             let parkResult;
@@ -836,19 +958,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (res.ok) {
-                mostrarToast(`✅ Vehículo con placa ${placa} ingresado correctamente en celda ${selectedCellId}.`);
-                UIElements.modalAsignar.classList.remove('mostrar');
-                UIElements.placaInput.value = '';
-                UIElements.btnSalida.disabled = false;
-                if (UIElements.modalRegistro.classList.contains('mostrar')) {
-                    const parqueaderos = await cargarParqueaderosCache();
-                    await mostrarCeldasEnGrid(UIElements.gridCeldasModal, UIElements.selectParqueaderoRegistro.value, parqueaderos);
-                }
+                mostrarToast(`✅ Vehículo con placa ${placa} ingresado correctamente en celda ${selectedCellId}.`, 'success');
+                if (modalAsignarInstance) modalAsignarInstance.hide();
+                resetUI(); // Limpiar UI y recargar resúmenes
             } else {
                 mostrarToast(`⚠️ ${parkResult.mensaje || 'Error al parquear vehículo'}`, 'danger');
             }
         } catch (error) {
-            console.error('Error al parquear vehículo:', error);
             if (error instanceof SyntaxError) {
                 mostrarToast(`❌ Error de formato de datos del servidor al parquear. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
             } else {
@@ -857,39 +973,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Función para manejar el registro de un nuevo usuario (propietario)
     async function handleRegistroUsuario(e) {
         e.preventDefault();
         const form = e.target;
         const formData = new FormData(form);
         const userData = Object.fromEntries(formData.entries());
 
-        userData.numero_documento = normalizeDocumento(userData.documento);
+        // Normalizar y limpiar datos
+        userData.numero_documento = normalizeDocumento(userData.numero_documento); // Usar el nombre del campo del formulario
         userData.primer_nombre = normalizeTexto(userData.primer_nombre);
         userData.segundo_nombre = normalizeTexto(userData.segundo_nombre);
         userData.primer_apellido = normalizeTexto(userData.primer_apellido);
         userData.segundo_apellido = normalizeTexto(userData.segundo_apellido);
-        userData.direccion_correo = normalizeCorreo(userData.correo);
-        userData.numero_celular = normalizeDocumento(userData.celular);
+        userData.direccion_correo = normalizeCorreo(userData.direccion_correo); // Usar el nombre del campo del formulario
+        userData.numero_celular = normalizeDocumento(userData.numero_celular); // Usar el nombre del campo del formulario
 
-        userData.tipo_documento = 'CC';
+        // Añadir campos obligatorios que podrían no estar en el formulario
+        userData.tipo_documento = 'CC'; // Asumir CC por defecto
         userData.segundo_nombre = userData.segundo_nombre || null;
         userData.segundo_apellido = userData.segundo_apellido || null;
-        userData.foto_perfil = userData.foto_perfil || null;
+        userData.foto_perfil = userData.foto_perfil || null; // Si no hay campo de foto
         userData.estado = 'activo';
-        userData.clave = userData.clave || 'default_clave';
-        userData.perfil_usuario_id = 3;
+        userData.clave = userData.clave || 'default_clave'; // Clave por defecto si no se pide
+        userData.perfil_usuario_id = 3; // Asumir perfil de cliente/propietario
 
         let res;
         try {
-            res = await fetch(`${window.location.origin}/admin/usuario/registrar`, {
+            res = await fetch(`${window.location.origin}/api/usuario`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(userData)
             });
             let result;
             if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(`Server responded with status ${res.status}: ${errorText}`);
+                const errorData = await res.json();
+                throw new Error(errorData.error || `Server responded with status ${res.status}`);
             }
             const contentType = res.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
@@ -903,20 +1022,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (res.ok) {
-                mostrarToast('✅ Propietario registrado exitosamente.');
-                UIElements.selectPropietario.innerHTML = `<option value="${result.usuario.id_usuario}">${result.usuario.primer_nombre} ${result.usuario.primer_apellido} — ${result.usuario.numero_documento}</option>`;
-                UIElements.selectPropietario.value = result.usuario.id_usuario;
-                updateUserSummary(result.usuario);
-                UIElements.collapseUsuario.classList.remove('show');
-                UIElements.btnAcordeonUsuario.setAttribute('aria-expanded', 'false');
-                UIElements.collapseVehiculo.classList.add('show');
-                UIElements.btnAcordeonVehiculo.setAttribute('aria-expanded', 'true');
-                UIElements.btnGuardarVehiculoRegistrar.disabled = selectedCellId === null;
+                mostrarToast('✅ Propietario registrado exitosamente.', 'success');
+                if (UIElements.selectPropietario) {
+                    // Actualizar el select con el nuevo usuario
+                    UIElements.selectPropietario.innerHTML = `<option value="${result.id_usuario}">${result.primer_nombre} ${result.primer_apellido} — ${result.numero_documento}</option>`;
+                    UIElements.selectPropietario.value = result.id_usuario;
+                }
+                updateUserSummary(result); // Mostrar resumen del nuevo usuario
+
+                // Colapsar acordeón de usuario y expandir el de vehículo
+                if (UIElements.collapseUsuario) {
+                    const collapseUsuarioInstance = bootstrap.Collapse.getInstance(UIElements.collapseUsuario) || new bootstrap.Collapse(UIElements.collapseUsuario, { toggle: false });
+                    collapseUsuarioInstance.hide();
+                }
+                if (UIElements.collapseVehiculo) {
+                    const collapseVehiculoInstance = bootstrap.Collapse.getInstance(UIElements.collapseVehiculo) || new bootstrap.Collapse(UIElements.collapseVehiculo, { toggle: false });
+                    collapseVehiculoInstance.show();
+                }
+                // Habilitar el botón de guardar vehículo si ya hay una celda seleccionada
+                if (UIElements.btnGuardarVehiculoRegistrar) UIElements.btnGuardarVehiculoRegistrar.disabled = selectedCellId === null;
             } else {
                 mostrarToast(`⚠️ Error al registrar propietario: ${result.mensaje || 'Error desconocido'}`, 'danger');
             }
         } catch (error) {
-            console.error('Error al registrar usuario:', error);
             if (error instanceof SyntaxError) {
                 mostrarToast(`❌ Error de formato de datos del servidor al registrar usuario. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
             } else {
@@ -925,6 +1053,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Función para manejar el registro de un nuevo vehículo
     async function handleRegistroVehiculo(e) {
         e.preventDefault();
         const form = e.target;
@@ -932,24 +1061,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const vehiculoData = Object.fromEntries(formData.entries());
 
         vehiculoData.placa = normalizePlaca(vehiculoData.placa);
-        vehiculoData.usuario_id_usuario = UIElements.selectPropietario.value;
+        vehiculoData.usuario_id_usuario = UIElements.selectPropietario?.value; // Obtener el ID del propietario seleccionado
+
+        // Asegurarse de que los campos de color, modelo, marca, tipo existan o sean null
+        vehiculoData.color = UIElements.colorRegistrar?.value || null;
+        vehiculoData.modelo = UIElements.modeloRegistrar?.value || null;
+        vehiculoData.marca = UIElements.marcaRegistrar?.value || null;
+        vehiculoData.tipo = UIElements.tipoRegistrar?.value || 'Carro'; // Tipo por defecto
 
         if (!vehiculoData.usuario_id_usuario) {
             mostrarToast('Por favor, seleccione o registre un propietario para el vehículo.', 'warning');
             return;
         }
+        if (!selectedCellId) {
+             mostrarToast('Por favor, seleccione una celda disponible para el vehículo.', 'warning');
+             return;
+        }
 
         let res;
         try {
-            res = await fetch(`${window.location.origin}/admin/vehiculo/registrar`, {
+            res = await fetch(`${window.location.origin}/api/vehiculo`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(vehiculoData)
             });
             let result;
             if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(`Server responded with status ${res.status}: ${errorText}`);
+                const errorData = await res.json();
+                throw new Error(errorData.error || `Server responded with status ${res.status}`);
             }
             const contentType = res.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
@@ -963,24 +1102,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (res.ok) {
-                mostrarToast('✅ Vehículo registrado exitosamente.');
-                UIElements.modalRegistro.classList.remove('mostrar');
-                UIElements.placaInput.value = result.vehiculo.placa;
-                UIElements.btnSalida.disabled = false;
+                mostrarToast('✅ Vehículo registrado exitosamente.', 'success');
+                currentVehicle = result; // Guardar el vehículo recién registrado
+                if (modalRegistroInstance) modalRegistroInstance.hide();
+                if (UIElements.placaInput) UIElements.placaInput.value = result.placa;
+                // Si hay una celda seleccionada, proceder a la asignación
                 if (selectedCellId) {
-                    await handleConfirmarAsignacion();
+                    await handleConfirmarAsignacion(); // Esto también llamará a resetUI()
                 } else {
                     mostrarToast('Vehículo registrado, pero no se seleccionó una celda para asignar. Puede asignarla manualmente.', 'info');
+                    if (UIElements.placaModalSpan) UIElements.placaModalSpan.textContent = result.placa;
+                    if (modalAsignarInstance) modalAsignarInstance.show();
+                    await cargarParqueaderosZonasYCeldasDisponibles(result.placa, result.id);
                 }
-                UIElements.formRegistroUsuario.reset();
-                UIElements.formRegistroVehiculo.reset();
-                UIElements.resumenPropietario.style.display = 'none';
-                UIElements.selectPropietario.innerHTML = '<option value="">Seleccione propietario</option>';
+                // Limpiar formularios y restablecer UI
+                if (UIElements.formRegistroUsuario) UIElements.formRegistroUsuario.reset();
+                if (UIElements.formRegistroVehiculo) UIElements.formRegistroVehiculo.reset();
+                if (UIElements.resumenPropietario) UIElements.resumenPropietario.style.display = 'none';
+                if (UIElements.selectPropietario) UIElements.selectPropietario.innerHTML = '<option value="">Seleccione propietario</option>';
+                await cargarUsuariosParaSeleccion(); // Recargar la lista de usuarios
+                resetUI(); // Asegurarse de que todo esté limpio y actualizado
             } else {
                 mostrarToast(`⚠️ Error al registrar vehículo: ${result.mensaje || 'Error desconocido'}`, 'danger');
             }
         } catch (error) {
-            console.error('Error al registrar vehículo:', error);
             if (error instanceof SyntaxError) {
                 mostrarToast(`❌ Error de formato de datos del servidor al registrar vehículo. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
             } else {
@@ -989,120 +1134,293 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    UIElements.btnIngreso.addEventListener('click', handleIngreso);
-    UIElements.btnSalida.addEventListener('click', handleSalida);
+    // Función debounce para limitar la frecuencia de ejecución de funciones
+    function debounce(func, delay) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), delay);
+        };
+    }
 
-    UIElements.btnCerrarModalRegistro.addEventListener('click', () => {
-        UIElements.modalRegistro.classList.remove('mostrar');
-        UIElements.formRegistroUsuario.reset();
-        UIElements.formRegistroVehiculo.reset();
-        UIElements.resumenPropietario.style.display = 'none';
-        UIElements.selectPropietario.innerHTML = '<option value="">Seleccione propietario</option>';
-        UIElements.placaInput.value = '';
-        UIElements.btnSalida.disabled = true;
-    });
 
-    UIElements.btnCerrarModalAsignar.addEventListener('click', () => {
-        UIElements.modalAsignar.classList.remove('mostrar');
-        UIElements.placaInput.value = '';
-        UIElements.btnSalida.disabled = true;
-    });
+   
+    if (UIElements.placaInput) {
+        UIElements.placaInput.addEventListener('input', () => {
+            const placa = normalizePlaca(UIElements.placaInput.value);
+            UIElements.placaInput.value = placa; 
 
-    UIElements.btnConfirmarAsignacion.addEventListener('click', handleConfirmarAsignacion);
+           
+            if (UIElements.btnSalida) UIElements.btnSalida.disabled = placa.length === 0;
+            if (UIElements.btnIngreso) UIElements.btnIngreso.disabled = placa.length === 0;
+        });
+    }
 
-    UIElements.formRegistroUsuario.addEventListener('submit', handleRegistroUsuario);
-    UIElements.formRegistroVehiculo.addEventListener('submit', handleRegistroVehiculo);
+    
+    if (UIElements.btnIngreso) UIElements.btnIngreso.addEventListener('click', handleIngreso);
+    if (UIElements.btnSalida) UIElements.btnSalida.addEventListener('click', handleSalida);
 
-    UIElements.inputBuscarPropietario.addEventListener('input', async (e) => {
-        const query = e.target.value.trim();
-        if (query.length < 3) {
-            if (dropdownSugerencias) dropdownSugerencias.style.display = 'none';
-            return;
-        }
+    // Event listeners para los botones de cerrar modales
+    if (UIElements.btnCerrarModalRegistro) {
+        UIElements.btnCerrarModalRegistro.addEventListener('click', () => {
+            resetUI();
+        });
+    }
 
-        let res;
-        try {
-            res = await fetch(`${window.location.origin}/admin/usuarios/buscar?query=${encodeURIComponent(query)}`);
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(`Server responded with status ${res.status}: ${errorText}`);
+    if (UIElements.btnCerrarModalAsignar) {
+        UIElements.btnCerrarModalAsignar.addEventListener('click', () => {
+            resetUI();
+        });
+    }
+
+    if (UIElements.btnConfirmarAsignacion) UIElements.btnConfirmarAsignacion.addEventListener('click', handleConfirmarAsignacion);
+
+    // Event listeners para los formularios de registro
+    if (UIElements.formRegistroUsuario) UIElements.formRegistroUsuario.addEventListener('submit', handleRegistroUsuario);
+    if (UIElements.formRegistroVehiculo) UIElements.formRegistroVehiculo.addEventListener('submit', handleRegistroVehiculo);
+
+    // Event listener para la búsqueda de propietario con debounce
+    if (UIElements.inputBuscarPropietario) {
+        UIElements.inputBuscarPropietario.addEventListener('input', debounce(async (e) => {
+            const query = e.target.value.trim();
+            if (query.length < 3) {
+                if (dropdownSugerencias) dropdownSugerencias.style.display = 'none';
+                return;
             }
-            const contentType = res.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                const errorText = await res.text();
-                throw new SyntaxError(`Expected JSON response, but received ${contentType || 'no content type'}. Response: ${errorText.substring(0, 200)}...`);
-            }
-            const data = await res.json();
-            const usuarios = data.usuarios || [];
 
-            if (!dropdownSugerencias) {
-                dropdownSugerencias = document.createElement('div');
-                dropdownSugerencias.className = 'dropdown-menu show';
-                dropdownSugerencias.style.position = 'absolute';
-                dropdownSugerencias.style.width = UIElements.inputBuscarPropietario.offsetWidth + 'px';
-                UIElements.inputBuscarPropietario.parentNode.insertBefore(dropdownSugerencias, UIElements.inputBuscarPropietario.nextSibling);
-            }
-            dropdownSugerencias.innerHTML = '';
-            if (usuarios.length > 0) {
-                usuarios.forEach(usuario => {
-                    const item = document.createElement('a');
-                    item.className = 'dropdown-item';
-                    item.href = '#';
-                    item.textContent = `${usuario.primer_nombre} ${usuario.primer_apellido} (${usuario.numero_documento})`;
-                    item.onclick = (e) => {
-                        e.preventDefault();
-                        UIElements.selectPropietario.innerHTML = `<option value="${usuario.id_usuario}">${usuario.primer_nombre} ${usuario.primer_apellido} — ${usuario.numero_documento}</option>`;
-                        UIElements.selectPropietario.value = usuario.id_usuario;
-                        updateUserSummary(usuario);
-                        dropdownSugerencias.style.display = 'none';
-                        UIElements.inputBuscarPropietario.value = '';
-                        UIElements.btnGuardarVehiculoRegistrar.disabled = selectedCellId === null;
-                    };
-                    dropdownSugerencias.appendChild(item);
-                });
-                dropdownSugerencias.style.display = 'block';
-            } else {
-                dropdownSugerencias.style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Error al buscar usuarios:', error);
-            if (dropdownSugerencias) dropdownSugerencias.style.display = 'none';
-            if (error instanceof SyntaxError) {
-                mostrarToast(`❌ Error de formato de datos del servidor al buscar usuarios. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
-            } else {
-                mostrarToast(`❌ Error al buscar usuarios: ${error.message}`, 'danger');
-            }
-        }
-    });
+            let res;
+            try {
+                res = await fetch(`${window.location.origin}/admin/usuarios/buscar?query=${encodeURIComponent(query)}`);
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`Server responded with status ${res.status}: ${errorText}`);
+                }
+                const contentType = res.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const errorText = await res.text();
+                    throw new SyntaxError(`Expected JSON response, but received ${contentType || 'no content type'}. Response: ${errorText.substring(0, 200)}...`);
+                }
+                const data = await res.json();
+                const usuarios = data.usuarios || [];
 
+                if (!dropdownSugerencias) { // En caso de que no se haya creado al inicio
+                    dropdownSugerencias = document.createElement('div');
+                    dropdownSugerencias.className = 'dropdown-menu show';
+                    dropdownSugerencias.style.position = 'absolute';
+                    dropdownSugerencias.style.width = UIElements.inputBuscarPropietario.offsetWidth + 'px';
+                    UIElements.inputBuscarPropietario.parentNode.insertBefore(dropdownSugerencias, UIElements.inputBuscarPropietario.nextSibling);
+                    UIElements.sugerenciasPropietario = dropdownSugerencias;
+                }
+                dropdownSugerencias.innerHTML = '';
+                if (usuarios.length > 0) {
+                    usuarios.forEach(usuario => {
+                        const item = document.createElement('a');
+                        item.className = 'dropdown-item';
+                        item.href = '#';
+                        item.textContent = `${usuario.primer_nombre} ${usuario.primer_apellido} (${usuario.numero_documento})`;
+                        item.onclick = (e) => {
+                            e.preventDefault();
+                            if (UIElements.selectPropietario) {
+                                UIElements.selectPropietario.innerHTML = `<option value="${usuario.id_usuario}">${usuario.primer_nombre} ${usuario.primer_apellido} — ${usuario.numero_documento}</option>`;
+                                UIElements.selectPropietario.value = usuario.id_usuario;
+                            }
+                            updateUserSummary(usuario);
+                            if (dropdownSugerencias) dropdownSugerencias.style.display = 'none';
+                            if (UIElements.inputBuscarPropietario) UIElements.inputBuscarPropietario.value = ''; // Limpiar input de búsqueda
+                            // Habilitar botón de guardar vehículo si ya hay una celda seleccionada
+                            if (UIElements.btnGuardarVehiculoRegistrar) UIElements.btnGuardarVehiculoRegistrar.disabled = selectedCellId === null;
+
+                            // Colapsar acordeón de usuario y expandir el de vehículo
+                            if (UIElements.collapseUsuario) {
+                                const collapseUsuarioInstance = bootstrap.Collapse.getInstance(UIElements.collapseUsuario) || new bootstrap.Collapse(UIElements.collapseUsuario, { toggle: false });
+                                collapseUsuarioInstance.hide();
+                            }
+                            if (UIElements.collapseVehiculo) {
+                                const collapseVehiculoInstance = bootstrap.Collapse.getInstance(UIElements.collapseVehiculo) || new bootstrap.Collapse(UIElements.collapseVehiculo, { toggle: false });
+                                collapseVehiculoInstance.show();
+                            }
+                        };
+                        dropdownSugerencias.appendChild(item);
+                    });
+                    dropdownSugerencias.classList.add('show'); // Mostrar el dropdown
+                } else {
+                    dropdownSugerencias.classList.remove('show'); // Ocultar el dropdown
+                }
+            } catch (error) {
+                if (error instanceof SyntaxError) {
+                    mostrarToast(`❌ Error de formato de datos del servidor al buscar usuarios. Se esperaba JSON. (${error.message.substring(0, 100)}...)`, 'danger');
+                } else {
+                    mostrarToast(`❌ Error al buscar usuarios: ${error.message}`, 'danger');
+                }
+            }
+        }, 300));
+    }
+
+    // Event listener para ocultar sugerencias de propietario al hacer clic fuera
     document.addEventListener('click', (e) => {
-        if (dropdownSugerencias && !UIElements.inputBuscarPropietario.contains(e.target) && !dropdownSugerencias.contains(e.target)) {
-            dropdownSugerencias.style.display = 'none';
+        if (dropdownSugerencias && UIElements.inputBuscarPropietario && !UIElements.inputBuscarPropietario.contains(e.target) && !dropdownSugerencias.contains(e.target)) {
+            dropdownSugerencias.classList.remove('show');
         }
     });
 
-    UIElements.confirmOkBtn.addEventListener('click', () => {
-        if (confirmCallback) {
-            confirmCallback(true);
-        }
-        UIElements.confirmModal.classList.remove('mostrar');
-        confirmCallback = null;
+    // Event listener para el select de propietario (cuando se elige uno de la lista)
+    if (UIElements.selectPropietario) {
+        UIElements.selectPropietario.addEventListener('change', async (e) => {
+            const userId = e.target.value;
+            if (userId) {
+                try {
+                    const usuario = allUsers.find(u => String(u.id_usuario) === String(userId));
+                    if (usuario) {
+                        updateUserSummary(usuario);
+                        // Colapsar acordeón de usuario y expandir el de vehículo
+                        if (UIElements.collapseUsuario) {
+                            const collapseUsuarioInstance = bootstrap.Collapse.getInstance(UIElements.collapseUsuario) || new bootstrap.Collapse(UIElements.collapseUsuario, { toggle: false });
+                            collapseUsuarioInstance.hide();
+                        }
+                        if (UIElements.collapseVehiculo) {
+                            const collapseVehiculoInstance = bootstrap.Collapse.getInstance(UIElements.collapseVehiculo) || new bootstrap.Collapse(UIElements.collapseVehiculo, { toggle: false });
+                            collapseVehiculoInstance.show();
+                        }
+                        if (UIElements.btnGuardarVehiculoRegistrar) UIElements.btnGuardarVehiculoRegistrar.disabled = selectedCellId === null;
+                    } else {
+                        mostrarToast('Propietario no encontrado en la lista.', 'warning');
+                        if (UIElements.resumenPropietario) UIElements.resumenPropietario.style.display = 'none';
+                        if (UIElements.btnGuardarVehiculoRegistrar) UIElements.btnGuardarVehiculoRegistrar.disabled = true;
+                    }
+                } catch (error) {
+                    console.error('Error al cargar datos del propietario:', error);
+                    mostrarToast(`❌ Error al cargar datos del propietario: ${error.message}`, 'danger');
+                    if (UIElements.resumenPropietario) UIElements.resumenPropietario.style.display = 'none';
+                    if (UIElements.btnGuardarVehiculoRegistrar) UIElements.btnGuardarVehiculoRegistrar.disabled = true;
+                }
+            } else {
+                if (UIElements.resumenPropietario) UIElements.resumenPropietario.style.display = 'none';
+                if (UIElements.btnGuardarVehiculoRegistrar) UIElements.btnGuardarVehiculoRegistrar.disabled = true;
+            }
+        });
+    }
+
+    // Event listener para el botón de cerrar el modal de confirmación de salida
+    if (UIElements.btnCerrarModalSalidaConfirmacion) {
+        UIElements.btnCerrarModalSalidaConfirmacion.addEventListener('click', () => {
+            resetUI();
+        });
+    }
+
+    // Event listeners para los botones de confirmación genéricos del modal
+    if (UIElements.confirmOkBtn) {
+        UIElements.confirmOkBtn.addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback(true);
+            }
+            if (confirmModalInstance) {
+                confirmModalInstance.hide();
+            }
+            confirmCallback = null; // Limpiar el callback
+        });
+    }
+
+    if (UIElements.confirmCancelBtn) {
+        UIElements.confirmCancelBtn.addEventListener('click', () => {
+            if (confirmCallback) {
+                confirmCallback(false);
+            }
+            if (confirmModalInstance) {
+                confirmModalInstance.hide();
+            }
+            confirmCallback = null; // Limpiar el callback
+        });
+    }
+
+    // Event listener para la paleta de colores
+    document.querySelectorAll('.color-palette .color-circle').forEach(circle => {
+        circle.addEventListener('click', function() {
+            const colorName = this.dataset.color;
+            if (UIElements.colorRegistrar) {
+                UIElements.colorRegistrar.value = colorName;
+            }
+        });
     });
 
-    UIElements.confirmCancelBtn.addEventListener('click', () => {
-        if (confirmCallback) {
-            confirmCallback(false);
-        }
-        UIElements.confirmModal.classList.remove('mostrar');
-        confirmCallback = null;
-    });
+    // Event listeners para los selects de parqueadero y zona en el modal de registro y asignación
+    if (UIElements.selectParqueaderoRegistro) {
+        UIElements.selectParqueaderoRegistro.addEventListener('change', async (e) => {
+            const parqueaderoId = e.target.value;
+            const parqueaderos = await cargarParqueaderosCache(); // Asegurarse de tener los parqueaderos
+            if (parqueaderoId) {
+                // Obtener info del parqueadero para mostrar en parq-info-modal
+                const selectedParqueadero = parqueaderos.find(p => String(p.id) === String(parqueaderoId));
+                if (selectedParqueadero && UIElements.parqInfoModal) {
+                    UIElements.parqInfoModal.textContent = `Capacidad: ${selectedParqueadero.capacidad}, Ocupadas: ${selectedParqueadero.ocupadas || 'N/A'}, Disponibles: ${selectedParqueadero.disponibles || 'N/A'}`;
+                } else if (UIElements.parqInfoModal) {
+                    UIElements.parqInfoModal.textContent = '';
+                }
+                await mostrarCeldasEnGrid(UIElements.gridCeldasModal, parqueaderoId, parqueaderos);
+            } else {
+                if (UIElements.parqInfoModal) UIElements.parqInfoModal.textContent = '';
+                if (UIElements.gridCeldasModal) UIElements.gridCeldasModal.innerHTML = '<p class="text-center text-muted" style="grid-column:1/-1;">Seleccione un parqueadero para ver las celdas disponibles.</p>';
+                if (UIElements.btnGuardarVehiculoRegistrar) UIElements.btnGuardarVehiculoRegistrar.disabled = true;
+            }
+        });
+    }
 
-    UIElements.btnCerrarModalSalidaConfirmacion.addEventListener('click', () => {
-        UIElements.modalSalidaConfirmacion.classList.remove('mostrar');
-    });
+    if (UIElements.selectParqueaderoAsignar) {
+        UIElements.selectParqueaderoAsignar.addEventListener('change', async (e) => {
+            const parqueaderoId = e.target.value;
+            // Limpiar zonas y celdas al cambiar de parqueadero
+            if (UIElements.selectZonaAsignar) UIElements.selectZonaAsignar.innerHTML = '<option value="">Seleccione Zona</option>';
+            if (UIElements.gridCeldasDisponibles) UIElements.gridCeldasDisponibles.innerHTML = '<div style="text-align:center;color:#888;grid-column:1/-1;">Seleccione parqueadero y zona.</div>';
+            if (UIElements.btnConfirmarAsignacion) UIElements.btnConfirmarAsignacion.disabled = true;
+            selectedCellId = null;
 
-    cargarResumenCeldas();
-    cargarResumenZonas();
-    cargarUsuariosParaSeleccion();
-    initAcordeon();
+            if (parqueaderoId) {
+                // Cargar zonas para el parqueadero seleccionado
+                let resZonas;
+                try {
+                    resZonas = await fetch(`${window.location.origin}/admin/zonas?parqueadero_id=${parqueaderoId}&json=1`);
+                    if (!resZonas.ok) {
+                        const errorText = await resZonas.text();
+                        throw new Error(`Server responded with status ${resZonas.status}: ${errorText}`);
+                    }
+                    const contentTypeZonas = resZonas.headers.get('content-type');
+                    if (!contentTypeZonas || !contentTypeZonas.includes('application/json')) {
+                        const errorText = await resZonas.text();
+                        throw new SyntaxError(`Expected JSON response for zones, but received ${contentTypeZonas || 'no content type'}. Response: ${errorText.substring(0, 200)}...`);
+                    }
+                    const dataZonas = await resZonas.json();
+                    const zonas = Array.isArray(dataZonas) ? dataZonas.zonas : (dataZonas.zonas || []);
+
+                    if (UIElements.selectZonaAsignar) {
+                        UIElements.selectZonaAsignar.innerHTML = '<option value="">Seleccione Zona</option>';
+                        zonas.forEach(z => {
+                            const opt = document.createElement('option');
+                            opt.value = z.id;
+                            opt.textContent = z.nombre;
+                            UIElements.selectZonaAsignar.appendChild(opt);
+                        });
+                    }
+                } catch (error) {
+                    mostrarToast(`❌ Error al cargar zonas: ${error.message}`, 'danger');
+                }
+            }
+        });
+    }
+
+    if (UIElements.selectZonaAsignar) {
+        UIElements.selectZonaAsignar.addEventListener('change', async (e) => {
+            const parqueaderoId = UIElements.selectParqueaderoAsignar?.value;
+            const zonaId = e.target.value;
+            if (parqueaderoId && zonaId) {
+                await cargarCeldasDisponibles(UIElements.placaModalSpan?.textContent, currentVehicle?.id);
+            } else {
+                if (UIElements.gridCeldasDisponibles) UIElements.gridCeldasDisponibles.innerHTML = '<div style="text-align:center;color:#888;grid-column:1/-1;">Seleccione parqueadero y zona.</div>';
+                if (UIElements.btnConfirmarAsignacion) UIElements.btnConfirmarAsignacion.disabled = true;
+                selectedCellId = null;
+            }
+        });
+    }
+
+   
+    resetUI(); 
 });
