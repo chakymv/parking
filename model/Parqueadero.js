@@ -1,4 +1,4 @@
-const supabase = require('./../supabaseClient');
+const { supabase } = require('../supabaseClient');
 const { normalizeTexto, normalizeFecha } = require('./../utils/normalizer');
 
 class Parqueadero {

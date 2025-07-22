@@ -1,4 +1,4 @@
-const supabase = require('./../supabaseClient');
+const { supabase } = require('../supabaseClient');
 
 class ReporteIncidencia {
   constructor(vehiculo_id, tipo_incidencia_id, fecha_hora) {

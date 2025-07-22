@@ -1,175 +1,185 @@
-const supabase = require('./../supabaseClient');
+// model/HistorialParqueo.js
+const { supabase } = require('../supabaseClient');
 const { normalizeFecha } = require('./../utils/normalizer');
 
 class HistorialParqueo {
-  constructor(celda_id = null, vehiculo_id = null, fecha_hora = null) {
-    this._celda_id = Number(celda_id);
-    this._vehiculo_id = Number(vehiculo_id);
-    this._fecha_hora = normalizeFecha(fecha_hora);
-  }
-
-  get celda_id() { return this._celda_id; }
-  get vehiculo_id() { return this._vehiculo_id; }
-  get fecha_hora() { return this._fecha_hora; }
-
-  set celda_id(value) { this._celda_id = Number(value); }
-  set vehiculo_id(value) { this._vehiculo_id = Number(value); }
-  set fecha_hora(value) { this._fecha_hora = normalizeFecha(value); }
-
-  async create() {
-    if (isNaN(this._celda_id) || isNaN(this._vehiculo_id)) {
-      throw new Error('IDs inválidos para crear HistorialParqueo.');
+    constructor(id = null, celda_id = null, vehiculo_id = null, entrada = null, salida = null, estado = null) {
+        this._id = Number(id);
+        this._celda_id = Number(celda_id);
+        this._vehiculo_id = Number(vehiculo_id);
+        this._entrada = normalizeFecha(entrada);
+        this._salida = normalizeFecha(salida);
+        this._estado = estado;
     }
 
-    const insertObj = {
-      celda_id: this._celda_id,
-      vehiculo_id: this._vehiculo_id,
-      fecha_hora: this._fecha_hora
-    };
+    get id() { return this._id; }
+    get celda_id() { return this._celda_id; }
+    get vehiculo_id() { return this._vehiculo_id; }
+    get entrada() { return this._entrada; }
+    get salida() { return this._salida; }
+    get estado() { return this._estado; }
 
-    const { data, error } = await supabase
-      .from('historial_parqueo')
-      .insert([insertObj])
-      .select()
-      .single();
+    set id(value) { this._id = Number(value); }
+    set celda_id(value) { this._celda_id = Number(value); }
+    set vehiculo_id(value) { this._vehiculo_id = Number(value); }
+    set entrada(value) { this._entrada = normalizeFecha(value); }
+    set salida(value) { this._salida = normalizeFecha(value); }
+    set estado(value) { this._estado = value; }
 
-    if (error) throw new Error(`Error creando HistorialParqueo: ${error.message}`);
-    this._mapRowToObject(data);
-    return this;
-  }
+    async create() {
+        if (isNaN(this._celda_id) || isNaN(this._vehiculo_id)) {
+            throw new Error('IDs inválidos para crear HistorialParqueo.');
+        }
 
-  async findById(celda_id, vehiculo_id) {
-    const celdaNum = Number(celda_id);
-    const vehiculoNum = Number(vehiculo_id);
-    if (isNaN(celdaNum) || isNaN(vehiculoNum)) {
-      throw new Error('IDs inválidos para búsqueda en HistorialParqueo.');
+        const insertObj = {
+            celda_id: this._celda_id,
+            vehiculo_id: this._vehiculo_id,
+            entrada: this._entrada || new Date().toISOString(),
+            estado: this._estado || 'activo'
+        };
+
+        const { data, error } = await supabase
+            .from('historial_parqueo')
+            .insert([insertObj])
+            .select()
+            .single();
+
+        if (error) throw new Error(`Error creando HistorialParqueo: ${error.message}`);
+        this._mapRowToObject(data);
+        return this;
     }
 
-    const { data, error } = await supabase
-      .from('historial_parqueo')
-      .select('*')
-      .eq('celda_id', celdaNum)
-      .eq('vehiculo_id', vehiculoNum)
-      .single();
+    static async findById(id) {
+        const idNum = Number(id);
+        if (isNaN(idNum)) throw new Error(`ID inválido proporcionado a findById: ${id}`);
 
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      throw new Error(`Error buscando HistorialParqueo por ID: ${error.message}`);
+        const { data, error } = await supabase
+            .from('historial_parqueo')
+            .select('id, celda_id, vehiculo_id, entrada, salida, estado')
+            .eq('id', idNum)
+            .single();
+
+        if (error && error.code !== 'PGRST116') {
+            throw new Error(`Error buscando HistorialParqueo por ID: ${error.message}`);
+        }
+
+        if (data) {
+            const historial = new HistorialParqueo();
+            historial._mapRowToObject(data);
+            return historial;
+        }
+        return null;
     }
 
-    if (data) {
-      this._mapRowToObject(data);
-      return this;
-    }
-    return null;
-  }
+    static async findAll() {
+        const { data, error } = await supabase
+            .from('historial_parqueo')
+            .select('id, celda_id, vehiculo_id, entrada, salida, estado')
+            .order('entrada', { ascending: false });
 
-  static async findAll() {
-    const { data, error } = await supabase
-      .from('historial_parqueo')
-      .select('*');
-
-    if (error) throw new Error(`Error obteniendo historial completo: ${error.message}`);
-    return (data || []).map(row => {
-      const historial = new HistorialParqueo();
-      historial._mapRowToObject(row);
-      return historial;
-    });
-  }
-
-  async update() {
-    const updateObj = {
-      fecha_hora: this._fecha_hora
-    };
-
-    const { error } = await supabase
-      .from('historial_parqueo')
-      .update(updateObj)
-      .eq('celda_id', this._celda_id)
-      .eq('vehiculo_id', this._vehiculo_id);
-
-    if (error) throw new Error(`Error actualizando HistorialParqueo: ${error.message}`);
-    return this;
-  }
-
-  async delete() {
-    if (isNaN(this._celda_id) || isNaN(this._vehiculo_id)) {
-      throw new Error('IDs inválidos para eliminar HistorialParqueo.');
+        if (error) throw new Error(`Error obteniendo historial completo: ${error.message}`);
+        return (data || []).map(row => {
+            const historial = new HistorialParqueo();
+            historial._mapRowToObject(row);
+            return historial;
+        });
     }
 
-    const { error } = await supabase
-      .from('historial_parqueo')
-      .delete()
-      .eq('celda_id', this._celda_id)
-      .eq('vehiculo_id', this._vehiculo_id);
+    async update() {
+        if (isNaN(this._id)) {
+            throw new Error('ID inválido para actualizar HistorialParqueo');
+        }
 
-    if (error) throw new Error(`Error eliminando HistorialParqueo: ${error.message}`);
-    return true;
-  }
+        const updateObj = {
+            celda_id: this._celda_id,
+            vehiculo_id: this._vehiculo_id,
+            entrada: this._entrada,
+            salida: this._salida,
+            estado: this._estado
+        };
 
-  static async findAllWithVehicleDetails() {
-    const { data, error } = await supabase
-      .from('historial_parqueo')
-      .select(`
-        celda_id,
-        fecha_hora,
-        vehiculo (
-          placa,
-          marca,
-          modelo,
-          color,
-          tipo
-        )
-      `)
-      .order('fecha_hora', { ascending: false });
+        const { error } = await supabase
+            .from('historial_parqueo')
+            .update(updateObj)
+            .eq('id', this._id);
 
-    if (error) {
-      console.error("HistorialParqueo.findAllWithVehicleDetails error:", error);
-      throw new Error('Error obteniendo historial detallado de parqueo.');
+        if (error) throw new Error(`Error actualizando HistorialParqueo: ${error.message}`);
+        return this;
     }
 
-    return (data || []).map(row => {
-      const { vehiculo, ...historialData } = row;
-      return { ...historialData, ...(vehiculo || {}) };
-    });
-  }
+    async delete() {
+        if (!this._id || isNaN(this._id)) {
+            throw new Error('ID inválido para eliminar HistorialParqueo.');
+        }
 
-  static async findByVehicleId(vehiculo_id) {
-    const vehiculoNum = Number(vehiculo_id);
-    if (isNaN(vehiculoNum)) {
-      throw new Error(`ID inválido proporcionado a findByVehicleId: ${vehiculo_id}`);
+        const { error } = await supabase
+            .from('historial_parqueo')
+            .delete()
+            .eq('id', this._id);
+
+        if (error) throw new Error(`Error eliminando HistorialParqueo: ${error.message}`);
+        return true;
     }
 
-    const { data, error } = await supabase
-      .from('historial_parqueo')
-      .select('*')
-      .eq('vehiculo_id', vehiculoNum)
-      .limit(1)
-      .single();
+    async marcarComoFinalizado(salidaHora) {
+        const { error } = await supabase
+            .from('historial_parqueo')
+            .update({
+                salida: salidaHora,
+                estado: 'finalizado'
+            })
+            .eq('id', this.id);
 
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      throw new Error(`Error buscando historial por vehículo: ${error.message}`);
+        if (error) {
+            console.error(`Error al marcar historial ${this.id} como finalizado:`, error);
+            throw new Error(`Error al marcar historial como finalizado: ${error.message}`);
+        }
+        this.salida = salidaHora;
+        this.estado = 'finalizado';
     }
 
-    return data
-      ? new HistorialParqueo(data.celda_id, data.vehiculo_id, data.fecha_hora)
-      : null;
-  }
+    static async findByVehicleId(vehiculoId) {
+        const vehiculoNum = Number(vehiculoId);
+        if (isNaN(vehiculoNum)) {
+            throw new Error(`ID de vehículo inválido proporcionado a findByVehicleId: ${vehiculoId}`);
+        }
 
-  _mapRowToObject(row) {
-    this._celda_id = row.celda_id;
-    this._vehiculo_id = row.vehiculo_id;
-    this._fecha_hora = normalizeFecha(row.fecha_hora);
-  }
+        const { data, error } = await supabase
+            .from('historial_parqueo')
+            .select('id, celda_id, vehiculo_id, entrada, salida, estado')
+            .eq('vehiculo_id', vehiculoNum)
+            .eq('estado', 'activo')
+            .limit(1)
+            .single();
 
-  toJSON() {
-    return {
-      celda_id: this._celda_id,
-      vehiculo_id: this._vehiculo_id,
-      fecha_hora: this._fecha_hora
-    };
-  }
+        if (error && error.code !== 'PGRST116') {
+            throw new Error(`Error buscando historial activo por vehículo: ${error.message}`);
+        }
+
+        return data
+            ? new HistorialParqueo(data.id, data.celda_id, data.vehiculo_id, data.entrada, data.salida, data.estado)
+            : null;
+    }
+
+    _mapRowToObject(row) {
+        this._id = row.id;
+        this._celda_id = row.celda_id;
+        this._vehiculo_id = row.vehiculo_id;
+        this._entrada = normalizeFecha(row.entrada);
+        this._salida = normalizeFecha(row.salida);
+        this._estado = row.estado;
+    }
+
+    toJSON() {
+        return {
+            id: this._id,
+            celda_id: this._celda_id,
+            vehiculo_id: this._vehiculo_id,
+            entrada: this._entrada,
+            salida: this._salida,
+            estado: this._estado
+        };
+    }
 }
 
 module.exports = HistorialParqueo;

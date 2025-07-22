@@ -1,4 +1,4 @@
-const supabase = require('./../supabaseClient');
+const { supabase } = require('../supabaseClient');
 const { normalizePlaca, normalizeTexto } = require('./../utils/normalizer');
 
 class PicoPlaca {

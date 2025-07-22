@@ -1,4 +1,4 @@
-const supabase = require('./../supabaseClient');
+const { supabase } = require('../supabaseClient');
 const { normalizeTexto } = require('./../utils/normalizer'); // ← si decidís usarlo
 
 class Zona {
