@@ -4,610 +4,258 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>
-        <%= titulo || 'Operar Parqueadero' %>
-    </title>
+    <title>Operar Parqueadero</title>
     <link rel="stylesheet" href="/admin/css/estilo.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <!-- Incluye Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <style>
-        /* Estilos para Botones */
-        .button-group {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            justify-content: flex-start;
-        }
+        /* Estilos personalizados que no son directamente de Bootstrap o para overrides */
+        /* Eliminamos .modal-overlay ya que Bootstrap maneja el fondo automáticamente */
 
-        .custom-button {
-            padding: 8px 18px;
-            font-size: 0.9em;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .button-success {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .button-success:hover {
-            background-color: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .button-danger {
-            background-color: #dc3545;
-            color: white;
-        }
-
-        .button-danger:hover {
-            background-color: #c82333;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .button-primary {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .button-primary:hover {
-            background-color: #0056b3;
-            transform: translateY(-2px);
-            box-shadow: 0 44px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .button-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-
-        .button-secondary:hover {
-            background-color: #5a6268;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .botones-grandes {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            max-width: 100%;
-            transition: background-color 0.3s ease, transform 0.3s ease;
-        }
-
-        @media (max-width: 600px) {
-            .botones-grandes {
-                padding: 8px 15px;
-                font-size: 14px;
-            }
-        }
-
-        @media (min-width: 601px) and (max-width: 1200px) {
-            .botones-grandes {
-                padding: 10px 20px;
-                font-size: 16px;
-            }
-        }
-
-        @media (min-width: 1201px) {
-            .botones-grandes {
-                padding: 10px 20px;
-                font-size: 16px;
-            }
-        }
-
-        .btn-guardar {
-            background-color: #007bff;
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-            font-size: 0.9em;
-        }
-
-        .btn-guardar:hover {
-            background-color: #0056b3;
-        }
-
-        .btn-guardar:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        /* Estilos para Modales */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1050;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-        }
-
-        .modal-overlay.mostrar {
-            display: flex;
-            opacity: 1;
-        }
-
-        .modal-content {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            max-width: 1200px;
-            width: 95%; 
-            max-height: 90vh; 
-            overflow-y: auto;
-            position: relative;
-            transform: translateY(-20px);
-            transition: transform 0.3s ease-in-out;
-        }
-
-        .modal-overlay.mostrar .modal-content {
-            transform: translateY(0);
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-
-        .modal-title {
-            margin: 0;
-            font-size: 1.1em;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .modal-close-button {
-            background: none;
-            border: none;
-            font-size: 1.4em;
-            color: #666;
-            cursor: pointer;
-            padding: 0;
-        }
+        /* Ajuste para el modal de registro de vehículo para que sea XL en PC */
+        /* Bootstrap ya maneja el tamaño modal-xl, modal-lg, etc. */
 
         .modal-body {
-            padding: 0 5px 5px 5px;
-            overflow-y: auto;
-            flex-grow: 1;
-            font-size: 0.95rem;
+            overflow-y: auto; /* Permite scroll si el contenido es muy largo */
         }
 
-        .modal-body p {
-            margin-bottom: 10px;
-            color: #555;
-            line-height: 1.6;
-        }
-
-        .modal-body strong {
-            color: #333;
-        }
-
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 15px;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
-            gap: 10px;
-        }
-
-        /* Estilos para Celdas en Modales */
-        .celdas-grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            gap: 10px;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-            max-height: 250px;
-            overflow-y: auto;
-        }
-
-        .celda-card-modal {
-            background-color: #f0f0f0;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 8px;
-            text-align: center;
-            font-size: 0.85em;
-            position: relative;
-            overflow: hidden;
-            transition: all 0.2s ease-in-out;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100px;
-            cursor: pointer;
-        }
-
-        .celda-card-modal.selected {
-            border: 3px solid #007bff;
-            box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
-            transform: scale(1.02);
-        }
-
-        .celda-card-modal:hover:not(.selected) {
-            background-color: #e9e9e9;
-            border-color: #bbb;
-            cursor: pointer;
-        }
-
-        .celda-card-modal i {
-            font-size: 1.5em;
-            margin-bottom: 5px;
-        }
-
-        .celda-card-modal b {
-            font-size: 1.1em;
-            margin-bottom: 3px;
-        }
-
-        /* Colores de estado de celda */
-        .celda-card-modal.status-libre {
-            background: #28a745 !important;
-            color: #fff;
-        }
-
-        .celda-card-modal.status-ocupada {
-            background: #dc3545 !important;
-            color: #fff;
-        }
-
-        .celda-card-modal.status-mantenimiento {
-            background: #f5f5f5 !important;
-            color: #444;
-        }
-
-        /* Estilos para Toast */
-        .custom-toast {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #28a745;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-            font-size: 1.1em;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            z-index: 1060;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-        }
-
-        .custom-toast.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .custom-toast.toast-danger {
-            background-color: #dc3545;
-        }
-
-        .custom-toast.toast-warning {
-            background-color: #ffc107;
-            color: #333;
-        }
-
-        .custom-toast.toast-info {
-            background-color: #17a2b8;
-        }
-
-        .toast-body-content {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .toast-body-content i {
-            font-size: 1.4em;
-        }
-
-        .custom-toast-close {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.6em;
-            cursor: pointer;
-            line-height: 1;
-            padding: 0;
-        }
-
-        .custom-toast.toast-warning .custom-toast-close {
-            color: #333;
-        }
-
-        /* Estilos específicos para elementos dentro del modal */
-        .custom-grid-2-col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .custom-label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            color: #555;
-        }
-
-        .custom-input,
-        .custom-select {
+        /* Estilos para la tarjeta de entrada/salida */
+        .decoracion-input {
             width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            background-color: #fff;
             box-sizing: border-box;
-            font-size: 0.9em;
+            display: flex; /* Usar flexbox para centrar contenido */
+            flex-direction: column;
+            align-items: center; /* Centra horizontalmente */
         }
 
-        .custom-input:focus,
-        .custom-select:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-            outline: none;
+        .placas-input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
         }
 
-        .custom-select {
-            appearance: none;
-            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%20viewBox%3D%220%200%20292.4%20292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%20197.3L159.9%2069.2c-3.7-3.7-9.8-3.7-13.5%200L5.4%20197.3c-3.7%203.7-3.7%209.8%200%2013.5l13.5%2013.5c3.7%203.7%209.8%203.7%2013.5%200l113.6-113.6c3.7-3.7%209.8-3.7%2013.5%200l13.5-13.5c3.7-3.7%203.7-9.8%200-13.5z%22%2F%3E%3C%2Fsvg%3E');
-            background-repeat: no-repeat;
-            background-position: right 15px center;
-            background-size: 14px;
+        .linea-windows {
+            width: 80%;
+            border: 0;
+            height: 1px;
+            background: #ccc;
+            margin: 15px 0;
         }
 
+        .centrar-texto {
+            text-align: center;
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .centrar {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .centrar .btn { /* Aplicar estilos específicos de botones grandes de la imagen original */
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .btn-entrada {
+            background-color: #17a2b8; /* Color azul cian */
+            color: white;
+            border: none;
+        }
+
+        .btn-entrada:hover {
+            background-color: #138496;
+            transform: translateY(-2px);
+        }
+
+        .btn-salida {
+            background-color: #28a745; /* Color verde */
+            color: white;
+            border: none;
+        }
+
+        .btn-salida:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+
+        /* Estilos para la paleta de colores */
         .color-palette {
             display: flex;
-            gap: 6px;
+            gap: 5px;
+            margin-top: 5px;
             flex-wrap: wrap;
-            margin-bottom: 10px;
         }
 
         .color-circle {
-            display: inline-block;
             width: 24px;
             height: 24px;
             border-radius: 50%;
-            cursor: pointer;
             border: 1px solid #ccc;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
             transition: transform 0.1s ease;
         }
 
         .color-circle:hover {
             transform: scale(1.1);
         }
+        /* Colores específicos para los círculos */
+        .color-circle[data-color="Rojo"] { background-color: red; }
+        .color-circle[data-color="Azul"] { background-color: blue; }
+        .color-circle[data-color="Verde"] { background-color: green; }
+        .color-circle[data-color="Negro"] { background-color: black; }
+        .color-circle[data-color="Blanco"] { background-color: white; border-color: #ccc; }
+        .color-circle[data-color="Gris"] { background-color: gray; }
+        .color-circle[data-color="Plata"] { background-color: silver; }
+        .color-circle[data-color="Amarillo"] { background-color: yellow; }
+        .color-circle[data-color="Naranja"] { background-color: orange; }
+        .color-circle[data-color="Marrón"] { background-color: brown; }
 
-        .custom-text-muted {
-            color: #6c757d;
+
+        /* Estilos para las tarjetas de celdas en los modales */
+        .celdas-grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #f8f9fa; /* Light background for the grid */
         }
 
-        .custom-text-center {
-            text-align: center;
-        }
-
-        .custom-text-danger {
-            color: #dc3545;
-        }
-
-        .custom-margin-right-sm {
-            margin-right: 8px;
-        }
-
-        .custom-justify-end {
-            justify-content: flex-end;
-        }
-
-        .custom-margin-bottom-md {
-            margin-bottom: 15px;
-        }
-
-        .custom-justify-center {
-            justify-content: center;
-        }
-
-        .custom-gap-1rem {
-            gap: 1rem;
-        }
-
-        .accordion-icon {
-            transition: transform 0.3s ease;
-        }
-
-        .custom-accordion-header.expanded .accordion-icon {
-            transform: rotate(180deg);
-        }
-
-        .custom-accordion-item {
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            overflow: hidden;
-        }
-
-        .custom-accordion-header {
-            background-color: #f8f9fa;
-            color: #333;
-            font-weight: 600;
-            padding: 12px 15px;
-            border: none;
-            width: 100%;
-            text-align: left;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background-color 0.2s;
-            cursor: pointer;
-        }
-
-        .custom-accordion-header:hover {
+        .celda-card-modal {
             background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 80px;
         }
 
-        .custom-accordion-content {
-            overflow: hidden;
-            transition: height 0.3s ease-in-out;
-            height: 0;
-            background-color: #fff;
-            border-top: 1px solid #e0e0e0;
-            padding: 0 15px;
+        .celda-card-modal.selected {
+            border: 3px solid #0056b3;
+            box-shadow: 0 0 8px rgba(0, 86, 179, 0.5);
         }
 
-        .custom-accordion-content.show {
-            height: auto;
-            padding: 15px;
+        .celda-card-modal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
+        /* Estilos para el toast */
+        /* Usamos las clases de Bootstrap para el toast-container y toast */
+        .toast-container {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            padding: 1rem;
+            z-index: 1080; /* Asegura que esté por encima de los modales */
+        }
+        .toast-body-content {
+            flex-grow: 1;
+            padding-right: 10px;
+        }
+
+        /* Estilos para el resumen del propietario */
         .user-summary-box {
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
             padding: 15px;
-            background-color: #f8f9fa;
+            background-color: #f9f9f9;
             margin-top: 15px;
-            display: none;
         }
 
         .user-summary-box p {
             margin-bottom: 5px;
-            font-size: 0.95em;
         }
-
-        .user-summary-box strong {
-            color: #007bff;
-        }
-
-        .custom-dropdown-menu {
-            position: absolute;
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            border-radius: 5px;
+        /* Estilos para el dropdown de sugerencias */
+        .dropdown-menu {
             max-height: 200px;
             overflow-y: auto;
-            z-index: 1000;
-            display: none;
+            display: block; /* Controlado por JS para mostrar/ocultar */
+            position: absolute;
+            width: 100%; /* Para que ocupe el ancho del input */
+            z-index: 1050; /* Asegura que esté por encima de otros elementos */
         }
-
-        .custom-dropdown-item {
-            padding: 8px 15px;
+        .dropdown-item {
             cursor: pointer;
-            transition: background-color 0.2s;
         }
-
-        .custom-dropdown-item:hover {
-            background-color: #f0f0f0;
-        }
-
-        /* Media queries para responsividad de modales y botones */
-        @media (max-width: 768px) {
-            .modal-content {
-                max-width: 95%;
-                width: auto;
-                padding: 15px;
-            }
-            .modal-header {
-                margin-bottom: 10px;
-            }
-            .modal-title {
-                font-size: 1em;
-            }
-            .modal-close-button {
-                font-size: 1.2em;
-            }
-            .modal-body {
-                font-size: 0.9em;
-                padding: 0 0 5px 0;
-            }
-            .modal-footer {
-                flex-direction: column;
-                gap: 8px;
-                margin-top: 10px;
-            }
-            .custom-button, .btn-guardar {
-                width: 100%;
-                padding: 10px 15px;
-                font-size: 0.85em;
-            }
-            .celdas-grid-container {
-                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-                max-height: 200px;
-            }
-            .celda-card-modal {
-                height: 80px;
-                font-size: 0.8em;
-            }
-            .celda-card-modal i {
-                font-size: 1.2em;
-            }
-
-            .custom-toast {
-                width: 90%;
-                padding: 12px 20px;
-                font-size: 0.95em;
-                gap: 10px;
-            }
-            .custom-toast-close {
-                font-size: 1.4em;
-            }
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
         }
     </style>
 </head>
 
 <body>
 
-    <%- include('header') %>
-    <main>
-        <div class="contenido-principal">
-            <div class="caja-oscura">
-                <div class="columnas">
-                    <div class="imagen_ingreso imagen_is">
-                        <div class="decoracion-input">
-                            <input type="text" id="placa-input" class="placas-input" placeholder="Placa: XXX-XXX"
-                                maxlength="7" pattern="[A-Z]{3}-\d{3}" required />
-                            <hr class="linea-windows" />
-                            <p class="centrar-texto">Escribe la placa y haz clic en una acción</p>
-                            <div class="centrar">
-                                <button id="btn-ingreso" class="botones-grandes btn-entrada">INGRESO <i
-                                        class="fa-solid fa-arrow-down"></i></button>
-                                <button id="btn-salida" class="botones-grandes btn-salida" disabled>SALIDA <i
-                                        class="fa-solid fa-arrow-up"></i></button>
-                            </div>
-                        </div>
+<%- include('header') %>
+    <main class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="decoracion-input">
+                    <input type="text" id="placa-input" class="form-control placas-input" placeholder="Placa: XXX-XXX"
+                        maxlength="7" pattern="[A-Z]{3}-\d{3}" required />
+                    <hr class="linea-windows" />
+                    <p class="centrar-texto">Escribe la placa y haz clic en una acción</p>
+                    <div class="centrar">
+                        <button id="btn-ingreso" class="btn btn-info btn-entrada">INGRESO <i
+                                class="fa-solid fa-arrow-down"></i></button>
+                        <button id="btn-salida" class="btn btn-success btn-salida" disabled>SALIDA <i
+                                class="fa-solid fa-arrow-up"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center mt-4">
+            <div class="col-md-6">
+                <div class="card p-3 mb-3">
+                    <h5 class="card-title text-center mb-3">Resumen de Celdas</h5>
+                    <div class="d-flex justify-content-around flex-wrap" id="resumen-celdas">
+                        <!-- Contenido cargado por JS -->
+                        <div class="text-center text-muted">Cargando resumen...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card p-3 mb-3">
+                    <h5 class="card-title text-center mb-3">Resumen de Zonas</h5>
+                    <div class="d-flex justify-content-around flex-wrap" id="resumen-zonas">
+                        <!-- Contenido cargado por JS -->
+                        <div class="text-center text-muted">Cargando resumen...</div>
                     </div>
                 </div>
             </div>
@@ -615,140 +263,158 @@
     </main>
 
     <!-- Modal para Registrar Vehículo y Propietario -->
-    <div class="modal-overlay" id="modal-registrar-vehiculo">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="modal-title">Registro de Vehículo y Propietario</span>
-                <button class="modal-close-button" id="btn-cerrar-modal-registrar">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p class="custom-text-muted">La placa <strong id="placa-registrar-span"></strong> no está registrada.
-                    Por favor, complete los datos.</p>
+    <!-- Se eliminó la clase custom 'modal-overlay' y se usaron las clases estándar de Bootstrap 'modal fade' -->
+    <div class="modal fade" id="modal-registrar-vehiculo" tabindex="-1" aria-labelledby="modalRegistrarVehiculoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl"> <!-- Usar modal-xl para 1200px en pantallas grandes -->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalRegistrarVehiculoLabel">Registro de Vehículo y Propietario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="btn-cerrar-modal-registrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">La placa <strong id="placa-registrar-span"></strong> no está registrada.
+                        Por favor, complete los datos.</p>
 
-                <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
-                    <div style="flex:1 1 350px;min-width:340px;max-width:500px;">
-                        <!-- Acordeón para Propietario -->
-                        <div class="custom-accordion-item">
-                            <div class="custom-accordion-header" id="headingUsuario">
-                                <span><i class="fa-solid fa-user-plus custom-margin-right-sm"></i> Datos del Propietario</span>
-                                <i class="fa-solid fa-chevron-down accordion-icon"></i>
-                            </div>
-                            <div id="collapseUsuario" class="custom-accordion-content">
-                                <div class="accordion-body-inner">
-                                    <div class="form-group">
-                                        <label for="usuario-buscar-doc-operar" class="custom-label">Buscar Propietario
-                                            (Documento/Nombre)</label>
-                                        <input type="text" class="custom-input" id="usuario-buscar-doc-operar"
-                                            placeholder="Buscar existente o dejar vacío para nuevo" />
-                                        <div id="sugerencias-propietario" class="custom-dropdown-menu"></div>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="usuario_id_operar" class="custom-label">Seleccionar Propietario</label>
-                                        <select class="custom-select" id="usuario_id_operar" name="usuario_id_usuario">
-                                            <option value="">Seleccione propietario</option>
-                                        </select>
-                                    </div>
-
-                                    <div id="usuario-resumen-operar" class="user-summary-box">
-                                        <h6>Propietario Seleccionado:</h6>
-                                        <p><strong>Nombre:</strong> <span id="res-nombre"></span></p>
-                                        <p><strong>Documento:</strong> <span id="res-documento"></span></p>
-                                        <p><strong>Correo:</strong> <span id="res-correo"></span></p>
-                                        <p><strong>Celular:</strong> <span id="res-celular"></span></p>
-                                    </div>
-
-                                    <hr>
-                                    <p class="custom-text-muted">O registrar un nuevo propietario:</p>
-                                    <form id="form-registrar-usuario" autocomplete="off">
-                                        <div class="custom-grid-2-col">
-                                            <div><label for="doc_usuario" class="custom-label">Número de Documento</label><input type="text" id="doc_usuario" name="documento" class="custom-input" required /></div>
-                                            <div><label for="nombre_usuario" class="custom-label">Primer Nombre</label><input type="text" id="nombre_usuario" name="primer_nombre" class="custom-input" required /></div>
-                                            <div><label for="apellido_usuario" class="custom-label">Primer Apellido</label><input type="text" id="apellido_usuario" name="primer_apellido" class="custom-input" required /></div>
-                                            <div><label for="correo_usuario" class="custom-label">Correo</label><input type="email" id="correo_usuario" name="correo" class="custom-input" required /></div>
-                                            <div><label for="celular_usuario" class="custom-label">Celular</label><input type="text" id="celular_usuario" name="celular" class="custom-input" required /></div>
-                                        </div>
-                                        <div class="modal-footer custom-justify-end">
-                                            <button type="submit" class="custom-button button-primary">Registrar Propietario</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Acordeón para Vehículo -->
-                        <div class="custom-accordion-item">
-                            <div class="custom-accordion-header" id="headingVehiculo">
-                                <span><i class="fa-solid fa-car-side custom-margin-right-sm"></i> Datos del Vehículo</span>
-                                <i class="fa-solid fa-chevron-down accordion-icon"></i>
-                            </div>
-                            <div id="collapseVehiculo" class="custom-accordion-content show">
-                                <div class="accordion-body-inner">
-                                    <form id="form-registrar-vehiculo" autocomplete="off">
-                                        <p>Vehículo con placa <strong id="placa-registrar-span"></strong> no está registrada.</p>
-                                        <div class="custom-grid-2-col">
-                                            <div><label for="placa_registrar" class="custom-label">Placa</label><input type="text" id="placa_registrar" name="placa" class="custom-input" readonly required /></div>
-                                            <div>
-                                                <label for="color_registrar" class="custom-label">Color</label>
-                                                <input type="text" id="color_registrar" name="color" class="custom-input" required list="colores-lista" autocomplete="off" style="margin-bottom:6px;" />
-                                                <div class="color-palette">
-                                                    <span class="color-circle" data-color="Rojo" style="background:#ff0000;"></span>
-                                                    <span class="color-circle" data-color="Azul" style="background:#0000ff;"></span>
-                                                    <span class="color-circle" data-color="Negro" style="background:#000;"></span>
-                                                    <span class="color-circle" data-color="Blanco" style="background:#fff;border:1px solid #ccc;"></span>
-                                                    <span class="color-circle" data-color="Gris" style="background:#888;"></span>
-                                                    <span class="color-circle" data-color="Verde" style="background:#008000;"></span>
-                                                    <span class="color-circle" data-color="Amarillo" style="background:#ffff00;"></span>
-                                                    <span class="color-circle" data-color="Naranja" style="background:#ffa500;"></span>
-                                                    <span class="color-circle" data-color="Plateado" style="background:#c0c0c0;"></span>
-                                                    <span class="color-circle" data-color="Oro" style="background:#ffd700;"></span>
-                                                    <span class="color-circle" data-color="Marrón" style="background:#8b4513;"></span>
-                                                </div>
-                                                <datalist id="colores-lista">
-                                                    <option value="Rojo">Rojo</option>
-                                                    <option value="Azul">Azul</option>
-                                                    <option value="Negro">Negro</option>
-                                                    <option value="Blanco">Blanco</option>
-                                                    <option value="Gris">Gris</option>
-                                                    <option value="Verde">Verde</option>
-                                                    <option value="Amarillo">Amarillo</option>
-                                                    <option value="Naranja">Naranja</option>
-                                                    <option value="Plateado">Plateado</option>
-                                                    <option value="Oro">Oro</option>
-                                                    <option value="Marrón">Marrón</option>
-                                                    <option value="Otro">Otro</option>
-                                                </datalist>
+                    <div class="row g-4"> <!-- Usar grid de Bootstrap para las dos columnas principales -->
+                        <div class="col-lg-6"> <!-- Columna izquierda para acordeones -->
+                            <!-- Contenedor del Acordeón de Bootstrap -->
+                            <div class="accordion" id="accordionRegistro">
+                                <!-- Sección de Acordeón para Propietario -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingUsuario">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                            data-bs-target="#collapseUsuario" aria-expanded="true"
+                                            aria-controls="collapseUsuario" id="btn-acordeon-usuario">
+                                            <i class="fas fa-user me-2"></i> Registrar o Seleccionar Propietario
+                                        </button>
+                                    </h2>
+                                    <div id="collapseUsuario" class="accordion-collapse collapse show"
+                                        aria-labelledby="headingUsuario" data-bs-parent="#accordionRegistro">
+                                        <div class="accordion-body">
+                                            <div class="mb-3 position-relative">
+                                                <label for="usuario-buscar-doc-operar" class="form-label">Buscar Propietario
+                                                    (Documento/Nombre)</label>
+                                                <input type="text" class="form-control" id="usuario-buscar-doc-operar"
+                                                    placeholder="Buscar existente o dejar vacío para nuevo" />
+                                                <!-- Este div será el contenedor de las sugerencias del dropdown -->
+                                                <div id="sugerencias-propietario" class="dropdown-menu"></div>
                                             </div>
-                                            <div><label for="modelo_registrar" class="custom-label">Modelo</label><input type="text" id="modelo_registrar" name="modelo" class="custom-input" required /></div>
-                                            <div><label for="marca_registrar" class="custom-label">Marca</label><input type="text" id="marca_registrar" name="marca" class="custom-input" required /></div>
-                                            <div>
-                                                <label for="tipo_registrar" class="custom-label">Tipo</label>
-                                                <select id="tipo_registrar" name="tipo" class="custom-select" required>
-                                                    <option value="">Seleccione un tipo</option>
-                                                    <option value="Carro">Carro</option>
-                                                    <option value="Moto">Moto</option>
-                                                    <option value="Bicicleta">Bicicleta</option>
+
+                                            <div class="mb-3">
+                                                <label for="usuario_id_operar" class="form-label">Propietario Seleccionado</label>
+                                                <select class="form-select" id="usuario_id_operar" name="usuario_id_usuario">
+                                                    <option value="">Seleccione propietario</option>
                                                 </select>
                                             </div>
-                                            <div>
-                                                <label for="parqueadero_registrar" class="custom-label">Parqueadero</label>
-                                                <select id="parqueadero_registrar" name="parqueadero_id" class="custom-select" required></select>
+
+                                            <div id="usuario-resumen-operar" class="card p-3 bg-light mt-3">
+                                                <h6>Propietario Seleccionado:</h6>
+                                                <p class="mb-1"><strong>Nombre:</strong> <span id="res-nombre"></span></p>
+                                                <p class="mb-1"><strong>Documento:</strong> <span id="res-documento"></span></p>
+                                                <p class="mb-1"><strong>Correo:</strong> <span id="res-correo"></span></p>
+                                                <p class="mb-1"><strong>Celular:</strong> <span id="res-celular"></span></p>
                                             </div>
+
+                                            <hr class="my-4">
+                                            <p class="text-muted text-center">O registrar un nuevo propietario:</p>
+                                            <form id="form-registrar-usuario" autocomplete="off">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6"><label for="doc_usuario" class="form-label">Número de Documento</label><input type="text" id="doc_usuario" name="documento" class="form-control" required /></div>
+                                                    <div class="col-md-6"><label for="nombre_usuario" class="form-label">Primer Nombre</label><input type="text" id="nombre_usuario" name="primer_nombre" class="form-control" required /></div>
+                                                    <div class="col-md-6"><label for="apellido_usuario" class="form-label">Primer Apellido</label><input type="text" id="apellido_usuario" name="primer_apellido" class="form-control" required /></div>
+                                                    <div class="col-md-6"><label for="correo_usuario" class="form-label">Correo</label><input type="email" id="correo_usuario" name="correo" class="form-control" required /></div>
+                                                    <div class="col-md-6"><label for="celular_usuario" class="form-label">Celular</label><input type="text" id="celular_usuario" name="celular" class="form-control" required /></div>
+                                                </div>
+                                                <div class="d-flex justify-content-end mt-3">
+                                                    <button type="submit" class="btn btn-primary">Registrar Propietario</button>
+                                                </div>
+                                            </form>
                                         </div>
-                                        <div class="modal-footer custom-justify-end">
-                                            <button type="submit" class="custom-button button-success" id="btn-guardar-vehiculo-registrar" disabled>
-                                                <i class="fa-solid fa-save custom-margin-right-sm"></i> Guardar Vehículo y Asignar Celda
-                                            </button>
+                                    </div>
+                                </div>
+
+                                <!-- Sección de Acordeón para Vehículo -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="headingVehiculo">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                            data-bs-target="#collapseVehiculo" aria-expanded="false"
+                                            aria-controls="collapseVehiculo" id="btn-acordeon-vehiculo">
+                                            <i class="fas fa-car me-2"></i> Detalles del Vehículo y Asignación de Celda
+                                        </button>
+                                    </h2>
+                                    <div id="collapseVehiculo" class="accordion-collapse collapse"
+                                        aria-labelledby="headingVehiculo" data-bs-parent="#accordionRegistro">
+                                        <div class="accordion-body">
+                                            <form id="form-registrar-vehiculo" autocomplete="off">
+                                                <p class="text-muted">Detalles para el vehículo con placa <strong id="placa-registrar-span-vehiculo"></strong>.</p>
+                                                <input type="hidden" id="placa_registrar" name="placa">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <label for="color_registrar" class="form-label">Color</label>
+                                                        <input type="text" id="color_registrar" name="color" class="form-control" required list="colores-lista" autocomplete="off" />
+                                                        <div class="color-palette mt-2">
+                                                            <span class="color-circle" data-color="Rojo" style="background:#ff0000;"></span>
+                                                            <span class="color-circle" data-color="Azul" style="background:#0000ff;"></span>
+                                                            <span class="color-circle" data-color="Negro" style="background:#000;"></span>
+                                                            <span class="color-circle" data-color="Blanco" style="background:#fff;border:1px solid #ccc;"></span>
+                                                            <span class="color-circle" data-color="Gris" style="background:#888;"></span>
+                                                            <span class="color-circle" data-color="Verde" style="background:#008000;"></span>
+                                                            <span class="color-circle" data-color="Amarillo" style="background:#ffff00;"></span>
+                                                            <span class="color-circle" data-color="Naranja" style="background:#ffa500;"></span>
+                                                            <span class="color-circle" data-color="Plateado" style="background:#c0c0c0;"></span>
+                                                            <span class="color-circle" data-color="Oro" style="background:#ffd700;"></span>
+                                                            <span class="color-circle" data-color="Marrón" style="background:#8b4513;"></span>
+                                                            <span class="color-circle" data-color="Otro" style="background:#ccc;"></span>
+                                                        </div>
+                                                        <datalist id="colores-lista">
+                                                            <option value="Rojo"></option>
+                                                            <option value="Azul"></option>
+                                                            <option value="Negro"></option>
+                                                            <option value="Blanco"></option>
+                                                            <option value="Gris"></option>
+                                                            <option value="Verde"></option>
+                                                            <option value="Amarillo"></option>
+                                                            <option value="Naranja"></option>
+                                                            <option value="Plateado"></option>
+                                                            <option value="Oro"></option>
+                                                            <option value="Marrón"></option>
+                                                            <option value="Otro"></option>
+                                                        </datalist>
+                                                    </div>
+                                                    <div class="col-md-6"><label for="modelo_registrar" class="form-label">Modelo</label><input type="text" id="modelo_registrar" name="modelo" class="form-control" required /></div>
+                                                    <div class="col-md-6"><label for="marca_registrar" class="form-label">Marca</label><input type="text" id="marca_registrar" name="marca" class="form-control" required /></div>
+                                                    <div class="col-md-6">
+                                                        <label for="tipo_registrar" class="form-label">Tipo de Vehículo</label>
+                                                        <select id="tipo_registrar" name="tipo" class="form-select" required>
+                                                            <option value="">Seleccione un tipo</option>
+                                                            <option value="Carro">Carro</option>
+                                                            <option value="Moto">Moto</option>
+                                                            <option value="Camioneta">Camioneta</option>
+                                                            <option value="Bicicleta">Bicicleta</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <label for="parqueadero_registrar" class="form-label">Parqueadero</label>
+                                                        <select id="parqueadero_registrar" name="parqueadero_id" class="form-select" required></select>
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex justify-content-end mt-4">
+                                                    <button type="submit" class="btn btn-success" id="btn-guardar-vehiculo-registrar" disabled>
+                                                        <i class="fa-solid fa-save me-2"></i> Guardar Vehículo y Asignar Celda
+                                                    </button>
+                                                </div>
+                                            </form>
                                         </div>
-                                    </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div style="flex:1 1 400px;min-width:340px;max-width:700px;">
-                        <p id="parq-info-modal" class="custom-text-muted custom-text-center"></p>
-                        <div id="grid-celdas-modal" class="celdas-grid-container">
-                            <p class="custom-text-center custom-text-muted" style="grid-column:1/-1;">Seleccione un parqueadero.</p>
+
+                        <div class="col-lg-6"> <!-- Columna derecha para celdas -->
+                            <p id="parq-info-modal" class="text-muted text-center"></p>
+                            <div id="grid-celdas-modal" class="celdas-grid-container">
+                                <p class="text-center text-muted" style="grid-column:1/-1;">Seleccione un parqueadero.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -757,85 +423,101 @@
     </div>
 
     <!-- Modal para Asignar Celda (Ingreso) -->
-    <div class="modal-overlay" id="modal-asignar-celda">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Asignar Celda para <span id="placa-modal-span"></span></h5>
-                <button type="button" class="modal-close-button" id="btn-cerrar-modal-celda">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p class="custom-text-muted">Seleccione la celda disponible para el vehículo.</p>
-                <div class="custom-grid-2-col custom-margin-bottom-md">
-                    <div>
-                        <label for="select-parqueadero" class="custom-label">Parqueadero</label>
-                        <select class="custom-select" id="select-parqueadero"></select>
-                    </div>
-                    <div>
-                        <label for="select-zona" class="custom-label">Zona</label>
-                        <select class="custom-select" id="select-zona"></select>
-                    </div>
+    <div class="modal fade" id="modal-asignar-celda" tabindex="-1" aria-labelledby="modalAsignarCeldaLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalAsignarCeldaLabel">Asignar Celda para <span id="placa-modal-span"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="btn-cerrar-modal-celda"></button>
                 </div>
-                <div id="celdas-disponibles-grid" class="celdas-grid-container">
-                    <p class="custom-text-center custom-text-muted" style="grid-column:1/-1;">Seleccione parqueadero y zona.</p>
+                <div class="modal-body">
+                    <p class="text-muted">Seleccione la celda disponible para el vehículo.</p>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="select-parqueadero" class="form-label">Parqueadero</label>
+                            <select class="form-select" id="select-parqueadero"></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="select-zona" class="form-label">Zona</label>
+                            <select class="form-select" id="select-zona"></select>
+                        </div>
+                    </div>
+                    <div id="celdas-disponibles-grid" class="celdas-grid-container">
+                        <p class="text-center text-muted" style="grid-column:1/-1;">Seleccione parqueadero y zona.</p>
+                    </div>
+                    <p id="modal-celda-msg" class="text-danger text-center mt-3"></p>
                 </div>
-                <p id="modal-celda-msg" class="custom-text-danger custom-text-center"></p>
-            </div>
-            <div class="modal-footer">
-                <input type="hidden" id="modal-celda-id" name="id" />
-                <button type="button" class="custom-button button-secondary" id="btn-cerrar-modal-celda">Cancelar</button>
-                <button type="button" class="custom-button button-primary" id="btn-confirmar-asignacion" disabled>
-                    <i class="fa-solid fa-check-circle custom-margin-right-sm"></i> Confirmar Asignación
-                </button>
+                <div class="modal-footer">
+                    <input type="hidden" id="modal-celda-id" name="id" />
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btn-confirmar-asignacion" disabled>
+                        <i class="fa-solid fa-check-circle me-2"></i> Confirmar Asignación
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Confirmación Genérico (para Salida, etc.) -->
-    <div class="modal-overlay" id="confirm-modal">
-        <div class="modal-content" style="max-width: 450px;">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirmar Acción</h5>
-                <button type="button" class="modal-close-button" id="confirm-cancel-btn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p id="confirm-message" style="font-size: 1.1em; text-align: center; margin-bottom: 1.5rem;"></p>
-            </div>
-            <div class="modal-footer custom-justify-center custom-gap-1rem">
-                <button type="button" class="custom-button button-secondary" id="confirm-cancel-btn">Cancelar</button>
-                <button type="button" class="custom-button button-primary" id="confirm-ok-btn">Aceptar</button>
+    <!-- Modal de Confirmación Genérico -->
+    <div class="modal fade" id="confirm-modal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Confirmar Acción</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="confirm-cancel-btn"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p id="confirm-message" class="fs-5 mb-4"></p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirm-ok-btn">Aceptar</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Nuevo Modal de Confirmación de Salida Exitosa -->
-    <div class="modal-overlay" id="modal-salida-confirmacion">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h5 class="modal-title">¡Salida Exitosa!</h5>
-                <button type="button" class="modal-close-button" id="btn-cerrar-modal-salida-confirmacion">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>El vehículo ha salido correctamente del parqueadero.</p>
-                <p>
-                    <strong>Placa:</strong> <span id="placa-salida-confirmacion"></span><br>
-                    <strong>Celda:</strong> <span id="celda-salida-confirmacion"></span><br>
-                    <strong>Zona:</strong> <span id="zona-salida-confirmacion"></span><br>
-                    <strong>Parqueadero:</strong> <span id="parqueadero-salida-confirmacion"></span>
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="custom-button button-primary" id="btn-cerrar-modal-salida-confirmacion">Aceptar</button>
+    <div class="modal fade" id="modal-salida-confirmacion" tabindex="-1" aria-labelledby="modalSalidaConfirmacionLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalSalidaConfirmacionLabel">¡Salida Exitosa!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="btn-cerrar-modal-salida-confirmacion"></button>
+                </div>
+                <div class="modal-body">
+                    <p>El vehículo ha salido correctamente del parqueadero.</p>
+                    <p>
+                        <strong>Placa:</strong> <span id="placa-salida-confirmacion"></span><br>
+                        <strong>Celda:</strong> <span id="celda-salida-confirmacion"></span><br>
+                        <strong>Zona:</strong> <span id="zona-salida-confirmacion"></span><br>
+                        <strong>Parqueadero:</strong> <span id="parqueadero-salida-confirmacion"></span>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Aceptar</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Toast para mensajes de notificación -->
-    <div id="toast-msg" class="custom-toast">
-        <div class="toast-body-content" id="toast-body">
+    <!-- Se usa la estructura de toast de Bootstrap -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast-msg" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toast-body">
+                    <!-- Mensaje del toast aquí -->
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
         </div>
-        <button type="button" class="custom-toast-close" onclick="cerrarToast()">&times;</button>
     </div>
 
+    <!-- Incluye Bootstrap JS (bundle incluye Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="/admin/js/operar-main.js" defer></script>
 </body>
 

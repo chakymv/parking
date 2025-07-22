@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accesos de Salida</title>
+  <link rel="stylesheet" href="/admin/css/estilo.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+  <%- include('header') %>
+  <main>
+    <div class="contenido-principal">
+      <h1 class="centrar">Accesos de Salida</h1>
+      <p class="centrar">Historial de vehículos que han salido del parqueadero</p>
+      <hr class="linea-windows">
+
+      <div class="filtros">
+        <input type="text" id="buscadorGeneral" class="input-filtro" placeholder="Buscar...">
+      </div>
+
+      <table id="salidas-table" class="datatable tabla-acceso" style="width:100%">
+        <thead>
+          <tr>
+            <th>Placa</th>
+            <th>Vehículo</th>
+            <th>Tipo</th>
+            <th>Fecha de Salida</th>
+            <th>Celda</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Se cargará dinámicamente con AJAX -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    $(document).ready(function() {
+      const table = $('#salidas-table').DataTable({
+        ajax: {
+          url: "/api/historial_parqueo/salidas", // Asegúrate de que esta ruta devuelve solo accesos tipo "salida"
+          dataSrc: "",
+          error: function (jqXHR, textStatus, errorThrown) {
+            console.error("Error de Ajax:", textStatus, errorThrown);
+            $('#salidas-table_processing').hide();
+            $('#salidas-table tbody').html(
+              '<tr><td colspan="5" class="centrar" style="color:red;">Error al cargar los datos. Revisa la consola.</td></tr>'
+            );
+          }
+        },
+        columns: [
+          { data: "placa" },
+          {
+            data: null,
+            render: function(row) {
+              return `${row.marca || ''}, ${row.modelo || ''}, ${row.color || ''}`.replace(/(, ){2,}/g, ', ').trim();
+            }
+          },
+          { data: "tipo" },
+          {
+            data: "fecha_hora",
+            render: function(data) {
+              return data ? new Date(data).toLocaleString('es-CO') : 'Sin fecha';
+            }
+          },
+          { data: "celda_id" }
+        ],
+        language: {
+          url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
+        },
+        responsive: true,
+        order: [[3, "desc"]]
+      });
+
+      $('#buscadorGeneral').on('keyup', function() {
+        table.search(this.value).draw();
+      });
+    });
+  </script>
+</body>
+</html>

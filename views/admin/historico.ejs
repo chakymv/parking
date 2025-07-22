@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Histórico</title>
+  <title>Accesos de Salida</title>
   <link rel="stylesheet" href="/admin/css/estilo.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
@@ -14,26 +14,28 @@
   <%- include('header') %>
   <main>
     <div class="contenido-principal">
-      <h1 class="centrar">Histórico de Entradas y Salidas</h1>
-      <p class="centrar">Consulta el historial de movimientos de vehículos en el parqueadero.</p>
+      <h1 class="centrar">Accesos de Salida - Historial</h1>
+      <p class="centrar">Historial de vehículos que han salido del parqueadero</p>
       <hr class="linea-windows">
 
       <div class="filtros">
-        <input type="text" id="buscadorGeneral" class="input-filtro" placeholder="Buscar en el histórico...">
+        <input type="text" id="buscadorGeneral" class="input-filtro" placeholder="Buscar...">
       </div>
 
-      <table id="historico-table" class="datatable tabla-usuarios" style="width:100%">
+      <table id="salidas-table" class="datatable tabla-acceso" style="width:100%">
         <thead>
           <tr>
             <th>Placa</th>
-            <th>Vehículo (Marca, Modelo, Color)</th>
+            <th>Modelo</th>
             <th>Tipo</th>
-            <th>Fecha del Evento</th>
+            <th>Color</th>
+            <th>Fecha de Ingreso</th> <!-- NUEVA COLUMNA -->
+            <th>Fecha de Salida</th>
             <th>Celda</th>
           </tr>
         </thead>
         <tbody>
-          <!-- Datos cargados dinámicamente -->
+          <!-- Se cargará dinámicamente con AJAX -->
         </tbody>
       </table>
     </div>
@@ -41,43 +43,49 @@
 
   <script>
     $(document).ready(function() {
-      const table = $('#historico-table').DataTable({
+      const table = $('#salidas-table').DataTable({
         ajax: {
-          url: "/api/historial_parqueo",
+          url: "/api/historial_parqueo/salidas",
           dataSrc: "",
           error: function (jqXHR, textStatus, errorThrown) {
             console.error("Error de Ajax:", textStatus, errorThrown);
-            $('#historico-table_processing').hide();
-            $('#historico-table tbody').html(
-              '<tr><td colspan="5" class="centrar" style="color:red;">Error al cargar los datos. Revisa la consola (F12).</td></tr>'
+            $('#salidas-table_processing').hide();
+            $('#salidas-table tbody').html(
+              '<tr><td colspan="7" class="centrar" style="color:red;">Error al cargar los datos. Revisa la consola.</td></tr>' // COLSPAN AJUSTADO
             );
           }
         },
         columns: [
-          { data: "placa" },
+          { data: "vehiculo.placa" },
           {
             data: null,
             render: function(row) {
-              const marca = row.marca || '';
-              const modelo = row.modelo || '';
-              const color = row.color || '';
-              return `${marca}, ${modelo}, ${color}`.replace(/(, ){2,}/g, ', ').trim();
+              console.log(row); // Línea de depuración: inspecciona el objeto de la fila
+              const modelo = row.vehiculo ? row.vehiculo.modelo : '';
+              return modelo;
             }
           },
-          { data: "tipo" },
-          {
-            data: "fecha_hora",
+          { data: "vehiculo.tipo" },
+          { data: "vehiculo.color" },
+          { // NUEVA COLUMNA: Fecha de Ingreso
+            data: "entrada",
             render: function(data) {
-              return data ? new Date(data).toLocaleString('es-CO') : 'N/A';
+              return data ? new Date(data).toLocaleString('es-CO') : 'Sin fecha';
             }
           },
-          { data: "celda_id" }
+          {
+            data: "salida",
+            render: function(data) {
+              return data ? new Date(data).toLocaleString('es-CO') : 'Sin fecha';
+            }
+          },
+          { data: "celda.numero" }
         ],
         language: {
           url: "https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json"
         },
         responsive: true,
-        order: [[3, "desc"]]
+        order: [[5, "desc"]] // ORDEN AJUSTADO: Ahora es la columna 5 (índice 4) para Fecha de Salida
       });
 
       $('#buscadorGeneral').on('keyup', function() {

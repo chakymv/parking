@@ -1,320 +1,149 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Vehículos</title>
-  <link rel="stylesheet" href="/admin/css/estilo.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehículos</title>
+    <link rel="stylesheet" href="/admin/css/estilo.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        .clickable-row {
+            cursor: pointer;
+        }
+        .dropdown-menu.custom-dropdown {
+            position: absolute;
+            z-index: 1000;
+            background-color: #fff;
+            border: 1px solid rgba(0,0,0,.15);
+            border-radius: .25rem;
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.175);
+            padding: .5rem 0;
+            min-width: 10rem;
+        }
+        .dropdown-menu.custom-dropdown label.dropdown-item {
+            padding: .25rem 1rem;
+            display: flex;
+            align-items: center;
+        }
+        .dropdown-menu.custom-dropdown label.dropdown-item input[type="checkbox"] {
+            margin-right: .5rem;
+        }
+        .dropdown.show .dropdown-menu.custom-dropdown {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-  <%- include('header') %>
-  <main>
-    <div class="contenido-principal">
-      <h1 class="centrar">Gestionar Vehículos ingresados</h1>
-      <p class="centrar">Esta tabla permite realizar búsqueda de vehículos</p>
-      <hr class="linea-windows">
-      <div class="filtros-vehiculos">
-        <div id="column-selector" class="dropdown"></div>
-        <input id="filtro" class="input-filtro" placeholder="Buscar..." oninput="filterTable()" />
-      </div>
-      <table border="1" id="vehiculos-table" class="datatable tabla-vehiculos"></table>
-  <script>
-    // --- VEHICULOS ---
-    const colNames = {
-      id: 'ID',
-      placa: 'Placa',
-      color: 'Color',
-      modelo: 'Modelo',
-      marca: 'Marca',
-      tipo: 'Tipo',
-      usuario_id_usuario: 'ID Usuario'
-    };
-    const allColumns = ['id', 'placa', 'color', 'modelo', 'marca', 'tipo', 'usuario_id_usuario'];
-    let columns = ['placa', 'color', 'modelo', 'marca', 'tipo']; // Ocultar IDs por defecto
-    let data = [];
-    let dataTableInstance = null;
-
-    async function fetchVehiculos() {
-      try {
-        const res = await fetch('/api/vehiculos');
-        if (!res.ok) {
-          alert('Error al obtener vehículos');
-          return;
-        }
-        data = await res.json();
-        if (!Array.isArray(data)) {
-          alert('La respuesta de vehículos no es un array');
-          data = [];
-        }
-        renderTable();
-        renderColumnSelector();
-      } catch (err) {
-        alert('Error de conexión');
-      }
-    }
-
-    function renderTable(filteredData) {
-      const table = document.getElementById('vehiculos-table');
-      if (dataTableInstance) {
-        dataTableInstance.destroy();
-        dataTableInstance = null;
-      }
-      table.innerHTML = '';
-      if (!columns || columns.length === 0) {
-        table.innerHTML = '<thead><tr><th>Sin columnas seleccionadas</th></tr></thead><tbody><tr><td>Seleccione al menos una columna</td></tr></tbody>';
-        return;
-      }
-      let header = '<thead><tr>';
-      columns.forEach(col => header += `<th>${colNames[col] || col}</th>`);
-      header += '</tr></thead>';
-      table.innerHTML += header;
-      let rows = '<tbody>';
-      const rowsData = (filteredData !== undefined ? filteredData : data) || [];
-      if (!rowsData.length) {
-        rows += `<tr><td colspan="${columns.length}" style="text-align:center;">No hay vehículos para mostrar</td></tr>`;
-      } else {
-        rowsData.forEach((row, idx) => {
-          let tr = `<tr data-usuario-id="${row.usuario_id_usuario}" data-row-idx="${idx}">`;
-          columns.forEach(col => tr += `<td>${row[col] ?? ''}</td>`);
-          tr += '</tr>';
-          rows += tr;
-        });
-      }
-      rows += '</tbody>';
-      table.innerHTML += rows;
-      dataTableInstance = $('#vehiculos-table').DataTable({
-        paging: true,
-        searching: false,
-        info: true,
-        responsive: true,
-        language: {
-          info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
-          lengthMenu: "Mostrar _MENU_ registros",
-          paginate: {
-            previous: "Anterior",
-            next: "Siguiente"
-          },
-          search: "Buscar:",
-          zeroRecords: "No se encontraron resultados",
-          infoEmpty: "Mostrando 0 a 0 de 0 registros",
-          infoFiltered: "(filtrado de _MAX_ registros totales)",
-          loadingRecords: "Cargando...",
-          processing: "Procesando...",
-          emptyTable: "No hay datos disponibles en la tabla"
-        }
-      });
-      // Delegación de evento click en filas
-      const tbody = table.querySelector('tbody');
-      if (tbody) {
-        tbody.onclick = async function(e) {
-          const row = e.target.closest('tr[data-usuario-id][data-row-idx]');
-          if(!row) return;
-          const usuarioId = row.getAttribute('data-usuario-id');
-          const vehiculoIdx = row.getAttribute('data-row-idx');
-          const vehiculo = data[vehiculoIdx];
-          if(usuarioId && vehiculo) await mostrarModalVehiculo(vehiculo, usuarioId);
-        };
-      }
-    }
-
-  // Modal para editar/eliminar vehículo
-  function crearModalVehiculo() {
-    let modal = document.getElementById('modal-vehiculo-info');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 'modal-vehiculo-info';
-      modal.className = 'modal';
-      modal.innerHTML = `
-        <div class="contenido-modal">
-          <div class="encabezado-modal">
-            <span>Editar Vehículo</span>
-            <button class="cerrar" onclick="document.getElementById('modal-vehiculo-info').classList.remove('active')">&times;</button>
-          </div>
-          <div class="cuerpo-modal" id="vehiculo-info-body" style="min-width:340px;"></div>
+    <%- include('header') %>
+    <main>
+        <div class="contenido-principal">
+            <h1 class="centrar">Gestionar Vehículos ingresados</h1>
+            <p class="centrar">Esta tabla permite realizar búsqueda de vehículos.</p>
+            <hr class="linea-windows">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <button id="btn-abrir-modal-crear" class="btn btn-success">
+                    <i class="fa-solid fa-car-side"></i> Agregar
+                </button>
+                <div class="d-flex align-items-center">
+                    <div id="column-selector" class="dropdown me-2"></div>
+                    <input id="filtro" class="form-control input-filtro" placeholder="Buscar..." />
+                </div>
+            </div>
+            <table id="vehiculos-table" class="datatable tabla-vehiculos w-100">
+                <thead>
+                    <tr>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
         </div>
-      `;
-      document.body.appendChild(modal);
-    }
-    return modal;
-  }
 
-  async function mostrarModalVehiculo(vehiculo, usuarioId) {
-    const modal = crearModalVehiculo();
-    const body = modal.querySelector('#vehiculo-info-body');
-    body.innerHTML = 'Cargando...';
-    modal.classList.add('active');
-    try {
-      // Obtener datos del usuario
-      const res = await fetch(`/api/usuarios/${usuarioId}`);
-      let usuario = null;
-      if(res.ok) usuario = await res.json();
-      // Formulario de edición de vehículo con selector de usuario
-      let html = `<form id="form-editar-vehiculo">
-        <input type="hidden" name="id" value="${vehiculo.id}">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div><label>Placa</label><input type="text" name="placa" value="${vehiculo.placa ?? ''}" required></div>
-          <div><label>Color</label><input type="text" name="color" value="${vehiculo.color ?? ''}" required></div>
-          <div><label>Modelo</label><input type="text" name="modelo" value="${vehiculo.modelo ?? ''}" required></div>
-          <div><label>Marca</label><input type="text" name="marca" value="${vehiculo.marca ?? ''}" required></div>
-          <div><label>Tipo</label><input type="text" name="tipo" value="${vehiculo.tipo ?? ''}" required></div>
+        <div class="modal fade" id="modal-vehiculo" tabindex="-1" aria-labelledby="modalTitulo" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalTitulo"></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="form-vehiculo">
+                            <input type="hidden" id="vehiculo-id" name="id">
+                            <div class="mb-3">
+                                <label for="placa" class="form-label">Placa</label>
+                                <input type="text" class="form-control" id="placa" name="placa" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="color" class="form-label">Color</label>
+                                <input type="text" class="form-control" id="color" name="color">
+                            </div>
+                            <div class="mb-3">
+                                <label for="modelo" class="form-label">Modelo</label>
+                                <input type="text" class="form-control" id="modelo" name="modelo">
+                            </div>
+                            <div class="mb-3">
+                                <label for="marca" class="form-label">Marca</label>
+                                <input type="text" class="form-control" id="marca" name="marca">
+                            </div>
+                            <div class="mb-3">
+                                <label for="tipo" class="form-label">Tipo</label>
+                                <input type="text" class="form-control" id="tipo" name="tipo">
+                            </div>
+                            <div class="mb-3">
+                                <label for="usuario-buscar-doc" class="form-label">Propietario (Buscar por documento o nombre)</label>
+                                <input type="text" class="form-control mb-2" id="usuario-buscar-doc" placeholder="Ingrese número de documento o nombre...">
+                                <select class="form-select" id="usuario_id_usuario" name="usuario_id_usuario" required>
+                                    <option value="">Seleccione un propietario</option>
+                                </select>
+                            </div>
+                            <div id="modal-msg" class="mt-2 text-danger"></div>
+                            <div class="modal-footer justify-content-end">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                                <button type="submit" class="btn btn-primary" id="btn-guardar-vehiculo">Guardar</button>
+                                
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div style="margin-top:10px;">
-          <label>Buscar usuario por documento</label>
-          <input type="text" id="usuario-buscar-doc" placeholder="Ingrese número de documento..." style="width:90%;">
-          <select id="usuario-select" name="usuario_id_usuario" style="width:95%;margin-top:5px;">
-            <option value="${usuario ? usuario.id : vehiculo.usuario_id_usuario}">
-              ${(() => {
-                if (usuario) {
-                  const doc = usuario.documento || usuario.id || '';
-                  const rol = usuario.rol ? ' - ' + usuario.rol : '';
-                  const nombres = [usuario.primer_nombre, usuario.segundo_nombre].filter(Boolean).join(' ');
-                  const apellidos = [usuario.primer_apellido, usuario.segundo_apellido].filter(Boolean).join(' ');
-                  return `${doc}${rol} - ${nombres} ${apellidos}`.replace(/undefined/g, '').replace(/  +/g, ' ').trim();
-                } else {
-                  return vehiculo.usuario_id_usuario || '';
-                }
-              })()}
-            </option>
-          </select>
+
+        <div class="modal fade" id="confirm-modal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="confirmModalLabel">Confirmación</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="confirm-message">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="confirm-cancel-btn" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-danger" id="confirm-ok-btn">Aceptar</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div id="vehiculo-modal-msg" style="color:red;margin-top:5px;"></div>
-        <div style="margin-top:15px;text-align:right;">
-          <button type="submit" class="btn-guardar">Guardar</button>
-          <button type="button" class="btn-eliminar" id="btn-eliminar-vehiculo-modal">Eliminar</button>
+
+        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div id="toast-msg" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="me-auto">Notificación</strong>
+                    <small>Ahora</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" id="toast-body">
+                </div>
+            </div>
         </div>
-      </form>`;
-      body.innerHTML = html;
 
-      // Buscador de usuario por documento
-      const inputBuscarDoc = document.getElementById('usuario-buscar-doc');
-      const selectUsuario = document.getElementById('usuario-select');
-      inputBuscarDoc.addEventListener('input', async function() {
-        const q = this.value.trim();
-        if (q.length < 2) {
-          selectUsuario.innerHTML = '';
-          return;
-        }
-        selectUsuario.innerHTML = '<option>Cargando...</option>';
-        try {
-          const res = await fetch(`/api/usuarios?documento=${encodeURIComponent(q)}`);
-          if (!res.ok) throw new Error('Error');
-          const usuarios = await res.json();
-          if (!Array.isArray(usuarios) || usuarios.length === 0) {
-            selectUsuario.innerHTML = '<option value="">Sin resultados</option>';
-            return;
-          }
-          // Solo mostrar el usuario que coincide
-          selectUsuario.innerHTML = usuarios.map(u => {
-            const nombres = [u.primer_nombre, u.segundo_nombre].filter(Boolean).join(' ');
-            const apellidos = [u.primer_apellido, u.segundo_apellido].filter(Boolean).join(' ');
-            const rol = u.rol ? ` - ${u.rol}` : '';
-            return `<option value='${u.id}' data-nombres='${nombres}' data-apellidos='${apellidos}'>${u.documento || u.id}${rol} - ${nombres} ${apellidos}</option>`;
-          }).join('');
-        } catch {
-          selectUsuario.innerHTML = '<option value="">Error de búsqueda</option>';
-        }
-      });
+    </main>
 
-      // Mostrar nombres y apellidos al seleccionar usuario
-      selectUsuario.addEventListener('change', function() {
-        const selected = this.options[this.selectedIndex];
-        const nombres = selected.getAttribute('data-nombres') || '';
-        const apellidos = selected.getAttribute('data-apellidos') || '';
-        let info = '';
-        if (nombres || apellidos) {
-          info = `<div id='usuario-info-seleccionado' style='margin-top:5px;color:#222;font-weight:bold;'>${nombres} ${apellidos}</div>`;
-        }
-        // Quitar anterior info
-        let old = document.getElementById('usuario-info-seleccionado');
-        if (old) old.remove();
-        // Insertar después del select
-        selectUsuario.insertAdjacentHTML('afterend', info);
-      });
-      // Eliminar vehículo
-      document.getElementById('btn-eliminar-vehiculo-modal').onclick = async function() {
-        if(!confirm('¿Eliminar este vehículo?')) return;
-        const delRes = await fetch(`/api/vehiculos/${vehiculo.id}`, { method: 'DELETE' });
-        if(delRes.ok) {
-          modal.classList.remove('active');
-          fetchVehiculos();
-        } else {
-          document.getElementById('vehiculo-modal-msg').innerText = 'Error al eliminar vehículo';
-        }
-      };
-      // Guardar cambios vehículo
-      document.getElementById('form-editar-vehiculo').onsubmit = async function(e) {
-        e.preventDefault();
-        const formData = Object.fromEntries(new FormData(this));
-        const putRes = await fetch(`/api/vehiculos/${vehiculo.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData)
-        });
-        if(putRes.ok) {
-          document.getElementById('vehiculo-modal-msg').style.color = 'green';
-          document.getElementById('vehiculo-modal-msg').innerText = 'Vehículo actualizado';
-          fetchVehiculos();
-          setTimeout(() => { modal.classList.remove('active'); }, 800);
-        } else {
-          document.getElementById('vehiculo-modal-msg').style.color = 'red';
-          document.getElementById('vehiculo-modal-msg').innerText = 'Error al actualizar vehículo';
-        }
-      };
-    } catch (e) {
-      body.innerHTML = '<div style="padding:12px;color:red;">Error de conexión</div>';
-    }
-  }
-
-    function renderColumnSelector() {
-      const selector = document.getElementById('column-selector');
-      const order = allColumns;
-      selector.innerHTML = `<button type='button' class='dropdown-btn' onclick='toggleDropdown(event)'>Seleccionar columnas ▼</button>` +
-        `<div class='dropdown-content custom-dropdown'>` +
-        order.map(col => {
-          const checked = columns.includes(col) ? 'checked' : '';
-          return `<label class='dropdown-check-label'><input type='checkbox' value='${col}' ${checked} onchange='toggleCol(this)'><span>${colNames[col] || col}</span></label>`;
-        }).join('') +
-        `</div>`;
-    }
-
-    function toggleDropdown(e) {
-      e.stopPropagation();
-      const selector = document.getElementById('column-selector');
-      selector.classList.toggle('show');
-      document.addEventListener('click', closeDropdown);
-    }
-    function closeDropdown(e) {
-      const selector = document.getElementById('column-selector');
-      if (!selector.contains(e.target)) {
-        selector.classList.remove('show');
-        document.removeEventListener('click', closeDropdown);
-      }
-    }
-
-    function toggleCol(checkbox) {
-      const col = checkbox.value;
-      if (checkbox.checked) {
-        if (!columns.includes(col)) columns.push(col);
-      } else {
-        columns = columns.filter(c => c !== col);
-      }
-      renderTable();
-    }
-
-    function filterTable() {
-      const filtro = document.getElementById('filtro').value.toLowerCase();
-      const filtered = data.filter(row => columns.some(col => (row[col]+'' || '').toLowerCase().includes(filtro)));
-      renderTable(filtered);
-    }
-
-    // Usar DOMContentLoaded para asegurar que el DOM esté listo
-    document.addEventListener('DOMContentLoaded', fetchVehiculos);
-  </script>
-
- 
- 
+  <script src="/public/js/gestion-vehiculos.js"></script>
 </body>
 </html>
