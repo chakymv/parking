@@ -1,155 +1,145 @@
 const express = require('express');
 const router = express.Router();
 const Vehiculo = require('../model/Vehiculo');
-
-const catchAsync = require('../utils/catchAsync');
-const {
-  validateCreateVehiculo,
-  validateUpdateVehiculo,
-  handleValidationErrors,
-} = require('../middlewares/validation.middleware');
+const HistorialParqueo = require('../model/HistorialParqueo');
+const Celda = require('../model/Celda');
+const Usuario = require('../model/Usuario');
 const { normalizePlaca } = require('../utils/normalizer');
-const supabase = require('../supabaseClient');
+const { supabase } = require('../supabaseClient');
 
+const {
+    validateCreateVehiculo,
+    validateUpdateVehiculo,
+    handleValidationErrors,
+} = require('../middlewares/validation.middleware');
+const catchAsync = require('../utils/catchAsync');
 
- // ⚠️ Verificá esta ruta según tu estructura
-
-// 🔍 Buscar vehículo por placa
 router.get('/placa/:placa', catchAsync(async (req, res) => {
-  const placa = normalizePlaca(req.params.placa);
-  if (!placa) return res.status(400).json({ error: 'Placa no proporcionada o inválida' });
+    const placa = normalizePlaca(req.params.placa);
+    if (!placa) return res.status(400).json({ error: 'Placa no proporcionada o inválida' });
 
-  const encontrado = await Vehiculo.findByPlaca(placa);
-  if (encontrado) {
-    res.json(encontrado.toJSON());
-  } else {
-    res.status(404).json({ error: 'Vehículo no encontrado por placa' });
-  }
+    const encontrado = await Vehiculo.findByPlaca(placa);
+    if (encontrado) {
+        res.json(encontrado.toJSON());
+    } else {
+        res.status(404).json({ error: 'Vehículo no encontrado por placa' });
+    }
 }));
 
-// 🔍 Obtener todos los vehículos
 router.get('/', catchAsync(async (req, res) => {
-  const vehiculos = await Vehiculo.findAll();
-  res.json(vehiculos.map(v => v.toJSON()));
+    const vehiculos = await Vehiculo.findAll();
+    res.json(vehiculos.map(v => v.toJSON()));
 }));
 
-// 🔍 Obtener vehículo por ID
 router.get('/:id', catchAsync(async (req, res) => {
-  const id = Number(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
-
-  const encontrado = await Vehiculo.findById(id);
-  if (encontrado) {
-    res.json(encontrado.toJSON());
-  } else {
-    res.status(404).json({ error: 'Vehículo no encontrado por ID' });
-  }
-}));
-
-// 🆕 Crear nuevo vehículo
-router.post(
-  '/',
-  validateCreateVehiculo,
-  handleValidationErrors,
-  catchAsync(async (req, res) => {
-    const datos = req.body;
-
-    const nuevoVehiculo = new Vehiculo(
-      null,
-      normalizePlaca(datos.placa),
-      datos.color?.trim(),
-      datos.modelo?.trim(),
-      datos.marca?.trim(),
-      datos.tipo?.trim(),
-      Number(datos.usuario_id_usuario)
-    );
-
-    await nuevoVehiculo.save();
-    res.status(201).json(nuevoVehiculo.toJSON());
-  })
-);
-
-// ✏️ Actualizar vehículo
-router.put(
-  '/:id',
-  validateUpdateVehiculo,
-  handleValidationErrors,
-  catchAsync(async (req, res) => {
     const id = Number(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
 
     const encontrado = await Vehiculo.findById(id);
-    if (!encontrado) {
-      return res.status(404).json({ error: 'Vehículo no encontrado' });
+    if (encontrado) {
+        res.json(encontrado.toJSON());
+    } else {
+        res.status(404).json({ error: 'Vehículo no encontrado por ID' });
     }
+}));
 
-    Object.assign(encontrado, {
-      placa: normalizePlaca(req.body.placa),
-      color: req.body.color?.trim(),
-      modelo: req.body.modelo?.trim(),
-      marca: req.body.marca?.trim(),
-      tipo: req.body.tipo?.trim(),
-      usuario_id_usuario: Number(req.body.usuario_id_usuario)
-    });
+router.post(
+    '/',
+    validateCreateVehiculo,
+    handleValidationErrors,
+    catchAsync(async (req, res) => {
+        const datos = req.body;
 
-    await encontrado.save();
-    res.json(encontrado.toJSON());
-  })
+        const nuevoVehiculo = await Vehiculo.create({
+            placa: normalizePlaca(datos.placa),
+            color: datos.color?.trim(),
+            modelo: datos.modelo?.trim(),
+            marca: datos.marca?.trim(),
+            tipo: datos.tipo?.trim(),
+            usuario_id_usuario: Number(datos.usuario_id_usuario)
+        });
+
+        res.status(201).json(nuevoVehiculo.toJSON());
+    })
 );
 
-// 🗑️ Eliminar vehículo
+router.put(
+    '/:id',
+    validateUpdateVehiculo,
+    handleValidationErrors,
+    catchAsync(async (req, res) => {
+        const id = Number(req.params.id);
+        if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+
+        const encontrado = await Vehiculo.findById(id);
+        if (!encontrado) {
+            return res.status(404).json({ error: 'Vehículo no encontrado' });
+        }
+
+        encontrado.placa = req.body.placa !== undefined ? normalizePlaca(req.body.placa) : encontrado.placa;
+        encontrado.color = req.body.color !== undefined ? req.body.color?.trim() : encontrado.color;
+        encontrado.modelo = req.body.modelo !== undefined ? req.body.modelo?.trim() : encontrado.modelo;
+        encontrado.marca = req.body.marca !== undefined ? req.body.marca?.trim() : encontrado.marca;
+        encontrado.tipo = req.body.tipo !== undefined ? req.body.tipo?.trim() : encontrado.tipo;
+        if (req.body.usuario_id_usuario !== undefined) {
+            encontrado.usuario_id_usuario = Number(req.body.usuario_id_usuario);
+        }
+
+        await encontrado.update();
+        res.json(encontrado.toJSON());
+    })
+);
+
 router.delete('/:id', catchAsync(async (req, res) => {
-  const id = Number(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
+    const id = Number(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: 'ID inválido' });
 
-  const encontrado = await Vehiculo.findById(id);
-  if (!encontrado) {
-    return res.status(404).json({ error: 'Vehículo no encontrado' });
-  }
-
-  await encontrado.delete();
-  res.status(200).json({ mensaje: 'Vehículo eliminado correctamente' });
+    await Vehiculo.delete(id);
+    res.status(200).json({ mensaje: 'Vehículo eliminado correctamente' });
 }));
 
-// 🔍 Verificar historial activo por placa
-router.get('/historial-activo/:placa', catchAsync(async (req, res) => {
-  const placa = normalizePlaca(req.params.placa);
-  const { data, error } = await supabase.rpc('get_historial_activo_por_placa', { p_placa: placa });
+router.get('/check-status/:placa', catchAsync(async (req, res) => {
+    const placa = normalizePlaca(req.params.placa);
+    const vehiculo = await Vehiculo.findByPlaca(placa);
+    let historialActivo = null;
 
-  if (error) return res.status(500).json({ error: 'Error al consultar historial activo.' });
-  if (!data || data.length === 0) return res.status(404).json({ mensaje: 'Sin historial activo' });
+    if (vehiculo) {
+        const historialData = await HistorialParqueo.findByVehicleId(vehiculo.id);
 
-  res.json(data[0]);
-}));
+        if (historialData) {
+            historialActivo = historialData.toJSON();
 
-// 🔓 Liberar celda y finalizar historial
-router.post('/liberar/:placa', catchAsync(async (req, res) => {
-  const placa = normalizePlaca(req.params.placa);
-  const { data: historial, error: errorHistorial } = await supabase.rpc('get_historial_activo_por_placa', { p_placa: placa });
+            const celdaInfo = await Celda.findById(historialActivo.celda_id);
+            if (celdaInfo) {
+                historialActivo.celda_numero = celdaInfo.numero;
 
-  if (errorHistorial || !historial || historial.length === 0) {
-    return res.status(404).json({ mensaje: 'No hay historial activo para liberar celda.' });
-  }
+                const { data: zonaData, error: zonaError } = await supabase
+                    .from('zona')
+                    .select('nombre')
+                    .eq('id', celdaInfo.zona_id)
+                    .single();
+                if (zonaError && zonaError.code !== 'PGRST116') throw zonaError;
+                historialActivo.zona_nombre = zonaData ? zonaData.nombre : 'N/A';
 
-  const celdaId = historial[0].celda_id;
-  const vehiculoId = historial[0].vehiculo_id;
+                const { data: parqueaderoData, error: parqueaderoError } = await supabase
+                    .from('parqueadero')
+                    .select('nombre')
+                    .eq('id', celdaInfo.parqueadero_id)
+                    .single();
+                if (parqueaderoError && parqueaderoError.code !== 'PGRST116') throw parqueaderoError;
+                historialActivo.parqueadero_nombre = parqueaderoData ? parqueaderoData.nombre : 'N/A';
+            } else {
+                historialActivo.celda_numero = 'N/A';
+                historialActivo.zona_nombre = 'N/A';
+                historialActivo.parqueadero_nombre = 'N/A';
+            }
+        }
+    }
 
-  const { error: errorCelda } = await supabase
-    .from('celda')
-    .update({ estado: 'libre' })
-    .eq('id', celdaId);
-
-  const { error: errorHistorialUpdate } = await supabase
-    .from('historial_parqueo')
-    .update({ estado: 'finalizado' })
-    .eq('vehiculo_id', vehiculoId)
-    .eq('celda_id', celdaId);
-
-  if (errorCelda || errorHistorialUpdate) {
-    return res.status(500).json({ mensaje: 'Error al liberar celda o cerrar historial.' });
-  }
-
-  res.json({ mensaje: 'Celda liberada y historial finalizado exitosamente.' });
+    res.json({
+        vehiculo: vehiculo ? vehiculo.toJSON() : null,
+        historialActivo: historialActivo
+    });
 }));
 
 module.exports = router;

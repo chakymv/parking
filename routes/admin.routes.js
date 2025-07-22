@@ -1,10 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const Usuario = require('../model/Usuario');
+const { Usuario } = require('../model');
 const Vehiculo = require('../model/Vehiculo');
-const { normalizePlaca } = require('../utils/normalizer');
+const HistorialParqueo = require('../model/HistorialParqueo');
+const Celda = require('../model/Celda');
 const catchAsync = require('../utils/catchAsync');
-const supabase = require('../supabaseClient');
+const { normalizePlaca } = require('../utils/normalizer');
+
+const { supabase } = require('../supabaseClient');
 
 const requireLogin = (req, res, next) => {
     if (!req.session.userId) return res.redirect('/admin/login');
@@ -58,22 +61,8 @@ router.get('/crear_vehiculo', requireLogin, (req, res) => {
     res.render('admin/vehiculos2', { titulo: 'Crear Vehículo', userName: req.session.userName });
 });
 
-router.get('/crear_celdas', requireLogin, async (req, res) => {
-    try {
-        const { data: parqueaderos } = await supabase.from('parqueadero').select('*');
-        const { data: zonas } = await supabase.from('zona').select('*');
-        const { data: celdas } = await supabase.from('celda').select('*');
-        res.render('admin/crear_celdas', {
-            titulo: 'Crear Celdas',
-            userName: req.session.userName,
-            parqueaderos: parqueaderos || [],
-            zonas: zonas || [],
-            celdas: celdas || []
-        });
-    } catch (err) {
-        console.error('Error al cargar crear_celdas:', err.message);
-        res.status(500).send('Error interno al cargar la vista.');
-    }
+router.get('/crear_celdas', requireLogin, (req, res) => {
+    res.render('admin/crear_celdas', { titulo: 'Crear Celdas', userName: req.session.userName });
 });
 
 router.get('/crear_zonas', requireLogin, (req, res) => {
@@ -81,380 +70,40 @@ router.get('/crear_zonas', requireLogin, (req, res) => {
 });
 
 router.get('/zonas', requireLogin, async (req, res) => {
-    if (req.query.json === '1') {
-        try {
-            const { data: zonas, error } = await supabase.from('zona').select('*').order('nombre');
-            if (error) throw error;
-            return res.json({ zonas: zonas || [] });
-        } catch (err) {
-            console.error('Error al cargar zonas (JSON):', err.message);
-            return res.status(500).json({ zonas: [], error: err.message });
-        }
-    } else {
-        res.render('admin/zonas', { titulo: 'Gestionar Zonas', userName: req.session.userName });
-    }
-});
-
-router.get('/operar', requireLogin, async (req, res) => {
     try {
-        const { data: parqueaderos } = await supabase.from('parqueadero').select('*');
-        const { data: zonas } = await supabase.from('zona').select('*');
-        const { data: celdas } = await supabase.from('celda').select('*');
-        res.render('admin/operar', {
-            titulo: 'Operar Parqueadero',
-            userName: req.session.userName,
-            parqueaderos: parqueaderos || [],
-            zonas: zonas || [],
-            celdas: celdas || []
-        });
+        const { data: zonas, error } = await supabase
+            .from('zona')
+            .select('*')
+            .order('nombre', { ascending: true });
+
+        if (error) {
+            return res.status(500).json({ error: 'Error al obtener zonas' });
+        }
+
+        if (req.query.json === '1') {
+            return res.json({ zonas });
+        }
+
+        res.render('admin/zonas', { titulo: 'Gestionar Zonas', userName: req.session.userName, zonas: zonas || [] });
     } catch (err) {
-        console.error('Error en /admin/operar:', err.message);
-        res.status(500).send('Error interno al cargar operación.');
+        res.status(500).json({ error: 'Error inesperado al obtener zonas' });
     }
 });
 
-router.get('/usuarios/buscar', requireLogin, async (req, res) => {
-    const query = req.query.query?.trim();
-    if (!query || query.length < 3) return res.json({ usuarios: [] });
+router.post('/', async (req, res) => {
+    const { nombre } = req.body;
+    if (!nombre) return res.status(400).json({ error: 'Nombre requerido.' });
 
-    try {
-        const { data, error } = await supabase
-            .from('usuario')
-            .select('id_usuario, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, numero_documento, direccion_correo, numero_celular')
-            .or([
-                `numero_documento.ilike.%${query}%`,
-                `primer_nombre.ilike.%${query}%`,
-                `primer_apellido.ilike.%${query}%`,
-                `segundo_apellido.ilike.%${query}%`
-            ])
-            .limit(10);
+    const { data, error } = await supabase
+        .from('incidencia')
+        .insert([{ nombre }])
+        .select();
 
-        if (error) throw error;
-        res.json({ usuarios: data || [] });
-    } catch (err) {
-        console.error('❌ Error en /usuarios/buscar:', err.message);
-        res.status(500).json({ usuarios: [], error: err.message });
-    }
-});
-
-router.get('/vehiculo/existe', requireLogin, async (req, res) => {
-    const placa = req.query.placa;
-    if (!placa) return res.status(400).json({ error: 'Placa no especificada' });
-
-    try {
-        const vehiculo = await Vehiculo.findByPlaca(placa);
-
-        if (vehiculo) {
-            return res.json({ existe: true, vehiculo: vehiculo.toJSON() });
-        } else {
-            return res.json({ existe: false });
-        }
-    } catch (err) {
-        console.error('Error inesperado en vehiculo/existe:', err.message);
-        res.status(500).json({ error: 'Error inesperado =(' });
-    }
-});
-
-router.get('/vehiculo/historial-activo/:placa', requireLogin, async (req, res) => {
-    const placa = req.params.placa;
-    console.log(`DEBUG: Solicitud a /vehiculo/historial-activo para placa: ${placa}`);
-    if (!placa) return res.status(400).json({ error: 'Placa requerida' });
-
-    try {
-        const vehiculo = await Vehiculo.findByPlaca(placa);
-        console.log(`DEBUG: Vehículo encontrado en historial-activo: ${vehiculo ? vehiculo.placa : 'null'}`);
-
-        if (!vehiculo) return res.status(404).json({ activo: false, mensaje: 'Vehículo no encontrado.' });
-
-        const vehiculo_id = vehiculo.id;
-
-        const { data: historial, error: errorHistorial } = await supabase
-            .from('historial_parqueo')
-            .select('id, celda_id, estado')
-            .eq('vehiculo_id', vehiculo_id)
-            .eq('estado', 'activo')
-            .order('fecha_hora', { ascending: false })
-            .limit(1);
-
-        if (errorHistorial) throw errorHistorial;
-
-        if (!historial?.length) return res.status(404).json({ activo: false, mensaje: 'Vehículo sin historial activo.' });
-
-        res.json({ activo: true, historial: historial[0] });
-    } catch (err) {
-        console.error('❌ Error en historial-activo:', err.message);
-        res.status(500).json({ activo: false, error: err.message });
-    }
-});
-
-router.post('/vehiculo/liberar/:placa', requireLogin, async (req, res) => {
-    const placa = req.params.placa;
-    if (!placa) return res.status(400).json({ success: false, error: 'Placa requerida', mensaje: 'Placa requerida' });
-
-    try {
-        const vehiculo = await Vehiculo.findByPlaca(placa);
-
-        if (!vehiculo) {
-            return res.status(404).json({ success: false, error: 'Vehículo no registrado', mensaje: 'Vehículo no registrado' });
-        }
-        const vehiculo_id = vehiculo.id;
-
-        const { data: historial, error: errorHistorial } = await supabase
-            .from('historial_parqueo')
-            .select('id, celda_id, fecha_hora')
-            .eq('vehiculo_id', vehiculo_id)
-            .eq('estado', 'activo')
-            .order('fecha_hora', { ascending: false })
-            .limit(1);
-
-        if (errorHistorial) throw errorHistorial;
-        if (!historial?.length) {
-            return res.status(404).json({ success: false, error: 'Vehículo no encontrado en historial activo', mensaje: 'Vehículo no encontrado en historial activo' });
-        }
-        const historial_id = historial[0].id;
-        const celda_id = historial[0].celda_id;
-
-        const fecha_salida = new Date().toISOString();
-        const { error: updateHistorialError } = await supabase
-            .from('historial_parqueo')
-            .update({ estado: 'finalizado', fecha_salida: fecha_salida })
-            .eq('id', historial_id);
-
-        if (updateHistorialError) throw updateHistorialError;
-
-        const { data: celdaInfo, error: errorCelda } = await supabase
-            .from('celda')
-            .update({ estado: 'libre' })
-            .eq('id', celda_id)
-            .select('numero, zona_id, parqueadero_id'); // Select additional info
-
-        if (errorCelda) throw errorCelda;
-
-        // Fetch zona and parqueadero names
-        let zonaNombre = 'N/A';
-        let parqueaderoNombre = 'N/A';
-        if (celdaInfo && celdaInfo[0]) {
-            const { data: zonaData, error: zonaError } = await supabase
-                .from('zona')
-                .select('nombre')
-                .eq('id', celdaInfo[0].zona_id)
-                .single();
-            if (zonaData) zonaNombre = zonaData.nombre;
-
-            const { data: parqueaderoData, error: parqueaderoError } = await supabase
-                .from('parqueadero')
-                .select('nombre')
-                .eq('id', celdaInfo[0].parqueadero_id)
-                .single();
-            if (parqueaderoData) parqueaderoNombre = parqueaderoData.nombre;
-        }
-
-        res.json({
-            success: true,
-            mensaje: 'Vehículo liberado correctamente.',
-            placa,
-            celdaLiberada: celda_id,
-            celdaNumero: celdaInfo ? celdaInfo[0].numero : 'N/A',
-            zonaNombre: zonaNombre,
-            parqueaderoNombre: parqueaderoNombre
-        });
-    } catch (err) {
-        console.error('🔥 Error inesperado en liberar celda:', err.message);
-        res.status(500).json({ success: false, error: 'Error inesperado al liberar celda', mensaje: err.message });
-    }
-});
-
-router.post('/parquear', requireLogin, async (req, res) => {
-    const { vehiculo_id, celda_id, placa } = req.body;
-
-    if (!vehiculo_id || !celda_id || !placa) {
-        return res.status(400).json({ success: false, mensaje: 'Datos incompletos para parquear.' });
+    if (error) {
+        return res.status(400).json({ error: error.message });
     }
 
-    try {
-        const { data: celdaData, error: celdaError } = await supabase
-            .from('celda')
-            .select('estado')
-            .eq('id', celda_id)
-            .single();
-
-        if (celdaError) throw celdaError;
-        if (!celdaData || celdaData.estado !== 'libre') {
-            return res.status(409).json({ success: false, mensaje: 'La celda no está libre o no existe.' });
-        }
-
-        const { error: historialError } = await supabase
-            .from('historial_parqueo')
-            .insert([{ celda_id: celda_id, vehiculo_id: vehiculo_id, fecha_hora: new Date().toISOString(), estado: 'activo' }]);
-
-        if (historialError) throw historialError;
-
-        const { error: updateCeldaError } = await supabase
-            .from('celda')
-            .update({ estado: 'ocupada' })
-            .eq('id', celda_id);
-
-        if (updateCeldaError) throw updateCeldaError;
-
-        res.status(200).json({ success: true, mensaje: 'Vehículo parqueado correctamente.' });
-
-    } catch (error) {
-        console.error('Error al parquear vehículo:', error.message);
-        res.status(500).json({ success: false, mensaje: 'Error interno del servidor al parquear el vehículo.', error: error.message });
-    }
-});
-
-router.post('/vehiculo/registrar', requireLogin, async (req, res) => {
-    try {
-        const { placa, color, modelo, marca, tipo, usuario_id_usuario } = req.body;
-
-        if (!placa || !color || !modelo || !marca || !tipo || !usuario_id_usuario) {
-            return res.status(400).json({ success: false, mensaje: 'Todos los campos son obligatorios.' });
-        }
-
-        const placaNormalizada = normalizePlaca(placa);
-
-        const vehiculoExistente = await Vehiculo.findByPlaca(placaNormalizada);
-        if (vehiculoExistente) {
-            return res.status(409).json({ success: false, mensaje: 'Un vehículo con esta placa ya está registrado.' });
-        }
-
-        const nuevoVehiculo = new Vehiculo(
-            null,
-            placaNormalizada,
-            color,
-            modelo,
-            marca,
-            tipo,
-            usuario_id_usuario
-        );
-
-        const vehiculoGuardado = await nuevoVehiculo.save();
-
-        res.status(201).json({
-            success: true,
-            mensaje: 'Vehículo registrado exitosamente.',
-            vehiculo: vehiculoGuardado.toJSON()
-        });
-
-    } catch (error) {
-        console.error('Error en el controlador al registrar vehículo:', error);
-        res.status(500).json({
-            success: false,
-            mensaje: 'Error interno del servidor al registrar el vehículo.',
-            error: error.message
-        });
-    }
-});
-
-router.post('/usuario/registrar', requireLogin, async (req, res) => {
-    try {
-        const { documento, primer_nombre, primer_apellido, correo, celular } = req.body;
-
-        if (!documento || !primer_nombre || !primer_apellido || !correo || !celular) {
-            return res.status(400).json({ success: false, mensaje: 'Todos los campos de usuario son obligatorios.' });
-        }
-
-        const nuevoUsuario = new Usuario(
-            null,
-            documento,
-            primer_nombre,
-            null,
-            primer_apellido,
-            null,
-            correo,
-            celular,
-            'CC',
-            'default_clave',
-            'activo',
-            3
-        );
-
-        const usuarioGuardado = await nuevoUsuario.save();
-
-        res.status(201).json({
-            success: true,
-            mensaje: 'Propietario registrado exitosamente.',
-            usuario: usuarioGuardado.toJSON()
-        });
-
-    } catch (error) {
-        console.error('Error en el controlador al registrar usuario:', error);
-        res.status(500).json({
-            success: false,
-            mensaje: 'Error interno del servidor al registrar el propietario.',
-            error: error.message
-        });
-    }
-});
-
-router.get('/celdas/disponibles', requireLogin, async (req, res) => {
-    try {
-        const { parqueadero_id, zona_id, all } = req.query;
-        let query = supabase.from('celda').select('*, zona(nombre)');
-        if (parqueadero_id) query = query.eq('parqueadero_id', parqueadero_id);
-        if (zona_id) query = query.eq('zona_id', zona_id);
-        if (!all) query = query.ilike('estado', '%libre%');
-
-        const { data, error } = await query;
-        if (error) throw error;
-
-        const celdasConInfo = await Promise.all((data || []).map(async celda => {
-            if (celda.zona && celda.zona.nombre) {
-                celda.zona_nombre = celda.zona.nombre;
-                delete celda.zona;
-            }
-
-            if (celda.estado === 'ocupada') {
-                const { data: historialParqueo, error: histError } = await supabase
-                    .from('historial_parqueo')
-                    .select('vehiculo(placa, usuario(numero_documento))')
-                    .eq('celda_id', celda.id)
-                    .eq('estado', 'activo')
-                    .order('fecha_hora', { ascending: false })
-                    .limit(1)
-                    .single();
-
-                if (historialParqueo && historialParqueo.vehiculo) {
-                    celda.placa = historialParqueo.vehiculo.placa;
-                    celda.usuario = historialParqueo.vehiculo.usuario;
-                }
-            }
-            return celda;
-        }));
-
-        res.json({ celdas: celdasConInfo });
-    } catch (err) {
-        console.error('Error al buscar celdas disponibles:', err.message);
-        res.status(500).json({ celdas: [], error: err.message });
-    }
-});
-
-router.get('/parqueaderos', requireLogin, async (req, res) => {
-    if (req.query.json === '1') {
-        try {
-            const { data: parqueaderos, error } = await supabase.from('parqueadero').select('*').order('nombre');
-            if (error) throw error;
-            return res.json(parqueaderos || []);
-        } catch (err) {
-            console.error('Error al cargar parqueaderos (JSON):', err.message);
-            return res.status(500).json({ parqueaderos: [], error: err.message });
-        }
-    } else {
-        try {
-            const { data: zonas } = await supabase.from('zona').select('*');
-            const { data: celdas } = await supabase.from('celda').select('*');
-            res.render('admin/parqueaderos', {
-                titulo: 'Gestionar Parqueaderos',
-                userName: req.session.userName,
-                zonas: zonas || [],
-                celdas: celdas || []
-            });
-        } catch (err) {
-            console.error('Error al cargar vista de parqueaderos:', err.message);
-            res.status(500).send('Error interno.');
-        }
-    }
+    res.status(201).json(data[0]);
 });
 
 router.get('/incidencia', requireLogin, async (req, res) => {
@@ -496,26 +145,34 @@ router.get('/incidencia', requireLogin, async (req, res) => {
             titulo: 'Incidencias'
         });
     } catch (error) {
-        console.error('Error cargando /admin/incidencia:', error);
         res.status(500).send('Error al cargar la vista de incidencias');
     }
 });
 
-router.post('/incidencia', requireLogin, async (req, res) => {
-    const { nombre } = req.body;
-    if (!nombre) return res.status(400).json({ error: 'Nombre requerido.' });
+router.get('/parqueaderos', requireLogin, async (req, res) => {
+    try {
+        const { data: parqueaderos, error: parqueaderosError } = await supabase.from('parqueadero').select('*');
+        if (parqueaderosError) throw parqueaderosError;
 
-    const { data, error } = await supabase
-        .from('incidencia')
-        .insert([{ nombre }])
-        .select();
+        if (req.query.json === '1') {
+            return res.json(parqueaderos);
+        }
 
-    if (error) {
-        console.error('Error Supabase (tipo):', error);
-        return res.status(400).json({ error: error.message });
+        const { data: zonas, error: zonasError } = await supabase.from('zona').select('*');
+        if (zonasError) throw zonasError;
+        const { data: celdas, error: celdasError } = await supabase.from('celda').select('*');
+        if (celdasError) throw celdasError;
+
+        res.render('admin/parqueaderos', {
+            titulo: 'Gestionar Parqueaderos',
+            userName: req.session.userName,
+            parqueaderos: parqueaderos || [],
+            zonas: zonas || [],
+            celdas: celdas || []
+        });
+    } catch (err) {
+        res.status(500).send('Error interno.');
     }
-
-    res.status(201).json(data[0]);
 });
 
 router.get('/vista_parqueaderos', requireLogin, async (req, res) => {
@@ -531,9 +188,303 @@ router.get('/vista_parqueaderos', requireLogin, async (req, res) => {
             celdas
         });
     } catch (err) {
-        console.error('Error al cargar vista completa:', err.message);
         res.status(500).send('Error interno al cargar la vista.');
     }
 });
+
+router.get('/operar', requireLogin, async (req, res) => {
+    try {
+        const { data: parqueaderos } = await supabase.from('parqueadero').select('*');
+        const { data: zonas } = await supabase.from('zona').select('*');
+        const { data: celdas } = await supabase.from('celda').select('*');
+        res.render('admin/operar', {
+            titulo: 'Operar Parqueadero',
+            userName: req.session.userName,
+            parqueaderos: parqueaderos || [],
+            zonas: zonas || [],
+            celdas: celdas || []
+        });
+    } catch (err) {
+        res.status(500).send('Error interno al cargar operación.');
+    }
+});
+
+router.get('/vehiculo/existe', requireLogin, async (req, res) => {
+    const placa = req.query.placa;
+    if (!placa) return res.status(400).json({ error: 'Placa no especificada' });
+
+    try {
+        const vehiculo = await Vehiculo.findByPlaca(placa);
+        let historialActivo = null;
+
+        if (vehiculo) {
+            const historialData = await HistorialParqueo.findByVehicleId(vehiculo.id);
+
+            if (historialData && historialData.estado === 'activo') {
+                historialActivo = historialData.toJSON();
+
+                const celdaInfo = await Celda.findById(historialActivo.celda_id);
+                if (celdaInfo) {
+                    historialActivo.celda_numero = celdaInfo.numero;
+
+                    const { data: zonaData, error: zonaError } = await supabase
+                        .from('zona')
+                        .select('nombre')
+                        .eq('id', celdaInfo.zona_id)
+                        .single();
+                    if (zonaError && zonaError.code !== 'PGRST116') throw zonaError;
+                    historialActivo.zona_nombre = zonaData ? zonaData.nombre : 'N/A';
+
+                    const { data: parqueaderoData, error: parqueaderoError } = await supabase
+                        .from('parqueadero')
+                        .select('nombre')
+                        .eq('id', celdaInfo.parqueadero_id)
+                        .single();
+                    if (parqueaderoError && parqueaderoError.code !== 'PGRST116') throw parqueaderoError;
+                    historialActivo.parqueadero_nombre = parqueaderoData ? parqueaderoData.nombre : 'N/A';
+                } else {
+                    historialActivo.celda_numero = 'N/A';
+                    historialActivo.zona_nombre = 'N/A';
+                    historialActivo.parqueadero_nombre = 'N/A';
+                }
+            }
+        }
+
+        res.json({
+            existe: !!vehiculo,
+            vehiculo: vehiculo ? vehiculo.toJSON() : null,
+            historialActivo: historialActivo
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Error inesperado =(' });
+    }
+});
+
+router.post('/vehiculo/liberar/:placa', async (req, res) => {
+    const placa = req.params.placa;
+    const placa_normalizada = placa.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+    if (!placa_normalizada) {
+        return res.status(400).json({ error: 'Placa no proporcionada o inválida' });
+    }
+
+    try {
+        const vehiculo = await Vehiculo.findByPlaca(placa_normalizada);
+
+        if (!vehiculo) {
+            return res.status(404).json({ error: 'Vehículo no registrado' });
+        }
+
+        const historial = await HistorialParqueo.findByVehicleId(vehiculo.id);
+
+        if (!historial || historial.estado !== 'activo') {
+            return res.status(404).json({ error: 'Vehículo sin historial de ingreso activo' });
+        }
+
+        const historial_id = historial.id;
+        const celda_id = historial.celda_id;
+        const horaSalida = new Date().toISOString();
+
+        const { error: errorCelda } = await supabase
+            .from('celda')
+            .update({ estado: 'libre' })
+            .eq('id', celda_id);
+
+        const { error: errorHistorialUpdate } = await supabase
+            .from('historial_parqueo')
+            .update({ estado: 'finalizado', salida: horaSalida })
+            .eq('id', historial_id);
+
+        if (errorCelda || errorHistorialUpdate) {
+            return res.status(500).json({ error: 'No se pudo liberar la celda o cerrar historial' });
+        }
+
+        const celdaInfo = await Celda.findById(celda_id);
+        let celdaNumero = 'N/A';
+        let zonaNombre = 'N/A';
+        let parqueaderoNombre = 'N/A';
+
+        if (celdaInfo) {
+            celdaNumero = celdaInfo.numero;
+            const { data: zonaData } = await supabase.from('zona').select('nombre').eq('id', celdaInfo.zona_id).single();
+            zonaNombre = zonaData ? zonaData.nombre : 'N/A';
+            const { data: parqueaderoData } = await supabase.from('parqueadero').select('nombre').eq('id', celdaInfo.parqueadero_id).single();
+            parqueaderoNombre = parqueaderoData ? parqueaderoData.nombre : 'N/A';
+        }
+
+        res.json({
+            success: true,
+            placa: placa_normalizada,
+            celdaNumero,
+            zonaNombre,
+            parqueaderoNombre,
+            horaSalida
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Error inesperado al procesar la salida' });
+    }
+});
+
+router.get('/celdas/disponibles', requireLogin, async (req, res) => {
+    const { parqueadero_id, zona_id, tipo, all } = req.query;
+
+    let query = supabase.from('celda').select(`
+        id,
+        numero,
+        tipo,
+        estado,
+        zona (
+            id,
+            nombre
+        ),
+        parqueadero (
+            id,
+            nombre
+        )
+    `);
+
+    if (parqueadero_id) {
+        query = query.eq('parqueadero_id', parqueadero_id);
+    }
+    if (zona_id) {
+        query = query.eq('zona_id', zona_id);
+    }
+    if (tipo) {
+        query = query.eq('tipo', tipo);
+    }
+
+    if (all !== '1') {
+        query = query.eq('estado', 'libre');
+    } else {
+        query = query.select(`
+            id,
+            numero,
+            tipo,
+            estado,
+            zona (
+                id,
+                nombre
+            ),
+            parqueadero (
+                id,
+                nombre
+            ),
+            historial_parqueo!left (
+                vehiculo_id,
+                estado,
+                vehiculo (
+                    placa,
+                    usuario (
+                        numero_documento
+                    )
+                )
+            )
+        `);
+    }
+
+    const { data, error } = await query.order('numero', { ascending: true });
+
+    if (error) {
+        return res.status(500).json({ error: 'Error al obtener celdas disponibles' });
+    }
+
+    const celdasProcesadas = data.map(celda => {
+        const processedCelda = { ...celda };
+        if (all === '1' && celda.estado === 'ocupada' && processedCelda.historial_parqueo && processedCelda.historial_parqueo.length > 0) {
+            const historialActivo = processedCelda.historial_parqueo.find(h => h.estado === 'activo');
+            if (historialActivo && historialActivo.vehiculo) {
+                processedCelda.placa = historialActivo.vehiculo.placa;
+                processedCelda.usuario = historialActivo.vehiculo.usuario;
+            }
+        }
+        delete processedCelda.historial_parqueo;
+        return processedCelda;
+    });
+
+    res.json({ celdas: celdasProcesadas });
+});
+
+router.post('/asignar-celda', async (req, res) => {
+    const { vehiculo_id, celda_id } = req.body;
+
+    if (!vehiculo_id || !celda_id) {
+        return res.status(400).json({ error: 'Faltan datos de vehículo o celda.' });
+    }
+
+    try {
+        const { data: celdaData, error: celdaError } = await supabase
+            .from('celda')
+            .select('estado')
+            .eq('id', celda_id)
+            .single();
+
+        if (celdaError || !celdaData) {
+            return res.status(404).json({ error: 'Celda no encontrada.' });
+        }
+
+        if (celdaData.estado !== 'libre') {
+            return res.status(409).json({ error: 'La celda seleccionada no está libre.' });
+        }
+
+        const { data: historialData, error: historialError } = await supabase
+            .from('historial_parqueo')
+            .insert({
+                celda_id: celda_id,
+                vehiculo_id: vehiculo_id,
+                entrada: new Date().toISOString(),
+                estado: 'activo'
+            })
+            .select()
+            .single();
+
+        if (historialError) {
+            return res.status(500).json({ error: 'Error al registrar el ingreso del vehículo.' });
+        }
+
+        const { error: updateCeldaError } = await supabase
+            .from('celda')
+            .update({ estado: 'ocupada' })
+            .eq('id', celda_id);
+
+        if (updateCeldaError) {
+            return res.status(500).json({ error: 'Error al actualizar el estado de la celda.' });
+        }
+
+        res.status(200).json({ success: true, mensaje: 'Celda asignada y vehículo ingresado correctamente.' });
+
+    } catch (err) {
+        res.status(500).json({ error: 'Error inesperado al asignar celda.' });
+    }
+});
+
+router.get('/usuarios/buscar', requireLogin, async (req, res) => {
+    const query = req.query.query;
+    if (!query) {
+        const { data, error } = await supabase
+            .from('usuario')
+            .select('id_usuario, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, numero_documento, direccion_correo, numero_celular')
+            .order('primer_nombre', { ascending: true });
+        if (error) {
+            return res.status(500).json({ error: 'Error al obtener usuarios' });
+        }
+        return res.json({ usuarios: data });
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('usuario')
+            .select('id_usuario, primer_nombre, segundo_nombre, primer_apellido, segundo_apellido, numero_documento, direccion_correo, numero_celular')
+            .or(`numero_documento.ilike.%${query}%,primer_nombre.ilike.%${query}%,primer_apellido.ilike.%${query}%`)
+            .limit(10);
+
+        if (error) {
+            return res.status(500).json({ error: 'Error al buscar usuarios' });
+        }
+        res.json({ usuarios: data });
+    } catch (err) {
+        res.status(500).json({ error: 'Error inesperado al buscar usuarios' });
+    }
+});
+
 
 module.exports = router;

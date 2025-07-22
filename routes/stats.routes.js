@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const supabase = require('../supabaseClient');
+const { supabase } = require('../supabaseClient');
 const catchAsync = require('../utils/catchAsync');
 
 // 🔍 GET /api/stats/dashboard - Obtener estadísticas para el dashboard
