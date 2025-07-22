@@ -20,10 +20,15 @@ const parqueaderoRoutes = require('./routes/parqueadero.routes');
 const statsRoutes = require('./routes/stats.routes');
 const tipoIncidenciaRoutes = require('./routes/tipo_incidencia.routes');
 const adminRoutes = require('./routes/admin.routes');
+
 const loginRoutes = require('./routes/usuario/login.routes');
 const registroRoutes = require('./routes/usuario/registro.routes');
 const disponibilidadPublica = require('./routes/public/disponibilidad.routes');
 const usuarioRoutes = require('./routes/usuario.routes');
+
+
+const apiRoutes = require('./routes/api_routes'); 
+const parkingApiRoutes = require('./routes/parking_router_code');
 
 const PORT = process.env.PORT || 7000;
 
@@ -86,6 +91,9 @@ app.use('/api/tipos', tipoIncidenciaRoutes);
 
 app.use('/admin', adminRoutes);
 app.use('/admin/vehiculo', vehiculoRoutes);
+
+app.use('/api', apiRoutes);     
+app.use('/api/parqueo', parkingApiRoutes); 
 
 app.get('/admin', (req, res) => {
   if (req.session.userId) {
